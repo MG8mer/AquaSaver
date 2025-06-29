@@ -1,4 +1,4 @@
-package com.example.aquasaver;
+package com.example.aquasaver.model;
 
 import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
