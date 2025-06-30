@@ -68,9 +68,7 @@ public class UserGoal {
         return targetAmountLiters;
     }
 
-    public void setTargetAmountLiters(double targetAmountLiters) {
-        this.targetAmountLiters = targetAmountLiters;
-    }
+    public void setTargetAmountLiters(double targetAmountLiters) { this.targetAmountLiters = targetAmountLiters;}
 
     public Long getStartDate() {
         return startDate;
@@ -92,8 +90,6 @@ public class UserGoal {
         return activityTypeFilter;
     }
 
-    public void setActivityTypeFilter(String activityTypeFilter) {
-        this.activityTypeFilter = activityTypeFilter;
-    }
+    public void setActivityTypeFilter(String activityTypeFilter) { this.activityTypeFilter = activityTypeFilter; }
 }
 
