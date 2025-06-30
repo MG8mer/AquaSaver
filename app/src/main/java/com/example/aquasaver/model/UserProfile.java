@@ -3,7 +3,6 @@ package com.example.aquasaver.model;
 import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
-import androidx.room.PrimaryKey;
 
 enum GoalType { // Enum for goal types
     DAILY,
