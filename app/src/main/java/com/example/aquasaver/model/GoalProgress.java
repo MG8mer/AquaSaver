@@ -7,7 +7,7 @@ import androidx.room.Index;
 import androidx.room.PrimaryKey;
 import androidx.annotation.NonNull;
 
-@Entity(tableName = "water_usage_log",
+@Entity(tableName = "goal_progress",
         foreignKeys = @ForeignKey(entity = UserProfile.class, // Parent entity
                 parentColumns = "email",     // Primary key in parent
                 childColumns = "user_email", // Foreign key in this entity
