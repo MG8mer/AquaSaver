@@ -7,6 +7,9 @@ import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 import androidx.room.Update;
 
+// Import WaterUsage class
+import com.example.aquasaver.model.WaterUsage;
+
 import java.util.List;
 
 @Dao

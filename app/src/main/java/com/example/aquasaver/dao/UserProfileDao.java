@@ -7,6 +7,10 @@ import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 import androidx.room.Update;
 
+
+// Import user profile class
+import com.example.aquasaver.model.UserProfile;
+
 import java.util.List;
 
 @Dao
