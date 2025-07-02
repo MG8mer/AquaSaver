@@ -23,10 +23,6 @@ public class GoalProgress {
     @ColumnInfo(name = "user_email") // Foreign key part 1
     public String userEmail;
 
-    @NonNull
-    @ColumnInfo(name = "user_goal_id") // Foreign key to a UserGoal definition entity
-    public int userGoalId; // This links to the specific goal definition being tracked
-
     @ColumnInfo(name = "amount_logged")
     public double amountLogged; // THIS IS THE SUM from WaterUsage
 
@@ -37,9 +33,8 @@ public class GoalProgress {
     public boolean onTarget;
 
     // Constructor
-    public GoalProgress(@NonNull String userEmail, int userGoalId, double amountLogged, Long progressDate, boolean onTarget) {
+    public GoalProgress(@NonNull String userEmail, double amountLogged, Long progressDate, boolean onTarget) {
         this.userEmail = userEmail;
-        this.userGoalId = userGoalId;
         this.amountLogged = amountLogged;
         this.progressDate = progressDate;
         this.onTarget = onTarget;
@@ -57,14 +52,6 @@ public class GoalProgress {
 
     public void setUserEmail(@NonNull String userEmail) { // Setter for userEmail
         this.userEmail = userEmail;
-    }
-
-    public int getUserGoalId() { // Getter for userGoalId
-        return userGoalId;
-    }
-
-    public void setUserGoalId(int userGoalId) { // Setter for userGoalId
-        this.userGoalId = userGoalId;
     }
 
     public double getAmountLogged() { // Getter for amountLogged
