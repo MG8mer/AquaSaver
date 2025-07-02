@@ -14,11 +14,9 @@ public class UserProfile {
     @ColumnInfo(name = "email")
     public String email;
 
-    @NonNull
     @ColumnInfo(name = "location")
     public String location;
 
-    @NonNull
     @ColumnInfo(name = "goal_type")
     public GoalType goalType; // Enum for goal types
 
@@ -31,26 +29,33 @@ public class UserProfile {
     @ColumnInfo(name = "notifications_on")
     public boolean notificationsOn;
 
+    @ColumnInfo(name = "reminder_time")
+    public String reminderTime;
+
+    @ColumnInfo(name = "weather_alerts_enabled", defaultValue = "false")
+    public boolean weatherAlertsEnabled;
+
     @ColumnInfo(name = "join_date")
     public Long joinDate;
 
-    public UserProfile(@NonNull String email, String passwordHash, @NonNull String location, boolean useGPS,
-                       @NonNull GoalType goalType, boolean notificationsOn, Long joinDate) { // Constructor
+    public UserProfile(@NonNull String email, String passwordHash, String location, boolean useGPS,
+                       GoalType goalType, boolean notificationsOn, String reminderTime, boolean weatherAlertsEnabled, Long joinDate) { // Constructor
         this.email = email;
         this.location = location;
         this.passwordHash = passwordHash;
         this.useGPS = useGPS;
         this.goalType = goalType;
         this.notificationsOn = notificationsOn;
+        this.reminderTime = reminderTime;
+        this.weatherAlertsEnabled = weatherAlertsEnabled;
         this.joinDate = joinDate;
     }
 
-    @NonNull
     public String getEmail() { // Getter for email
         return email;
     }
 
-    public void setEmail(@NonNull String email) { // Setter for email
+    public void setEmail(String email) { // Setter for email
         this.email = email;
     }
 
@@ -62,12 +67,11 @@ public class UserProfile {
         this.passwordHash = passwordHash;
     }
 
-    @NonNull
     public String getLocation() { // Getter for location
         return location;
     }
 
-    public void setLocation(@NonNull String location) { // Setter for location
+    public void setLocation(String location) { // Setter for location
         this.location = location;
     }
 
@@ -79,12 +83,11 @@ public class UserProfile {
         this.useGPS = useGPS;
     }
 
-    @NonNull
     public GoalType getGoalType() { // Getter for goal type
         return goalType;
     }
 
-    public void setGoalType(@NonNull GoalType goalType) { // Setter for goal type
+    public void setGoalType(GoalType goalType) { // Setter for goal type
         this.goalType = goalType;
     }
 
@@ -95,6 +98,14 @@ public class UserProfile {
     public void setNotificationsOn(boolean notificationsOn) { // Setter for notificationsOn
         this.notificationsOn = notificationsOn;
     }
+
+    public String getReminderTime() { return reminderTime;}
+
+    public void setReminderTime(String reminderTime) {this.reminderTime = reminderTime; }
+
+    public boolean isWeatherAlertsEnabled() {return weatherAlertsEnabled; }
+
+    public void setWeatherAlertsEnabled(boolean weatherAlertsEnabled) {this.weatherAlertsEnabled = weatherAlertsEnabled; }
 
     public Long getJoinDate() { // Getter for joinDate
         return joinDate;
