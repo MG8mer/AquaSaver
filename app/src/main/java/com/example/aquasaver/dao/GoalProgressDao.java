@@ -10,7 +10,6 @@ import androidx.room.Update;
 // Import GoalProgress class
 import com.example.aquasaver.model.GoalProgress;
 
-
 import java.util.List;
 @Dao
 public interface GoalProgressDao {
@@ -33,7 +32,7 @@ public interface GoalProgressDao {
     @Query("SELECT * FROM goal_progress WHERE user_email = :userEmail AND progress_date >= :startDate AND progress_date <= :endDate ORDER BY progress_date DESC")
     List<GoalProgress> getProgressForUserInDateRange(String userEmail, long startDate, long endDate);
 
-    @Query("SELECT * FROM challenge_progress WHERE user_email = :userEmail AND completion = :on_target")
+    @Query("SELECT * FROM challenge_progress WHERE user_email = :userEmail AND on_target = :on_target")
     List<ChallengeProgress> getUserChallengeProgressByCompletion(String userEmail, boolean on_target); // Returns the progress of all goals
 
 
