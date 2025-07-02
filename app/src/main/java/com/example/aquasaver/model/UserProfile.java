@@ -4,10 +4,8 @@ import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 
-enum GoalType { // Enum for goal types
-    DAILY,
-    WEEKLY
-}
+import com.example.aquasaver.model.enums.GoalType;
+
 
 @Entity(tableName = "user_profiles",
         primaryKeys = {"email", "location", "goal_type"}) // Define composite primary key here

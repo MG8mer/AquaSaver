@@ -8,11 +8,8 @@ import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
-// Enum data type for user's goal type (is it based on challenges met daily or weekly?)
-enum ChallengeGoalType {
-    DAILY,
-    WEEKLY
-}
+import com.example.aquasaver.model.enums.ChallengeGoalType;
+
 
 @Entity(tableName = "challenges",
         foreignKeys = @ForeignKey(entity = UserProfile.class,

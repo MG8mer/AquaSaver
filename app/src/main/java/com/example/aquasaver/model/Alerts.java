@@ -5,21 +5,10 @@ import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import com.example.aquasaver.model.enums.AlertType;
+
 // Enum data type for weather alert variants (heatwaves, drought, etc.)
-enum AlertType
-{
-    HEATWAVE,
-    DROUGHT,
-    HEAVY_RAINFALL,
-    THUNDERSTORM,
-    FROST_WARNING,
-    SNOWSTORM,
-    FLASH_FLOOD,
-    HIGH_WINDS,
-    HUMIDITY_SPIKE,
-    LOW_RAIN_FORECAST,
-    TEMP_DROP
-}
+
 @Entity(tableName = "alerts")
 
 public class Alerts

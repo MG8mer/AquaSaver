@@ -8,12 +8,8 @@ import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
-// Enum data type for the water usage summary report type (either report daily, weekly, or monthly usage)
-enum SummaryType {
-    DAILY,
-    WEEKLY,
-    MONTHLY
-}
+// Import SummaryType enum
+import com.example.aquasaver.model.enums.SummaryType;
 
 @Entity(tableName = "reports",
         foreignKeys = @ForeignKey(entity = UserProfile.class,

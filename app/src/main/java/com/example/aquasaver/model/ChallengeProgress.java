@@ -34,7 +34,7 @@ public class ChallengeProgress {
     @ColumnInfo(name = "completion")
     public boolean completion;
 
-    // Constructir
+    // Constructor
     public ChallengeProgress(@NonNull String userEmail, String title, float currentProgress, boolean completion) {
         this.userEmail = userEmail;
         this.title = title;

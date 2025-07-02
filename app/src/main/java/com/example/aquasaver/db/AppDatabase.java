@@ -16,18 +16,17 @@ import com.example.aquasaver.dao.*;    // DAO (database operations) --> houses f
                 WaterUsage.class,
                 UserGoal.class,
                 GoalProgress.class,
-                WaterAchievementProgress.class, // TO BE POPULATED (TBP)
-                Alerts.class, // TBP
-                NotificationSettings.class, // TBP
-                WeatherSuggestions.class, // TBP
-                Reports.class, // TBP
-                Challenges.class, // TBP
-                ChallengeProgress.class // TBP
+                WaterAchievementProgress.class,
+                Alerts.class,
+                NotificationSettings.class,
+                WeatherSuggestions.class,
+                Reports.class,
+                Challenges.class,
+                ChallengeProgress.class
         },
         version = 1,
         exportSchema = true
 )
-@TypeConverters(Converters.class)        // Converters.java for Instant, enums, etc.
 public abstract class AppDatabase extends RoomDatabase {
 
     // ACCESSORS FOR DAO FILES FOR EACH ENTITY
