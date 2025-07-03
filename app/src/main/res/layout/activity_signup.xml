@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#B3E5FC">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center_horizontal">
+
+        <!-- Top Center Title -->
+        <TextView
+            android:id="@+id/profileTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="User Profile"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Username -->
+        <EditText
+            android:id="@+id/signupUsername"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:hint="Username"
+            android:inputType="textPersonName"
+            android:layout_marginTop="8dp" />
+
+        <!-- Password -->
+        <EditText
+            android:id="@+id/signupPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:hint="Password"
+            android:inputType="textPassword"
+            android:layout_marginTop="16dp" />
+
+        <!-- Location label -->
+        <TextView
+            android:id="@+id/labelLocationPrefTracker"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Location"
+            android:textSize="18sp"
+            android:textColor="#000000"
+            android:layout_marginTop="16dp"
+            android:paddingBottom="4dp" />
+
+        <!-- Location (auto-filled) -->
+        <EditText
+            android:id="@+id/location"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:hint="Location"
+            android:inputType="text" />
+
+        <!-- Goal Dropdown with Water Usage Tracker Label to the left -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/labelGoalTracker"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Water-usage Goal tracker"
+                android:textSize="16sp"
+                android:textColor="#000000"
+                android:layout_marginEnd="12dp" />
+
+            <Spinner
+                android:id="@+id/goalSpinner"
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:padding="8dp" />
+        </LinearLayout>
+
+        <!-- Notification preference (left-aligned) -->
+        <Switch
+            android:id="@+id/notifications"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Enable Notifications"
+            android:gravity="start"
+            android:layout_marginTop="16dp"
+            android:minWidth="48dp"
+            android:minHeight="48dp"
+            android:padding="8dp" />
+
+        <!-- Submit button -->
+        <Button
+            android:id="@+id/signupSubmit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sign Up"
+            android:layout_marginTop="24dp"
+            android:backgroundTint="#0288D1"
+            android:textColor="#FFFFFF" />
+
+    </LinearLayout>
+</ScrollView>

@@ -1,4 +1,4 @@
-package com.example.aquasaver;
+package com.aquasaver;
 
 import org.junit.Test;
 
