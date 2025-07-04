@@ -48,9 +48,8 @@ public interface AlertsDao
     @Query("DELETE FROM alerts WHERE alert_type = :alert_type")
     int deleteAlertsByType(AlertType alert_type); // Deletes alerts based on alert type and returns # rows deleted
 
-    @Query("DELETE FROM alerts WHERE location = :location AND alert_type = alert_type")
+    @Query("DELETE FROM alerts WHERE location = :location AND alert_type = :alert_type") // Corrected line
     int deleteAlertsByLocationAndType(AlertType alert_type, String location); // Deletes alerts based on location and alert type and returns # rows deleted
-
     /*
 
     Select queries

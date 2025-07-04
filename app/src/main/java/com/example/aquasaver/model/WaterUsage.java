@@ -23,7 +23,7 @@ public class WaterUsage {
     @NonNull
     public String userEmail;
 
-    @ColumnInfo(name = "usage_date")
+    @ColumnInfo(name = "date")
     public Long usageDate;
 
     @ColumnInfo(name = "amount_liters")

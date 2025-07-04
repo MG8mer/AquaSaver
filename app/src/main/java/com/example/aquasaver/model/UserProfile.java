@@ -8,7 +8,7 @@ import com.example.aquasaver.model.enums.GoalType;
 
 
 @Entity(tableName = "user_profiles",
-        primaryKeys = {"email", "location", "goal_type"}) // Define composite primary key here
+        primaryKeys = {"email"}) // Define composite primary key here
 public class UserProfile {
     @NonNull
     @ColumnInfo(name = "email")

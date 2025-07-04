@@ -8,16 +8,11 @@ import androidx.room.PrimaryKey;
 import androidx.annotation.NonNull;
 
 @Entity(tableName = "weather_suggestions",
-        foreignKeys = {
-                @ForeignKey(entity = UserProfile.class, // Assuming UserProfile is the parent for user_email
-                        parentColumns = "email",    // Or {"email", "location"} if UserProfile has composite PK
-                        childColumns = "user_email",
-                        onDelete = ForeignKey.CASCADE) // If UserProfile deleted, delete their suggestions
-        },
-    indices = {
-    @Index(value = {"user_email"}),
-    @Index(value = {"user_email", "date"}) // For efficient lookup of suggestions for a user on a specific date
-            })
+        foreignKeys = @ForeignKey(entity = UserProfile.class,
+                parentColumns = "email",
+                childColumns = "user_email",
+                onDelete = ForeignKey.CASCADE,
+                onUpdate = ForeignKey.NO_ACTION))
 public class WeatherSuggestions {
 
     @PrimaryKey(autoGenerate = true)
@@ -27,21 +22,17 @@ public class WeatherSuggestions {
     @ColumnInfo(name = "user_email", index = true)
     public String userEmail;
 
-    @NonNull
     @ColumnInfo(name = "location")
     public String location;
 
-    @NonNull
     @ColumnInfo(name = "date")
     public Long date;
 
-    @NonNull
     @ColumnInfo(name = "usage_suggestion_text")
     public String usageSuggestionText; // The actual suggestion string from the LLM
 
     // Constructor
-    public WeatherSuggestions(@NonNull String userEmail, @NonNull String location, @NonNull Long date,
-                              @NonNull String usageSuggestionText) {
+    public WeatherSuggestions(@NonNull String userEmail, String location, Long date, String usageSuggestionText) {
         this.userEmail = userEmail;
         this.location = location;
         this.date = date;
@@ -58,11 +49,9 @@ public class WeatherSuggestions {
     public String getLocation() { return location; }
     public void setLocation(@NonNull String location) { this.location = location; }
 
-    @NonNull
     public Long getDate() { return date; }
-    public void setDate(@NonNull Long date) { this.date = date; }
+    public void setDate(Long date) { this.date = date; }
 
-    @NonNull
     public String getUsageSuggestionText() { return usageSuggestionText; }
-    public void setUsageSuggestionText(@NonNull String usageSuggestionText) { this.usageSuggestionText = usageSuggestionText; }
+    public void setUsageSuggestionText(String usageSuggestionText) { this.usageSuggestionText = usageSuggestionText; }
 }

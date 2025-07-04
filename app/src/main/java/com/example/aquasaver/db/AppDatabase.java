@@ -14,11 +14,8 @@ import com.example.aquasaver.dao.*;    // DAO (database operations) --> houses f
         entities = {
                 UserProfile.class,
                 WaterUsage.class,
-                UserGoal.class,
                 GoalProgress.class,
-                WaterAchievementProgress.class,
                 Alerts.class,
-                NotificationSettings.class,
                 WeatherSuggestions.class,
                 Reports.class,
                 Challenges.class,
@@ -32,11 +29,8 @@ public abstract class AppDatabase extends RoomDatabase {
     // ACCESSORS FOR DAO FILES FOR EACH ENTITY
     public abstract UserProfileDao          userProfileDao();
     public abstract WaterUsageDao           waterUsageDao();
-    public abstract UserGoalDao             userGoalDao();
     public abstract GoalProgressDao         goalProgressDao();
-    public abstract WaterAchievementProgressDao     waterAchievementProgressDao();
     public abstract AlertsDao                alertsDao();
-    public abstract NotificationSettingsDao         notificationSettingsDao();
     public abstract WeatherSuggestionsDao    weatherSuggestionsDao();
     public abstract ReportsDao               reportsDao();
     public abstract ChallengesDao            challengesDao();
