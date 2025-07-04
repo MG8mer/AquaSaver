@@ -104,8 +104,8 @@ public class MainActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     WeatherResponse data = response.body();
                     Log.d("Weather", "Location: " + data.name);
-                    Log.d("Weather", "Temp: " + data.main.temp + " °C");
-                    Log.d("Weather", "Condition: " + data.weather.get(0).description);
+                    Log.d("Weather", "Temperature: " + data.main.temp + " °C");
+                    Log.d("Weather", "Weather Condition: " + data.weather.get(0).description);
                 } else {
                     Log.e("WeatherAPI", "Unsuccessful response: Code " + response.code());
                     try {
