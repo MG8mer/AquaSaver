@@ -11,7 +11,6 @@ import android.view.View;
 import android.view.Menu;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.Toolbar;
 
 import com.example.aquasaver.db.AppDatabase;
 import com.example.aquasaver.model.UserProfile;
@@ -23,6 +22,7 @@ import com.example.aquasaver.weatherapi.WeatherResponse;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
 
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -54,8 +54,8 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         fetchWeather("Denver");
-        androidx.appcompat.widget.Toolbar toolbar = binding.appBarMain.toolbar;
-        setSupportActionBar(binding.appBarMain.toolbar);
+        Toolbar toolbar = binding.username.toolbar;
+        setSupportActionBar(binding.username.toolbar);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.colorPrimaryVariant));
 
@@ -86,11 +86,18 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupWithNavController(navigationView, navController);
     }
 
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         //getMenuInflater().inflate(R.menu.main, menu);
         return true;
+    }
+    @Override
+    public boolean onSupportNavigateUp() {
+        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
+        return NavigationUI.navigateUp(navController, mAppBarConfiguration)
+                || super.onSupportNavigateUp();
     }
 
     public void fetchWeather(String location) {
