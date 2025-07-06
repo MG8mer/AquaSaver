@@ -7,6 +7,8 @@ import androidx.room.Index;
 import androidx.room.PrimaryKey;
 import androidx.annotation.NonNull;
 
+import java.util.Date;
+
 @Entity(tableName = "water_usage_log",
         foreignKeys = @ForeignKey(entity = UserProfile.class, // Parent entity
                 parentColumns = "email",     // Primary key in parent
@@ -24,7 +26,7 @@ public class WaterUsage {
     public String userEmail;
 
     @ColumnInfo(name = "date")
-    public Long usageDate;
+    public Date usageDate;
 
     @ColumnInfo(name = "amount_liters")
     public double amountLiters;
@@ -32,7 +34,7 @@ public class WaterUsage {
     @ColumnInfo(name = "activity_type") // e.g., "Shower", "Dishwasher", "Gardening"
     public String activityType;
 
-    public WaterUsage(@NonNull String userEmail, Long usageDate, double amountLiters, String activityType) { // Constructor
+    public WaterUsage(@NonNull String userEmail, Date usageDate, double amountLiters, String activityType) { // Constructor
         this.userEmail = userEmail;
         this.usageDate = usageDate;
         this.amountLiters = amountLiters;
@@ -52,11 +54,11 @@ public class WaterUsage {
         this.userEmail = userEmail;
     }
 
-    public Long getUsageDate() { // Getter for usageDate
+    public Date getUsageDate() { // Getter for usageDate
         return usageDate;
     }
 
-    public void setUsageDate(Long usageDate) { // Setter for usageDate
+    public void setUsageDate(Date usageDate) { // Setter for usageDate
         this.usageDate = usageDate;
     }
 

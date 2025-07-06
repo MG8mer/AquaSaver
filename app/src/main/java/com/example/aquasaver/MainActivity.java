@@ -13,6 +13,10 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toolbar;
 
+import com.example.aquasaver.db.AppDatabase;
+import com.example.aquasaver.model.UserProfile;
+import com.example.aquasaver.model.WeatherSuggestions;
+import com.example.aquasaver.model.enums.GoalType;
 import com.example.aquasaver.weatherapi.RetrofitClient;
 import com.example.aquasaver.weatherapi.WeatherApi;
 import com.example.aquasaver.weatherapi.WeatherResponse;
@@ -26,10 +30,13 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.room.Room;
 
 import com.example.aquasaver.databinding.ActivityMainBinding;
 
 import java.io.IOException;
+import java.util.Date;
+import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -86,13 +93,7 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    @Override
-    public boolean onSupportNavigateUp() {
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-        return NavigationUI.navigateUp(navController, mAppBarConfiguration)
-                || super.onSupportNavigateUp();
-    }
-    public void fetchWeather(String location) { //backend ONLY
+    public void fetchWeather(String location) {
         WeatherApi api = RetrofitClient.getWeatherApi();
         String apiKey = "74a0f3136d13e60fcdd50fd6fd9bb433";
 
@@ -106,6 +107,28 @@ public class MainActivity extends AppCompatActivity {
                     Log.d("Weather", "Location: " + data.name);
                     Log.d("Weather", "Temperature: " + data.main.temp + " °C");
                     Log.d("Weather", "Weather Condition: " + data.weather.get(0).description);
+
+                    String suggestionText = "It’s currently " + data.main.temp + "°C with " + data.weather.get(0).description + ". Consider reducing outdoor water usage.";
+
+                    Date today = new Date();
+                    WeatherSuggestions suggestion = new WeatherSuggestions("user@example.com", location, today, suggestionText);
+
+                    new Thread(() -> {
+                        AppDatabase db = Room.databaseBuilder(getApplicationContext(),
+                                AppDatabase.class, "aqua_saver.db").build();
+                        UserProfile testUser = new UserProfile("user@example.com", "password", "Denver", false, GoalType.DAILY, true, "daily", true, new Date());
+                        db.userProfileDao().insertUserProfile(testUser);
+                        db.weatherSuggestionsDao().insertSuggestion(suggestion);
+
+                        List<WeatherSuggestions> suggestions = db.weatherSuggestionsDao()
+                                .getSuggestionsForUser("user@example.com");
+
+                        for (WeatherSuggestions s : suggestions) {
+                            Log.d("DB_CHECK", "Saved Suggestion: " +
+                                    s.location + " | " +
+                                    s.usageSuggestionText);
+                        }
+                    }).start();
                 } else {
                     Log.e("WeatherAPI", "Unsuccessful response: Code " + response.code());
                     try {
@@ -120,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
             public void onFailure(Call<WeatherResponse> call, Throwable t) {
                 Log.e("WeatherAPI", "API call failed", t);
             }
-        });
+        }); // closing enqueue()
     }
 
 }

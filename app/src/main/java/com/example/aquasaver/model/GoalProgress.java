@@ -7,6 +7,8 @@ import androidx.room.Index;
 import androidx.room.PrimaryKey;
 import androidx.annotation.NonNull;
 
+import java.util.Date;
+
 @Entity(tableName = "goal_progress",
         foreignKeys = @ForeignKey(entity = UserProfile.class, // Parent entity
                 parentColumns = "email",     // Primary key in parent
@@ -27,13 +29,13 @@ public class GoalProgress {
     public double amountLogged; // THIS IS THE SUM from WaterUsage
 
     @ColumnInfo(name = "progress_date") // Date this progress record was last updated or represents
-    public Long progressDate; // Timestamp
+    public Date progressDate; // Timestamp
 
     @ColumnInfo(name = "on_target")
     public boolean onTarget;
 
     // Constructor
-    public GoalProgress(@NonNull String userEmail, double amountLogged, Long progressDate, boolean onTarget) {
+    public GoalProgress(@NonNull String userEmail, double amountLogged, Date progressDate, boolean onTarget) {
         this.userEmail = userEmail;
         this.amountLogged = amountLogged;
         this.progressDate = progressDate;
@@ -62,11 +64,11 @@ public class GoalProgress {
         this.amountLogged = amountLogged;
     }
 
-    public Long getProgressDate() { // Getter for progressDate
+    public Date getProgressDate() { // Getter for progressDate
         return progressDate;
     }
 
-    public void setProgressDate(Long progressDate) { // Setter for progressDate
+    public void setProgressDate(Date progressDate) { // Setter for progressDate
         this.progressDate = progressDate;
     }
 

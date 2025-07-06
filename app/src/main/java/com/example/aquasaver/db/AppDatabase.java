@@ -24,6 +24,7 @@ import com.example.aquasaver.dao.*;    // DAO (database operations) --> houses f
         version = 1,
         exportSchema = true
 )
+@TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
 
     // ACCESSORS FOR DAO FILES FOR EACH ENTITY

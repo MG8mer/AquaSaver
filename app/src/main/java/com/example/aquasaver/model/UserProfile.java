@@ -6,6 +6,8 @@ import androidx.room.Entity;
 
 import com.example.aquasaver.model.enums.GoalType;
 
+import java.util.Date;
+
 
 @Entity(tableName = "user_profiles",
         primaryKeys = {"email"}) // Define composite primary key here
@@ -36,10 +38,10 @@ public class UserProfile {
     public boolean weatherAlertsEnabled;
 
     @ColumnInfo(name = "join_date")
-    public Long joinDate;
+    public Date joinDate;
 
     public UserProfile(@NonNull String email, String passwordHash, String location, boolean useGPS,
-                       GoalType goalType, boolean notificationsOn, String reminderTime, boolean weatherAlertsEnabled, Long joinDate) { // Constructor
+                       GoalType goalType, boolean notificationsOn, String reminderTime, boolean weatherAlertsEnabled, Date joinDate) { // Constructor
         this.email = email;
         this.location = location;
         this.passwordHash = passwordHash;
@@ -107,11 +109,11 @@ public class UserProfile {
 
     public void setWeatherAlertsEnabled(boolean weatherAlertsEnabled) {this.weatherAlertsEnabled = weatherAlertsEnabled; }
 
-    public Long getJoinDate() { // Getter for joinDate
+    public Date getJoinDate() { // Getter for joinDate
         return joinDate;
     }
 
-    public void setJoinDate(Long joinDate) { // Setter for joinDate
+    public void setJoinDate(Date joinDate) { // Setter for joinDate
         this.joinDate = joinDate;
     }
 

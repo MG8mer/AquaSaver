@@ -10,6 +10,8 @@ import androidx.room.PrimaryKey;
 
 import com.example.aquasaver.model.enums.ChallengeGoalType;
 
+import java.util.Date;
+
 
 @Entity(tableName = "challenges",
         foreignKeys = @ForeignKey(entity = UserProfile.class,
@@ -41,10 +43,10 @@ public class Challenges {
     public int goalAmount; // amount of goals user has
 
     @ColumnInfo(name = "start_date")
-    public Long startDate; // start of challenge
+    public Date startDate; // start of challenge
 
     @ColumnInfo(name = "end_date")
-    public Long endDate; // end of challenge
+    public Date endDate; // end of challenge
 
     // Constructor
     public Challenges(@NonNull String userEmail,
@@ -52,8 +54,8 @@ public class Challenges {
                       String description,
                       ChallengeGoalType goalType,
                       int goalAmount,
-                      Long startDate,
-                      Long endDate) {
+                      Date startDate,
+                      Date endDate) {
         this.userEmail = userEmail;
         this.title = title;
         this.description = description;
@@ -79,9 +81,9 @@ public class Challenges {
     public int getGoalAmount() { return goalAmount; }
     public void setGoalAmount(int goalAmount) { this.goalAmount = goalAmount; }
 
-    public Long getStartDate() { return startDate; }
-    public void setStartDate(Long startDate) { this.startDate = startDate; }
+    public Date getStartDate() { return startDate; }
+    public void setStartDate(Date startDate) { this.startDate = startDate; }
 
-    public Long getEndDate() { return endDate; }
-    public void setEndDate(Long endDate) { this.endDate = endDate; }
+    public Date getEndDate() { return endDate; }
+    public void setEndDate(Date endDate) { this.endDate = endDate; }
 }

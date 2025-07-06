@@ -11,6 +11,8 @@ import androidx.room.PrimaryKey;
 // Import SummaryType enum
 import com.example.aquasaver.model.enums.SummaryType;
 
+import java.util.Date;
+
 @Entity(tableName = "reports",
         foreignKeys = @ForeignKey(entity = UserProfile.class,
                 parentColumns = "email",
@@ -32,10 +34,10 @@ public class Reports {
     public SummaryType summaryType; // How the report is broken down (daily, weekly, monthly)
 
     @ColumnInfo(name = "start_date")
-    public Long startDate; // Start date of report
+    public Date startDate; // Start date of report
 
     @ColumnInfo(name = "end_date")
-    public Long endDate; // End date of report
+    public Date endDate; // End date of report
 
     @ColumnInfo(name = "total_liters_used")
     public int totalLitersUsed; // Total liters of water used
@@ -49,8 +51,8 @@ public class Reports {
     // Constructor
     public Reports(@NonNull String userEmail,
                    SummaryType summaryType,
-                   Long startDate,
-                   Long endDate,
+                   Date startDate,
+                   Date endDate,
                    int totalLitersUsed,
                    int challengesCompleted,
                    int streakCount) {
@@ -70,11 +72,11 @@ public class Reports {
     public SummaryType getSummaryType() { return summaryType; }
     public void setSummaryType(SummaryType summaryType) { this.summaryType = summaryType; }
 
-    public Long getStartDate() { return startDate; }
-    public void setStartDate(Long startDate) { this.startDate = startDate; }
+    public Date getStartDate() { return startDate; }
+    public void setStartDate(Date startDate) { this.startDate = startDate; }
 
-    public Long getEndDate() { return endDate; }
-    public void setEndDate(Long endDate) { this.endDate = endDate; }
+    public Date getEndDate() { return endDate; }
+    public void setEndDate(Date endDate) { this.endDate = endDate; }
 
     public int getTotalLitersUsed() { return totalLitersUsed; }
     public void setTotalLitersUsed(int totalLitersUsed) { this.totalLitersUsed = totalLitersUsed; }
