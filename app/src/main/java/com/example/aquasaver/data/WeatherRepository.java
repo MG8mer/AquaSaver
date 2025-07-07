@@ -6,7 +6,7 @@ import android.util.Log;
 import com.example.aquasaver.weatherapi.RetrofitClient;
 import com.example.aquasaver.weatherapi.WeatherApi;
 import com.example.aquasaver.weatherapi.WeatherResponse;
-import com.example.aquasaver.entities.WeatherSuggestions;
+import com.example.aquasaver.model.WeatherSuggestions;
 import com.example.aquasaver.dao.WeatherSuggestionsDao;
 import com.example.aquasaver.db.AppDatabase;
 

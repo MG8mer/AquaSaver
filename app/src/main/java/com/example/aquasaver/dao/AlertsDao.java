@@ -10,8 +10,8 @@ import androidx.room.Query;
 import androidx.room.Update;
 
 // Import AlertType enum and Alerts class
-import com.example.aquasaver.entities.enums.AlertType;
-import com.example.aquasaver.entities.Alerts;
+import com.example.aquasaver.model.enums.AlertType;
+import com.example.aquasaver.model.Alerts;
 
 // Import list
 import java.util.List;

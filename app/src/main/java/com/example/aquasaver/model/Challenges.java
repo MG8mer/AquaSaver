@@ -1,4 +1,4 @@
-package com.example.aquasaver.entities;
+package com.example.aquasaver.model;
 
 // Import important room db libraries
 import androidx.annotation.NonNull;
@@ -8,7 +8,7 @@ import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
-import com.example.aquasaver.entities.enums.ChallengeGoalType;
+import com.example.aquasaver.model.enums.ChallengeGoalType;
 
 import java.util.Date;
 
