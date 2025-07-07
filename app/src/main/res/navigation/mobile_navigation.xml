@@ -22,4 +22,11 @@
         android:name="com.example.aquasaver.ui.goals.GoalsFragment"
         android:label="@string/menu_goals"
         tools:layout="@layout/fragment_goals" />
+
+    <fragment
+        android:id="@+id/nav_climate_alerts"
+        android:name="com.example.aquasaver.ui.climate_alerts.ClimateAlertsFragment"
+        android:label="@string/menu_climate_alerts"
+        tools:layout="@layout/fragment_climate_alerts" />
+
 </navigation>

@@ -9,5 +9,6 @@
 
     <string name="menu_home">Home</string>
     <string name="menu_water_usage">Water Usage</string>
-    <string name="menu_goals">Eco Challenges</string>
+    <string name="menu_climate_alerts">Climate Alerts</string>
+    <string name="menu_goals">Goals</string>
 </resources>

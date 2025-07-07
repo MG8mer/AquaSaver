@@ -16,5 +16,10 @@
             android:id="@+id/nav_goals"
             android:icon="@drawable/ic_menu_goals"
             android:title="@string/menu_goals" />
+        <item
+            android:id="@+id/nav_climate_alerts"
+            android:icon="@drawable/ic_dialog_alert"
+            android:title="@string/menu_climate_alerts" />
+
     </group>
 </menu>
