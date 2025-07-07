@@ -36,10 +36,11 @@ dependencies {
     implementation libs.appcompat
     implementation libs.material
     implementation libs.constraintlayout
-    implementation libs.lifecycle.livedata.ktx
-    implementation libs.lifecycle.viewmodel.ktx
-    implementation libs.navigation.fragment
-    implementation libs.navigation.ui
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.9.1"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.1"
+    implementation "androidx.navigation:navigation-fragment-ktx:2.9.1"
+    implementation "androidx.navigation:navigation-ui-ktx:2.9.1"
+    implementation 'com.google.android.gms:play-services-location:21.0.1' // or latest version
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
@@ -49,4 +50,6 @@ dependencies {
 
     implementation "androidx.room:room-runtime:$room_version"
     annotationProcessor "androidx.room:room-compiler:$room_version" // For Java annotation processing
+
+
 }
