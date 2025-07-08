@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/nav_home">
+
+    <fragment
+        android:id="@+id/nav_home"
+        android:name="com.example.aquasaver.ui.home.HomeFragment"
+        android:label="@string/menu_home"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/nav_water_usage"
+        android:name="com.example.aquasaver.ui.water_usage.WaterUsageFragment"
+        android:label="@string/menu_water_usage"
+        tools:layout="@layout/fragment_water_usage" />
+
+    <fragment
+        android:id="@+id/nav_goals"
+        android:name="com.example.aquasaver.ui.goals.GoalsFragment"
+        android:label="@string/menu_goals"
+        tools:layout="@layout/fragment_goals" />
+
+    <fragment
+        android:id="@+id/nav_climate_alerts"
+        android:name="com.example.aquasaver.ui.climate_alerts.ClimateAlertsFragment"
+        android:label="@string/menu_climate_alerts"
+        tools:layout="@layout/fragment_climate_alerts" />
+
+</navigation>

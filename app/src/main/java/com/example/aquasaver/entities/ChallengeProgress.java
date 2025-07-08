@@ -1,4 +1,4 @@
-package com.example.aquasaver.model;
+package com.example.aquasaver.entities;
 
 // Import important room db libraries
 import androidx.annotation.NonNull;

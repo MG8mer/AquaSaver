@@ -9,7 +9,7 @@ import androidx.room.Update;
 
 
 // Import user profile class
-import com.example.aquasaver.model.UserProfile;
+import com.example.aquasaver.entities.UserProfile;
 
 import java.util.List;
 
@@ -39,4 +39,12 @@ public interface UserProfileDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM user_profiles WHERE email = :email AND location = :location LIMIT 1)")
     boolean doesProfileExist(String email, String location);
+
+    @Query("SELECT EXISTS(SELECT 1 FROM user_profiles WHERE email = :email)")
+    boolean doesProfileExist(String email);
+
+
+    @Query("SELECT * FROM user_profiles WHERE email = :email LIMIT 1")
+    UserProfile getUserByEmail(String email);
+
 }
