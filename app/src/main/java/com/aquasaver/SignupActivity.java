@@ -16,6 +16,7 @@ import androidx.core.app.ActivityCompat;
 
 import com.google.android.gms.location.*;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.example.aquasaver.R;
 
 import java.io.IOException;
 import java.util.List;
