@@ -1,12 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#0047AB</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="transparent">#00000000</color>
+
+    <color name="colorPrimary">#0047AB</color>
+    <color name="colorOnPrimary">#FFFFFF</color>
+    <color name="colorPrimaryVariant">#00307A</color>
+
+    <color name="colorSecondary">#565F71</color>
+    <color name="colorOnSecondary">#FFFFFF</color>
+    <color name="colorSecondaryVariant">#3D4758</color>
+
+    <color name="colorTertiary">#6D5870</color>
+    <color name="colorOnTertiary">#FFFFFF</color>
+
+    <color name="colorError">#B00020</color>
+    <color name="colorOnError">#FFFFFF</color>
+
+    <color name="colorBackground">#FFFFFF</color>
+    <color name="colorOnBackground">#000000</color>
+    <color name="colorSurface">#FFFFFF</color>
+    <color name="colorOnSurface">#000000</color>
+
+    <color name="colorSurfaceVariant">#E3E3E3</color>
+    <color name="colorOnSurfaceVariant">#444444</color>
+
+    <color name="colorOutline">#6E6E6E</color>
+
+    <!--    night colors-->
+    <color name="nightColorPrimary">#AFC7FF</color>
+    <color name="nightColorOnPrimary">#002D6C</color>
+    <color name="nightColorPrimaryVariant">#004399</color>
+
+    <color name="nightColorSecondary">#BDC7DC</color>
+    <color name="nightColorOnSecondary">#273141</color>
+    <color name="nightColorSecondaryVariant">#3D4758</color>
+
+    <color name="nightColorTertiary">#D6BEE4</color>
+    <color name="nightColorOnTertiary">#3C2949</color>
+
+    <color name="nightColorError">#FFB4AB</color>
+    <color name="nightColorOnError">#690005</color>
+
+    <color name="nightColorBackground">#1A1C1E</color>
+    <color name="nightColorOnBackground">#E3E2E6</color>
+    <color name="nightColorSurface">#1A1C1E</color>
+    <color name="nightColorOnSurface">#E3E2E6</color>
+
+    <color name="nightColorSurfaceVariant">#43474E</color>
+    <color name="nightColorOnSurfaceVariant">#C4C6D0</color>
+
+    <color name="nightColorOutline">#8D9199</color>
 
 </resources>
