@@ -1,4 +1,4 @@
-package com.example.aquasaver.entities.enums;
+package com.example.aquasaver.model.enums;
 
 public enum GoalType { // Enum for goal types
     DAILY,

@@ -7,7 +7,7 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.room.TypeConverters;
 
-import com.example.aquasaver.entities.*;  // model --> houses all database entities
+import com.example.aquasaver.model.*;  // model --> houses all database entities
 import com.example.aquasaver.dao.*;    // DAO (database operations) --> houses files storing database operations for each entity
 
 @Database(
