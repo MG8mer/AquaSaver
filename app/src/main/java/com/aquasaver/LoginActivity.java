@@ -7,6 +7,8 @@ import android.widget.EditText;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.aquasaver.R;
+
 public class LoginActivity extends AppCompatActivity {
     EditText username, password;
     Button loginBtn, signupBtn;
