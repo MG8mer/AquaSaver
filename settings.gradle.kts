@@ -11,6 +11,9 @@ pluginManagement {
         mavenCentral()
         maven(url = "https://jitpack.io") // optional: only if needed for plugins
     }
+    plugins {
+        id("com.android.application") version "8.10.1"
+    }
 }
 
 dependencyResolutionManagement {
