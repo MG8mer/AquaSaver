@@ -1,9 +1,8 @@
-package com.example.aquasaver.model;
+package com.example.aquasaver.entities;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
-import androidx.room.Index;
 import androidx.room.PrimaryKey;
 import androidx.annotation.NonNull;
 
@@ -32,6 +31,9 @@ public class WeatherSuggestions {
 
     @ColumnInfo(name = "usage_suggestion_text")
     public String usageSuggestionText; // The actual suggestion string from the LLM
+
+    @ColumnInfo(name = "raw_weather_data_json")
+    public String rawWeatherDataJson; // The raw JSON data from the LLM
 
     // Constructor
     public WeatherSuggestions(@NonNull String userEmail, String location, Date date, String usageSuggestionText) {

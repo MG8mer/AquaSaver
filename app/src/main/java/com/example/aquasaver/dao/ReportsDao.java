@@ -10,7 +10,7 @@ import androidx.room.Query;
 import androidx.room.Update;
 
 // Import Reports class
-import com.example.aquasaver.model.Reports;
+import com.example.aquasaver.entities.Reports;
 
 // Import list
 import java.util.List;

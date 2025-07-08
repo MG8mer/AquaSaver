@@ -10,7 +10,7 @@ import androidx.room.Query;
 import androidx.room.Update;
 
 // Import Challenges class
-import com.example.aquasaver.model.ChallengeProgress;
+import com.example.aquasaver.entities.ChallengeProgress;
 
 // Import list
 import java.util.List;

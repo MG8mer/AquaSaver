@@ -1,11 +1,11 @@
-package com.example.aquasaver.model;
+package com.example.aquasaver.entities;
 
 // Import important room libraries
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
-import com.example.aquasaver.model.enums.AlertType;
+import com.example.aquasaver.entities.enums.AlertType;
 
 // Enum data type for weather alert variants (heatwaves, drought, etc.)
 

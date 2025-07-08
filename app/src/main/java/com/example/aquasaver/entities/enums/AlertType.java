@@ -1,4 +1,4 @@
-package com.example.aquasaver.model.enums;
+package com.example.aquasaver.entities.enums;
 
 public enum AlertType
 {

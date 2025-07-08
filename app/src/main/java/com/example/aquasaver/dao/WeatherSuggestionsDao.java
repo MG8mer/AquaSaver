@@ -8,8 +8,9 @@ import androidx.room.Query;
 import androidx.room.Update;
 
 // Import WeatherSuggestions class
-import com.example.aquasaver.model.WeatherSuggestions;
+import com.example.aquasaver.entities.WeatherSuggestions;
 
+import java.util.Date;
 import java.util.List;
 
 @Dao
@@ -26,7 +27,6 @@ public interface WeatherSuggestionsDao {
 
     @Delete
     void deleteSuggestion(WeatherSuggestions weatherSuggestion); //deletes suggestion
-
 
     @Query("DELETE FROM weather_suggestions WHERE user_email = :userEmail")
     int deleteSuggestionsForUser(String userEmail); //deletes all weather suggestions for a specific user and returns number of rows deleted
@@ -48,5 +48,8 @@ public interface WeatherSuggestionsDao {
 
     @Query("SELECT * FROM weather_suggestions WHERE user_email = :userEmail AND date >= :startDateTimestamp AND date <= :endDateTimestamp ORDER BY date DESC")
     List<WeatherSuggestions> getSuggestionsForUserInDateRange(String userEmail, long startDateTimestamp, long endDateTimestamp); //Returns a list of suggestions for a specific user within a date range.
+
+    @Query("SELECT * FROM weather_suggestions WHERE user_email = :email AND location = :loc AND date = :date LIMIT 1")
+    WeatherSuggestions getSuggestionForUserAndDate(String email, String loc, Date date);
 
 }
