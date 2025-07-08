@@ -45,7 +45,6 @@ public class MainViewModel extends AndroidViewModel {
 
                     String suggestionText = data.main.temp + "°C with " + data.weather.get(0).description + ". Consider reducing outdoor water usage.";
                     WeatherSuggestions suggestion = new WeatherSuggestions("user@example.com", location, new Date(), suggestionText);
-
                     new Thread(() -> {
                         try {
                             if (!db.userProfileDao().doesProfileExist("user@example.com")) {
