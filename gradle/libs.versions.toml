@@ -26,12 +26,8 @@ lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-view
 multistatetogglebutton = { module = "org.honorato.multistatetogglebutton:multistatetogglebutton", version.ref = "multistatetogglebutton" }
 navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment", version.ref = "navigationFragment" }
 navigation-ui = { group = "androidx.navigation", name = "navigation-ui", version.ref = "navigationUi" }
-<<<<<<< HEAD
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
-=======
 navigation-runtime-android = { group = "androidx.navigation", name = "navigation-runtime-android", version.ref = "navigationRuntimeAndroid" }
->>>>>>> 2d03f61142b2778280fbb2d7655949e439dee0f3
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-
