@@ -11,6 +11,7 @@ import com.example.aquasaver.db.AppDatabase;
 import com.example.aquasaver.dao.UserProfileDao;
 import com.example.aquasaver.model.UserProfile;
 import androidx.room.Room;
+import com.example.aquasaver.R;
 
 public class MainActivity extends AppCompatActivity {
 

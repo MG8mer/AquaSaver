@@ -2,6 +2,8 @@ package com.aquasaver;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+
+import com.example.aquasaver.model.enums.GoalType;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import android.content.SharedPreferences;
@@ -22,12 +24,13 @@ import com.google.android.gms.location.*;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Date;
 import java.util.Locale;
 import com.example.aquasaver.dao.UserProfileDao;
 import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.db.AppDatabase;
 import androidx.room.Room;
-import java.time.LocalDate;
+import com.example.aquasaver.R;
 
 
 public class SignupActivity extends AppCompatActivity {
@@ -98,20 +101,30 @@ public class SignupActivity extends AppCompatActivity {
             String user = username.getText().toString();
             String pass = password.getText().toString();
             String loc = locationField.getText().toString();
-            String goal = goalSpinner.getSelectedItem().toString();
             boolean notify = notifications.isChecked();
             boolean weatherAlert = weatherAlertSwitch.isChecked();
             boolean reminder = reminderTimeSwitch.isChecked();
+            Date joinDate = new Date();
+
+            String selected = goalSpinner.getSelectedItem().toString();
+            GoalType goal = null;
+
+            switch (selected.toLowerCase()) {
+                case "daily":
+                    goal = GoalType.DAILY;
+                    break;
+                case "weekly":
+                    goal = GoalType.WEEKLY;
+                    break;
+            }
 
             if (user.isEmpty() || pass.isEmpty() || loc.isEmpty()) {
                 Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
             } else {
                 // Placeholders:
-                    // useGPS: false
-                    // reminderTime: "12:00 AM"
-                    // weatherAlertsEnabled: true
-                    // GoalType: null
-                UserProfile newUser = new UserProfile(user, pass, loc, false, null, notify, "12:00 AM", true, joinDate);
+                // useGPS: false
+                // reminderTime: "12:00 AM"
+                UserProfile newUser = new UserProfile(user, pass, loc, false, goal, notify, "12:00 AM", weatherAlert, joinDate);
 
                 userDao.insertUserProfile(newUser);
                 // Save profile data
@@ -119,7 +132,7 @@ public class SignupActivity extends AppCompatActivity {
                         .putString("username", user)
                         .putString("password", pass)
                         .putString("location", loc)
-                        .putString("goal", goal)
+                        .putString("goal", goal.toString())
                         .putBoolean("notifications", notify)
                         .putBoolean("weatherAlert", weatherAlert)
                         .putBoolean("reminderTime", reminder)
@@ -130,6 +143,7 @@ public class SignupActivity extends AppCompatActivity {
             }
         });
     }
+
 
     private void loadSavedProfile() {
         String savedUsername = prefs.getString("username", "");
