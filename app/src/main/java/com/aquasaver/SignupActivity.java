@@ -2,6 +2,8 @@ package com.aquasaver;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Address;
@@ -9,6 +11,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Switch; // import Switch
 import android.widget.*;
 
 import androidx.annotation.NonNull;
@@ -20,6 +23,12 @@ import com.google.android.gms.location.*;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
+import com.example.aquasaver.dao.UserProfileDao;
+import com.example.aquasaver.model.UserProfile;
+import com.example.aquasaver.db.AppDatabase;
+import androidx.room.Room;
+import java.time.LocalDate;
+
 
 public class SignupActivity extends AppCompatActivity {
 
@@ -33,6 +42,8 @@ public class SignupActivity extends AppCompatActivity {
     private static final int LOCATION_PERMISSION_CODE = 1001;
 
     private SharedPreferences prefs;
+    private AppDatabase db;
+    private UserProfileDao userDao;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +84,15 @@ public class SignupActivity extends AppCompatActivity {
         notifications.setOnCheckedChangeListener((buttonView, isChecked) -> {
             extraNotificationOptions.setVisibility(isChecked ? View.VISIBLE : View.GONE);
         });
+        db = Room.databaseBuilder(
+                getApplicationContext(),
+                AppDatabase.class,
+                "aqua_db"
+        ).allowMainThreadQueries().build();   // OK for demo, move to background thread later
+
+        userDao = db.userProfileDao();
+
+        // Signup button click: validate and save profile
 
         signupSubmit.setOnClickListener(v -> {
             String user = username.getText().toString();
@@ -86,6 +106,15 @@ public class SignupActivity extends AppCompatActivity {
             if (user.isEmpty() || pass.isEmpty() || loc.isEmpty()) {
                 Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
             } else {
+                // Placeholders:
+                    // useGPS: false
+                    // reminderTime: "12:00 AM"
+                    // weatherAlertsEnabled: true
+                    // GoalType: null
+                UserProfile newUser = new UserProfile(user, pass, loc, false, null, notify, "12:00 AM", true, joinDate);
+
+                userDao.insertUserProfile(newUser);
+                // Save profile data
                 prefs.edit()
                         .putString("username", user)
                         .putString("password", pass)
@@ -100,6 +129,27 @@ public class SignupActivity extends AppCompatActivity {
                 finish();
             }
         });
+    }
+
+    private void loadSavedProfile() {
+        String savedUsername = prefs.getString("username", "");
+        String savedPassword = prefs.getString("password", "");
+        String savedLocation = prefs.getString("location", "");
+        String savedGoal = prefs.getString("goal", "Daily");
+        boolean savedNotifications = prefs.getBoolean("notifications", false);
+
+        username.setText(savedUsername);
+        password.setText(savedPassword);
+        locationField.setText(savedLocation);
+        notifications.setChecked(savedNotifications);
+
+        if (goalSpinner.getAdapter() != null) { // Handle the case of nullPointerException
+            ArrayAdapter<String> adapter = (ArrayAdapter<String>) goalSpinner.getAdapter();
+            int spinnerPosition = adapter.getPosition(savedGoal);
+            if (spinnerPosition >= 0) {
+                goalSpinner.setSelection(spinnerPosition);
+            }
+        }
     }
 
     @SuppressLint("MissingPermission")

@@ -7,6 +7,10 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import com.example.aquasaver.db.AppDatabase;
+import com.example.aquasaver.dao.UserProfileDao;
+import com.example.aquasaver.model.UserProfile;
+import androidx.room.Room;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -24,15 +28,28 @@ public class MainActivity extends AppCompatActivity {
         loginBtn = findViewById(R.id.loginBtn);
         signupBtn = findViewById(R.id.signupBtn);
 
-        // Handle Login
+        AppDatabase db = Room.databaseBuilder(
+                getApplicationContext(),
+                AppDatabase.class,
+                "aqua_db"
+        ).allowMainThreadQueries().build(); // for development only
+
+        UserProfileDao userDao = db.userProfileDao();
+
         loginBtn.setOnClickListener(v -> {
             String user = username.getText().toString().trim();
             String pass = password.getText().toString().trim();
 
+            // Handling login (SignupActivity.java handels SIGNING UP)
             if (user.isEmpty() || pass.isEmpty()) {
                 Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(this, "Login clicked (add Firebase/Auth later)", Toast.LENGTH_SHORT).show();
+                UserProfile existingUser = userDao.getUserProfileByIds(user, pass);
+                if (existingUser != null) {
+                    Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
