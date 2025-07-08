@@ -8,6 +8,7 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
+import android.util.Patterns;
 import android.view.View;
 import android.widget.*;
 
@@ -23,9 +24,9 @@ import java.util.Locale;
 
 public class SignupActivity extends AppCompatActivity {
 
-    EditText username, password, locationField;
+    EditText email, password, locationField;
     Spinner goalSpinner;
-    Switch notifications, weatherAlertSwitch, reminderTimeSwitch;
+    Switch notifications, weatherAlertSwitch, reminderTimeSwitch, locationTrackingSwitch;
     LinearLayout extraNotificationOptions;
     Button signupSubmit;
 
@@ -42,52 +43,65 @@ public class SignupActivity extends AppCompatActivity {
         prefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
         prefs.edit().clear().apply();
 
-        username = findViewById(R.id.signupUsername);
+        // Link UI elements
+        email = findViewById(R.id.signupEmail);
         password = findViewById(R.id.signupPassword);
         locationField = findViewById(R.id.location);
         goalSpinner = findViewById(R.id.goalSpinner);
         notifications = findViewById(R.id.notifications);
         weatherAlertSwitch = findViewById(R.id.weatherAlertSwitch);
         reminderTimeSwitch = findViewById(R.id.reminderTimeSwitch);
+        locationTrackingSwitch = findViewById(R.id.locationTrackingSwitch);
         extraNotificationOptions = findViewById(R.id.extraNotificationOptions);
         signupSubmit = findViewById(R.id.signupSubmit);
 
-        // Setup spinner
+        // Setup spinner options
         String[] goals = {"Daily", "Weekly", "Monthly"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, goals);
         goalSpinner.setAdapter(adapter);
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(
-                    this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    LOCATION_PERMISSION_CODE
-            );
-        } else {
-            getUserLocation();
-        }
+        // Location tracking toggle logic
+        locationTrackingSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(
+                            this,
+                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                            LOCATION_PERMISSION_CODE
+                    );
+                } else {
+                    getUserLocation();
+                }
+                locationField.setEnabled(false);
+            } else {
+                locationField.setText("");
+                locationField.setEnabled(true);
+            }
+        });
 
         notifications.setOnCheckedChangeListener((buttonView, isChecked) -> {
             extraNotificationOptions.setVisibility(isChecked ? View.VISIBLE : View.GONE);
         });
 
         signupSubmit.setOnClickListener(v -> {
-            String user = username.getText().toString();
-            String pass = password.getText().toString();
-            String loc = locationField.getText().toString();
+            String userEmail = email.getText().toString().trim();
+            String pass = password.getText().toString().trim();
+            String loc = locationField.getText().toString().trim();
             String goal = goalSpinner.getSelectedItem().toString();
             boolean notify = notifications.isChecked();
             boolean weatherAlert = weatherAlertSwitch.isChecked();
             boolean reminder = reminderTimeSwitch.isChecked();
 
-            if (user.isEmpty() || pass.isEmpty() || loc.isEmpty()) {
+            if (userEmail.isEmpty() || pass.isEmpty() || loc.isEmpty()) {
                 Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+            } else if (!Patterns.EMAIL_ADDRESS.matcher(userEmail).matches()) {
+                Toast.makeText(this, "Please enter a valid email address", Toast.LENGTH_SHORT).show();
             } else {
                 prefs.edit()
-                        .putString("username", user)
+                        .putString("email", userEmail)
                         .putString("password", pass)
                         .putString("location", loc)
                         .putString("goal", goal)
