@@ -9,7 +9,7 @@ import androidx.room.Update;
 
 
 // Import user profile class
-import com.example.aquasaver.entities.UserProfile;
+import com.example.aquasaver.model.UserProfile;
 
 import java.util.List;
 

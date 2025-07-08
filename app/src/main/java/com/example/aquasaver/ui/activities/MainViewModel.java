@@ -7,9 +7,9 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 
 import com.example.aquasaver.db.AppDatabase;
-import com.example.aquasaver.entities.UserProfile;
-import com.example.aquasaver.entities.WeatherSuggestions;
-import com.example.aquasaver.entities.enums.GoalType;
+import com.example.aquasaver.model.UserProfile;
+import com.example.aquasaver.model.WeatherSuggestions;
+import com.example.aquasaver.model.enums.GoalType;
 import com.example.aquasaver.weatherapi.RetrofitClient;
 import com.example.aquasaver.weatherapi.WeatherApi;
 import com.example.aquasaver.weatherapi.WeatherResponse;

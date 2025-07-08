@@ -8,7 +8,7 @@ import androidx.room.Query;
 import androidx.room.Update;
 
 // Import GoalProgress class
-import com.example.aquasaver.entities.GoalProgress;
+import com.example.aquasaver.model.GoalProgress;
 
 import java.util.List;
 @Dao
