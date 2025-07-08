@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import com.google.android.gms.location.*;
+import com.google.android.gms.location.FusedLocationProviderClient;
 
 import java.io.IOException;
 import java.util.List;

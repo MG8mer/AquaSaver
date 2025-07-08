@@ -7,6 +7,8 @@ import android.widget.EditText;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.aquasaver.R;
+
 public class MainActivity extends AppCompatActivity {
     EditText username, password;
     Button loginBtn, signupBtn;
@@ -14,7 +16,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_login);
 
         username = findViewById(R.id.username);
         password = findViewById(R.id.password);
