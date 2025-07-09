@@ -9,6 +9,7 @@ import com.google.android.gms.location.LocationServices;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Address;
+import android.util.Patterns;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
@@ -35,9 +36,9 @@ import com.example.aquasaver.R;
 
 public class SignupActivity extends AppCompatActivity {
 
-    EditText username, password, locationField;
+    EditText email, password, locationField;
     Spinner goalSpinner;
-    Switch notifications, weatherAlertSwitch, reminderTimeSwitch;
+    Switch notifications, weatherAlertSwitch, reminderTimeSwitch, locationTrackingSwitch;
     LinearLayout extraNotificationOptions;
     Button signupSubmit;
 
@@ -56,13 +57,15 @@ public class SignupActivity extends AppCompatActivity {
         prefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
         prefs.edit().clear().apply();
 
-        username = findViewById(R.id.signupUsername);
+        // Link UI elements
+        email = findViewById(R.id.signupEmail);
         password = findViewById(R.id.signupPassword);
         locationField = findViewById(R.id.location);
         goalSpinner = findViewById(R.id.goalSpinner);
         notifications = findViewById(R.id.notifications);
         weatherAlertSwitch = findViewById(R.id.weatherAlertSwitch);
         reminderTimeSwitch = findViewById(R.id.reminderTimeSwitch);
+        locationTrackingSwitch = findViewById(R.id.locationTrackingSwitch);
         extraNotificationOptions = findViewById(R.id.extraNotificationOptions);
         signupSubmit = findViewById(R.id.signupSubmit);
 
@@ -73,16 +76,25 @@ public class SignupActivity extends AppCompatActivity {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(
-                    this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    LOCATION_PERMISSION_CODE
-            );
-        } else {
-            getUserLocation();
-        }
+        // Location tracking toggle logic
+        locationTrackingSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(
+                            this,
+                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                            LOCATION_PERMISSION_CODE
+                    );
+                } else {
+                    getUserLocation();
+                }
+                locationField.setEnabled(false);
+            } else {
+                locationField.setText("");
+                locationField.setEnabled(true);
+            }
+        });
 
         notifications.setOnCheckedChangeListener((buttonView, isChecked) -> {
             extraNotificationOptions.setVisibility(isChecked ? View.VISIBLE : View.GONE);
@@ -98,9 +110,10 @@ public class SignupActivity extends AppCompatActivity {
         // Signup button click: validate and save profile
 
         signupSubmit.setOnClickListener(v -> {
-            String user = username.getText().toString();
-            String pass = password.getText().toString();
-            String loc = locationField.getText().toString();
+            String userEmail = email.getText().toString().trim();
+            String pass = password.getText().toString().trim();
+            String loc = locationField.getText().toString().trim();
+            String goal = goalSpinner.getSelectedItem().toString();
             boolean notify = notifications.isChecked();
             boolean weatherAlert = weatherAlertSwitch.isChecked();
             boolean reminder = reminderTimeSwitch.isChecked();
@@ -118,8 +131,11 @@ public class SignupActivity extends AppCompatActivity {
                     break;
             }
 
-            if (user.isEmpty() || pass.isEmpty() || loc.isEmpty()) {
+
+            if (userEmail.isEmpty() || pass.isEmpty() || loc.isEmpty()) {
                 Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+            } else if (!Patterns.EMAIL_ADDRESS.matcher(userEmail).matches()) {
+            Toast.makeText(this, "Please enter a valid email address", Toast.LENGTH_SHORT).show();
             } else {
                 // Placeholders:
                 // useGPS: false
@@ -129,10 +145,10 @@ public class SignupActivity extends AppCompatActivity {
                 userDao.insertUserProfile(newUser);
                 // Save profile data
                 prefs.edit()
-                        .putString("username", user)
+                        .putString("username", userEmail)
                         .putString("password", pass)
                         .putString("location", loc)
-                        .putString("goal", goal.toString())
+                        .putString("goal", goal)
                         .putBoolean("notifications", notify)
                         .putBoolean("weatherAlert", weatherAlert)
                         .putBoolean("reminderTime", reminder)
@@ -144,7 +160,6 @@ public class SignupActivity extends AppCompatActivity {
         });
     }
 
-
     private void loadSavedProfile() {
         String savedUsername = prefs.getString("username", "");
         String savedPassword = prefs.getString("password", "");
@@ -152,7 +167,7 @@ public class SignupActivity extends AppCompatActivity {
         String savedGoal = prefs.getString("goal", "Daily");
         boolean savedNotifications = prefs.getBoolean("notifications", false);
 
-        username.setText(savedUsername);
+        userEmail.setText(savedUsername);
         password.setText(savedPassword);
         locationField.setText(savedLocation);
         notifications.setChecked(savedNotifications);
