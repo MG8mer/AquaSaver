@@ -13,7 +13,7 @@ import com.example.aquasaver.model.UserProfile;
 import androidx.room.Room;
 import com.example.aquasaver.R;
 
-public class MainActivity extends AppCompatActivity {
+public class LoginActivity extends AppCompatActivity {
 
     EditText username, password;
     Button loginBtn, signupBtn;
@@ -21,7 +21,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_login);
 
         // Connect UI components
         username = findViewById(R.id.username);
@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Navigate to SignupActivity
         signupBtn.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, SignupActivity.class);
+            Intent intent = new Intent(LoginActivity.this, SignupActivity.class);
 
             // Optional: Clear old signup data
             getSharedPreferences("UserProfile", MODE_PRIVATE).edit().clear().apply();

@@ -1,6 +1,7 @@
 package com.aquasaver;
 
 import android.Manifest;
+import android.util.Log;
 import android.annotation.SuppressLint;
 
 import com.example.aquasaver.model.enums.GoalType;
@@ -32,7 +33,6 @@ import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.db.AppDatabase;
 import androidx.room.Room;
 import com.example.aquasaver.R;
-
 
 public class SignupActivity extends AppCompatActivity {
 
@@ -103,7 +103,7 @@ public class SignupActivity extends AppCompatActivity {
                 getApplicationContext(),
                 AppDatabase.class,
                 "aqua_db"
-        ).allowMainThreadQueries().build();   // OK for demo, move to background thread later
+        ).allowMainThreadQueries().build();
 
         userDao = db.userProfileDao();
 
@@ -117,19 +117,23 @@ public class SignupActivity extends AppCompatActivity {
             boolean notify = notifications.isChecked();
             boolean weatherAlert = weatherAlertSwitch.isChecked();
             boolean reminder = reminderTimeSwitch.isChecked();
+            boolean useGps = locationTrackingSwitch.isChecked();
             Date joinDate = new Date();
 
             String selected = goalSpinner.getSelectedItem().toString();
-            GoalType goal = null;
+            GoalType goalType = null;
 
             switch (selected.toLowerCase()) {
                 case "daily":
-                    goal = GoalType.DAILY;
+                    goalType = GoalType.DAILY;
                     break;
                 case "weekly":
-                    goal = GoalType.WEEKLY;
+                    goalType = GoalType.WEEKLY;
                     break;
             }
+
+
+
 
 
             if (userEmail.isEmpty() || pass.isEmpty() || loc.isEmpty()) {
@@ -137,25 +141,31 @@ public class SignupActivity extends AppCompatActivity {
             } else if (!Patterns.EMAIL_ADDRESS.matcher(userEmail).matches()) {
             Toast.makeText(this, "Please enter a valid email address", Toast.LENGTH_SHORT).show();
             } else {
-                // Placeholders:
-                // useGPS: false
-                // reminderTime: "12:00 AM"
-                UserProfile newUser = new UserProfile(user, pass, loc, false, goal, notify, "12:00 AM", weatherAlert, joinDate);
+                List<UserProfile> userProfiles = userDao.getUserProfilesByEmail(userEmail);
+                if (userProfiles.size() > 0)
+                {
+                    Toast.makeText(this, "This email address has already been used! Try again.", Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    // Placeholders:
+                    // reminderTime: "12:00 AM"
+                    UserProfile newUser = new UserProfile(userEmail, pass, loc, useGps, goalType, notify, "12:00 AM", weatherAlert, joinDate);
 
-                userDao.insertUserProfile(newUser);
-                // Save profile data
-                prefs.edit()
-                        .putString("username", userEmail)
-                        .putString("password", pass)
-                        .putString("location", loc)
-                        .putString("goal", goal)
-                        .putBoolean("notifications", notify)
-                        .putBoolean("weatherAlert", weatherAlert)
-                        .putBoolean("reminderTime", reminder)
-                        .apply();
+                    userDao.insertUserProfile(newUser);
+                    // Save profile data
+                    prefs.edit()
+                            .putString("username", userEmail)
+                            .putString("password", pass)
+                            .putString("location", loc)
+                            .putString("goal", goal)
+                            .putBoolean("notifications", notify)
+                            .putBoolean("weatherAlert", weatherAlert)
+                            .putBoolean("reminderTime", reminder)
+                            .apply();
 
-                Toast.makeText(this, "Signup Successful!", Toast.LENGTH_SHORT).show();
-                finish();
+                    Toast.makeText(this, "Signup Successful!", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
             }
         });
     }
@@ -167,7 +177,7 @@ public class SignupActivity extends AppCompatActivity {
         String savedGoal = prefs.getString("goal", "Daily");
         boolean savedNotifications = prefs.getBoolean("notifications", false);
 
-        userEmail.setText(savedUsername);
+        email.setText(savedUsername);
         password.setText(savedPassword);
         locationField.setText(savedLocation);
         notifications.setChecked(savedNotifications);
