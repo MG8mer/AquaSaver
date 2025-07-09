@@ -10,9 +10,9 @@ import com.example.aquasaver.db.AppDatabase;
 import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.model.WeatherSuggestions;
 import com.example.aquasaver.model.enums.GoalType;
-import com.example.aquasaver.weatherapi.RetrofitClient;
-import com.example.aquasaver.weatherapi.WeatherApi;
-import com.example.aquasaver.weatherapi.WeatherResponse;
+import com.example.aquasaver.smart_suggestions.weatherapi.WeatherAPIClient;
+import com.example.aquasaver.smart_suggestions.weatherapi.WeatherApi;
+import com.example.aquasaver.smart_suggestions.weatherapi.WeatherResponse;
 
 import java.io.IOException;
 import java.util.Date;
@@ -32,7 +32,7 @@ public class MainViewModel extends AndroidViewModel {
     }
 
     public void fetchWeather(String location) {
-        WeatherApi api = RetrofitClient.getWeatherApi();
+        WeatherApi api = WeatherAPIClient.getWeatherApi();
         String apiKey = "74a0f3136d13e60fcdd50fd6fd9bb433";
 
         Call<WeatherResponse> call = api.getWeather(location, apiKey, "metric");

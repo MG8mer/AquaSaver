@@ -1,4 +1,4 @@
-package com.example.aquasaver.weatherapi;
+package com.example.aquasaver.smart_suggestions.weatherapi;
 
 import java.util.List;
 
