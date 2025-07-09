@@ -9,7 +9,7 @@ public class ClimateAlertsViewModel extends ViewModel {
 
     public ClimateAlertsViewModel() {
         mText = new MutableLiveData<>();
-        mText.setValue("This is climate alerts fragment");
+        mText.setValue("");
     }
 
     public LiveData<String> getText() {
