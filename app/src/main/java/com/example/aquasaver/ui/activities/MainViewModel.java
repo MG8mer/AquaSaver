@@ -1,4 +1,5 @@
 package com.example.aquasaver.ui.activities;
+import com.example.aquasaver.BuildConfig;
 
 import android.app.Application;
 import android.util.Log;
@@ -33,7 +34,7 @@ public class MainViewModel extends AndroidViewModel {
 
     public void fetchWeather(String location) {
         WeatherApi api = WeatherAPIClient.getWeatherApi();
-        String apiKey = "74a0f3136d13e60fcdd50fd6fd9bb433";
+        String apiKey = BuildConfig.API_KEY;
 
         Call<WeatherResponse> call = api.getWeather(location, apiKey, "metric");
 

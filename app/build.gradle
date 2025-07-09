@@ -1,8 +1,16 @@
 plugins {
-    alias(libs.plugins.android.application)
+    id 'com.android.application'
+    id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
 
 }
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
 
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { stream ->
+        localProperties.load(stream)
+    }
+}
 android {
     namespace 'com.example.aquasaver'
     compileSdk 35
@@ -22,7 +30,10 @@ android {
                 ]
             }
         }
+        def weatherapiKey = project.hasProperty("API_KEY") ? project.getProperty("API_KEY") : ""
+        buildConfigField "String", "API_KEY", "\"${weatherapiKey}\""
     }
+
 
     buildTypes {
         release {
@@ -36,6 +47,7 @@ android {
     }
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 }
 

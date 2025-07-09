@@ -35,7 +35,7 @@ public class ClimateAlertsViewModel extends ViewModel {
         openAIService = retrofit.create(OpenAIService.class);
     }
 
-    public LiveData<String> getSuggestionLiveData() {
+    public LiveData<String> getSuggestionsLiveData() {
         return suggestionLiveData;
     }
 

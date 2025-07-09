@@ -17,7 +17,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class WeatherRepository {
-    private final WeatherSuggestionsDao suggestionsDao;
+    private static WeatherSuggestionsDao suggestionsDao;
     private final AppDatabase db;
     private final Context context;
 
@@ -51,14 +51,14 @@ public class WeatherRepository {
             }
         });
     }
-    private void storeWeatherSuggestion(WeatherSuggestions suggestion, WeatherDataCallback callback) {
+    private static void storeWeatherSuggestion(WeatherSuggestions suggestion, WeatherDataCallback callback) {
         new Thread(() -> {
             suggestionsDao.insertSuggestion(suggestion);
             callback.onWeatherDataLoaded(suggestion);
         }).start();
     }
 
-    private Date getTodayDate() {
+    private static Date getTodayDate() {
         // implement date truncation if needed
         return new Date();
     }
