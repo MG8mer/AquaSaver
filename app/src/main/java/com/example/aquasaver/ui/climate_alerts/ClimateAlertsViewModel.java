@@ -66,14 +66,14 @@ public class ClimateAlertsViewModel extends ViewModel {
         });
     }
 
-    /*public void loadSmartSuggestions(String email, String location) { FIX THIS
+    public void loadSmartSuggestions(String email, String location) { //FIX THIS
         WeatherRepository.getTodayWeather(email, location, weather -> {
             String prompt = "Weather: " + weather + ". Suggest water-saving tips.";
             OpenAIClient.getSmartSuggestion(prompt, suggestions -> {
                 suggestionsLiveData.postValue(suggestions);
             });
         });
-    }*/
+    }
 }
 
 
