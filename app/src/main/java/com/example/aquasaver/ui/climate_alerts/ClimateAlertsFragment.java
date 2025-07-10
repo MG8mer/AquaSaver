@@ -40,8 +40,7 @@ public class ClimateAlertsFragment extends Fragment {
             text_climate_alerts.setText(suggestion);
         });
 
-        String weatherInfo = "Today's weather is + [temp] and [condition] in [location]. Suggest smart water-saving tips."; //TODO: PASS IN REAL DATA
-        climateAlertsViewModel.fetchSuggestion(weatherInfo);
+        //climateAlertsViewModel.fetchSuggestion(weatherInfo);
 
         return view;
     }

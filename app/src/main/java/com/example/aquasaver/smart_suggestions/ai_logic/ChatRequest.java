@@ -3,7 +3,7 @@ package com.example.aquasaver.smart_suggestions.ai_logic;
 import java.util.List;
 
 public class ChatRequest {
-    public String model = "o4-mini";
+    public String model = "gpt-3.5-turbo";
     public List<Message> messages;
 
     public static class Message {

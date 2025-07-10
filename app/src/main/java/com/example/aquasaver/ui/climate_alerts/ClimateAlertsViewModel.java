@@ -68,7 +68,18 @@ public class ClimateAlertsViewModel extends ViewModel {
                     Log.d("OpenAI", "API call successful - Suggestion: " + suggestion);
                 } else {
                     suggestionLiveData.postValue("Failed to get suggestions.");
-                    Log.e("OpenAI", "API error: " + response.errorBody());
+                    String errorMsg = "Failed to get suggestions.";
+                    if (response.errorBody() != null) {
+                        try {
+                            errorMsg += " Error: " + response.errorBody().string();
+                        } catch (IOException e) {
+                            Log.e("OpenAI", "Error reading error body", e);
+                        }
+                    } else if (response.body() != null && response.body().choices.isEmpty()) {
+                        errorMsg = "Failed to get suggestions: No choices returned.";
+                    }
+                    suggestionLiveData.postValue(errorMsg);
+                    Log.e("OpenAI", "API error - Code: " + response.code() + ", Message: " + errorMsg);
                 }
             }
 
@@ -84,38 +95,25 @@ public class ClimateAlertsViewModel extends ViewModel {
             @Override
             public void onSuccess(String weather) {
                 if (weather == null || weather.isEmpty()) {
-                    suggestionLiveData.postValue("Could not fetch weather.");
+                    suggestionLiveData.postValue("Could not fetch weather data to generate suggestions.");
+                    Log.w("ViewModel", "Weather data was null or empty.");
                     return;
                 }
 
-                String prompt = "Weather: " + weather + ". Suggest water-saving tips.";
-
-                OpenAIClient openAIClient = new OpenAIClient(OPENAI_API_KEY); // Use secure key handling in production
-
-                openAIClient.getSmartSuggestion(prompt, new OpenAIClient.SuggestionCallback() {
-                    @Override
-                    public void onSuggestionReceived(String suggestion) {
-                        suggestionLiveData.postValue(suggestion);
-                    }
-
-                    @Override
-                    public void onError(String error) {
-                        suggestionLiveData.postValue("Failed to get smart suggestion: " + error);
-                    }
-                });
+                fetchSuggestion("Weather: " + weather +". Generate water-saving tips");
             }
 
             @Override
             public void onWeatherDataLoaded(WeatherSuggestions suggestions) {
-                // Not used in this flow, but must be implemented
+                Log.d("ViewModel", "onWeatherDataLoaded callback triggered, but currently using onSuccess with String.");
             }
 
             @Override
             public void onFailure(String error) {
                 suggestionLiveData.postValue("Failed to fetch weather: " + error);
+                Log.e("ViewModel", "WeatherRepository onFailure: " + error);
             }
         });
     }
-
 
 }
