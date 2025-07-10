@@ -58,4 +58,14 @@ public class WeatherSuggestions {
 
     public String getUsageSuggestionText() { return usageSuggestionText; }
     public void setUsageSuggestionText(String usageSuggestionText) { this.usageSuggestionText = usageSuggestionText; }
+
+    @Override
+    public String toString() {
+        return "WeatherSuggestions{" +
+                "email='" + userEmail + '\'' +
+                ", location='" + location + '\'' +
+                ", date=" + date +
+                ", suggestionText='" + usageSuggestionText + '\'' +
+                '}';
+    }
 }

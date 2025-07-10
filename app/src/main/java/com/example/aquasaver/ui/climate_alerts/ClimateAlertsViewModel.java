@@ -1,18 +1,30 @@
 package com.example.aquasaver.ui.climate_alerts;
 
+import static com.example.aquasaver.BuildConfig.OPENAI_API_KEY;
+
 import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.example.aquasaver.BuildConfig;
+import com.example.aquasaver.model.UserProfile;
+import com.example.aquasaver.model.WeatherSuggestions;
+import com.example.aquasaver.model.enums.GoalType;
 import com.example.aquasaver.smart_suggestions.ai_logic.ChatRequest;
 import com.example.aquasaver.smart_suggestions.ai_logic.ChatResponse;
 import com.example.aquasaver.smart_suggestions.ai_logic.OpenAIService;
 import com.example.aquasaver.smart_suggestions.ai_logic.OpenAIClient;
+import com.example.aquasaver.smart_suggestions.weatherapi.WeatherAPIClient;
+import com.example.aquasaver.smart_suggestions.weatherapi.WeatherApi;
 import com.example.aquasaver.smart_suggestions.weatherapi.WeatherRepository;
+import com.example.aquasaver.smart_suggestions.weatherapi.WeatherRepository.WeatherDataCallback;
+import com.example.aquasaver.smart_suggestions.weatherapi.WeatherResponse;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import retrofit2.Call;
@@ -67,31 +79,35 @@ public class ClimateAlertsViewModel extends ViewModel {
             }
         });
     }
-
-    // This uses your custom helper method which wraps both weather fetching and OpenAI
     public void loadSmartSuggestions(String email, String location) {
-        WeatherRepository.getTodayWeather(email, location, new WeatherRepository.WeatherDataCallback() {
+        WeatherRepository.getTodayWeather(email, location, new WeatherDataCallback() {
             @Override
             public void onSuccess(String weather) {
-                if (weather == null) {
+                if (weather == null || weather.isEmpty()) {
                     suggestionLiveData.postValue("Could not fetch weather.");
                     return;
                 }
 
                 String prompt = "Weather: " + weather + ". Suggest water-saving tips.";
 
-                OpenAIClient.getSmartSuggestion(prompt,
-                        new OpenAIClient.SuggestionCallback() {
-                            @Override
-                            public void onSuggestionReceived(String suggestion) {
-                                suggestionLiveData.postValue(suggestion);
-                            }
+                OpenAIClient openAIClient = new OpenAIClient(OPENAI_API_KEY); // Use secure key handling in production
 
-                            @Override
-                            public void onError(String error) {
-                                suggestionLiveData.postValue("Failed to get smart suggestion: " + error);
-                            }
-                        });
+                openAIClient.getSmartSuggestion(prompt, new OpenAIClient.SuggestionCallback() {
+                    @Override
+                    public void onSuggestionReceived(String suggestion) {
+                        suggestionLiveData.postValue(suggestion);
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        suggestionLiveData.postValue("Failed to get smart suggestion: " + error);
+                    }
+                });
+            }
+
+            @Override
+            public void onWeatherDataLoaded(WeatherSuggestions suggestions) {
+                // Not used in this flow, but must be implemented
             }
 
             @Override
@@ -99,19 +115,7 @@ public class ClimateAlertsViewModel extends ViewModel {
                 suggestionLiveData.postValue("Failed to fetch weather: " + error);
             }
         });
-
-            OpenAIClient.getSmartSuggestion(prompt,
-                    new OpenAIClient.SuggestionCallback() {
-                        @Override
-                        public void onSuggestionReceived(String suggestion) {
-                            suggestionLiveData.postValue(suggestion);
-                        }
-
-                        @Override
-                        public void onError(String error) {
-                            suggestionLiveData.postValue("Failed to get smart suggestion: " + error);
-                        }
-                    });
-        });
     }
+
+
 }

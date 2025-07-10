@@ -39,7 +39,7 @@ public class ClimateAlertsActivity extends AppCompatActivity {
         viewModel = new ViewModelProvider(this).get(ClimateAlertsViewModel.class);
 
         // Example of observing data from the ViewModel
-        viewModel.getSuggestionsLiveData().observe(this, suggestions -> {
+        viewModel.getSuggestionLiveData().observe(this, suggestions -> {
             if (suggestions != null) {
                 tvSuggestions.setText(suggestions);
                 Log.d("ClimateAlerts", "Suggestions loaded successfully");

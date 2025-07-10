@@ -46,8 +46,6 @@ public class MainActivity extends AppCompatActivity {
         // Initialize ViewModel
         mainViewModel = new ViewModelProvider(this).get(MainViewModel.class);
 
-        // Fetch weather for user's location (replace with dynamic later)
-        mainViewModel.fetchWeather("London");
     }
 
     private void setupNavigation() {

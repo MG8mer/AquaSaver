@@ -21,7 +21,7 @@ public class OpenAIClient {
     private final String apiKey;
 
     public OpenAIClient(String apiKey) {
-        this.apiKey = apiKey;
+        this.apiKey = OPENAI_API_KEY;
         client = new OkHttpClient.Builder()
                 .addInterceptor(chain -> {
                     Request original = chain.request();
@@ -39,10 +39,10 @@ public class OpenAIClient {
         void onError(String error);
     }
 
-    public static void getSmartSuggestion(String prompt, SuggestionCallback callback) {
+    public void getSmartSuggestion(String prompt, SuggestionCallback callback) {
         JSONObject json = new JSONObject();
         try {
-            json.put("model", "gpt-3.5-turbo-instruct"); // o4-mini is not a valid OpenAI model for completions
+            json.put("model", "gpt-3.5-turbo-instruct");
             json.put("prompt", prompt);
             json.put("max_tokens", 100);
         } catch (JSONException e) {
@@ -56,8 +56,7 @@ public class OpenAIClient {
         );
 
         Request request = new Request.Builder()
-                .url(BASE_URL + "v1/completions") // make sure it's correct
-                .header("Authorization", "Bearer " + OPENAI_API_KEY) // Add your API key
+                .url(BASE_URL + "v1/completions")
                 .post(body)
                 .build();
 
@@ -87,6 +86,5 @@ public class OpenAIClient {
                 }
             }
         });
-
     }
 }

@@ -1,6 +1,7 @@
 package com.example.aquasaver.smart_suggestions.weatherapi;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.example.aquasaver.model.WeatherSuggestions;
 import com.example.aquasaver.dao.WeatherSuggestionsDao;
@@ -22,14 +23,10 @@ public class WeatherRepository {
         this.db = AppDatabase.getInstance(context);
         this.suggestionsDao = db.weatherSuggestionsDao();
     }
-    public interface WeatherDataCallback {
-        void onSuccess(String weather);
-        void onFailure(String error);
-    }
 
     public static void getTodayWeather(String email, String location, WeatherDataCallback callback) {
         WeatherApi api = WeatherAPIClient.getWeatherApi();
-        Call<WeatherResponse> call = api.getWeather(location, "74a0f3136d13e60fcdd50fd6fd9bb433", "metric");
+        Call<WeatherResponse> call = api.getWeather(location, "WEATHER_API_KEY", "metric");
 
         call.enqueue(new Callback<WeatherResponse>() {
             @Override
@@ -41,19 +38,20 @@ public class WeatherRepository {
 
                     storeWeatherSuggestion(suggestion, callback);
                 } else {
-                    callback.onError("API error: " + response.code());
+                    callback.onFailure("API error: " + response.code());
                 }
             }
 
             @Override
             public void onFailure(Call<WeatherResponse> call, Throwable t) {
-                callback.onError(t.getMessage());
+                callback.onFailure(t.getMessage());
             }
         });
     }
     private static void storeWeatherSuggestion(WeatherSuggestions suggestion, WeatherDataCallback callback) {
         new Thread(() -> {
             suggestionsDao.insertSuggestion(suggestion);
+            Log.d("DB_CHECK", "Weather suggestion stored successfully" + suggestion.toString());
             callback.onWeatherDataLoaded(suggestion);
         }).start();
     }
@@ -64,7 +62,8 @@ public class WeatherRepository {
     }
 
     public interface WeatherDataCallback {
-        void onWeatherDataLoaded(WeatherSuggestions suggestion);
-        void onError(String errorMessage);
+        void onSuccess(String weather);
+        void onWeatherDataLoaded(WeatherSuggestions suggestions);
+        void onFailure(String error);
     }
 }
