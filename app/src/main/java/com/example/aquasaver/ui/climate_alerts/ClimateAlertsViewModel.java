@@ -1,7 +1,5 @@
 package com.example.aquasaver.ui.climate_alerts;
 
-import static com.example.aquasaver.BuildConfig.OPENAI_API_KEY;
-
 import android.util.Log;
 
 import androidx.lifecycle.LiveData;
@@ -9,24 +7,19 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.aquasaver.BuildConfig;
-import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.model.WeatherSuggestions;
-import com.example.aquasaver.model.enums.GoalType;
 import com.example.aquasaver.smart_suggestions.ai_logic.ChatRequest;
 import com.example.aquasaver.smart_suggestions.ai_logic.ChatResponse;
 import com.example.aquasaver.smart_suggestions.ai_logic.OpenAIService;
-import com.example.aquasaver.smart_suggestions.ai_logic.OpenAIClient;
-import com.example.aquasaver.smart_suggestions.weatherapi.WeatherAPIClient;
-import com.example.aquasaver.smart_suggestions.weatherapi.WeatherApi;
 import com.example.aquasaver.smart_suggestions.weatherapi.WeatherRepository;
 import com.example.aquasaver.smart_suggestions.weatherapi.WeatherRepository.WeatherDataCallback;
-import com.example.aquasaver.smart_suggestions.weatherapi.WeatherResponse;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -40,8 +33,19 @@ public class ClimateAlertsViewModel extends ViewModel {
 
     public ClimateAlertsViewModel() {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://api.openai.com/")  // ✅ Make sure trailing slash exists
+                .baseUrl("https://api.openai.com/")  //
                 .addConverterFactory(GsonConverterFactory.create())
+                .client(new OkHttpClient.Builder()
+                        .addInterceptor(chain -> {
+                            Request original = chain.request();
+                            Request request = original.newBuilder()
+                                    .header("Authorization", "Bearer " + BuildConfig.OPENAI_API_KEY)
+                                    .header("Content-Type", "application/json")
+                                    .method(original.method(), original.body())
+                                    .build();
+                            return chain.proceed(request);
+                        })
+                        .build())
                 .build();
 
         openAIService = retrofit.create(OpenAIService.class);
@@ -95,23 +99,20 @@ public class ClimateAlertsViewModel extends ViewModel {
             @Override
             public void onSuccess(String weather) {
                 if (weather == null || weather.isEmpty()) {
-                    suggestionLiveData.postValue("Could not fetch weather data to generate suggestions.");
-                    Log.w("ViewModel", "Weather data was null or empty.");
+                    suggestionLiveData.postValue("Could not fetch weather.");
                     return;
                 }
-
-                fetchSuggestion("Weather: " + weather +". Generate water-saving tips");
+                fetchSuggestion("Weather: " + weather + ". Suggest water-saving tips.");
             }
 
             @Override
             public void onWeatherDataLoaded(WeatherSuggestions suggestions) {
-                Log.d("ViewModel", "onWeatherDataLoaded callback triggered, but currently using onSuccess with String.");
+                // store or show past suggestions
             }
 
             @Override
             public void onFailure(String error) {
                 suggestionLiveData.postValue("Failed to fetch weather: " + error);
-                Log.e("ViewModel", "WeatherRepository onFailure: " + error);
             }
         });
     }

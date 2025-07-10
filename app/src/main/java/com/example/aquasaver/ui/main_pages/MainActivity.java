@@ -1,4 +1,4 @@
-package com.example.aquasaver.ui.activities;
+package com.example.aquasaver.ui.main_pages;
 
 import android.os.Bundle;
 import android.view.Menu;

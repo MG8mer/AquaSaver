@@ -29,7 +29,7 @@
 
 <!--    THIS SECTION SETS THE MAINACTIVITY AS ACTIVITY ON LAUNCH-->
         <activity android:name="com.aquasaver.SignupActivity"/>
-        <activity android:name="com.example.aquasaver.ui.activities.MainActivity"
+        <activity android:name="com.example.aquasaver.ui.climate_alerts.ClimateAlertsActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.AquaSaver.NoActionBar">

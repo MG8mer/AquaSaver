@@ -25,7 +25,7 @@ public class WeatherRepository {
     }
 
     public static void getTodayWeather(String email, String location, WeatherDataCallback callback) {
-        WeatherApi api = WeatherAPIClient.getWeatherApi();
+        WeatherAPI api = WeatherAPIClient.getWeatherApi();
         Call<WeatherResponse> call = api.getWeather(location, "WEATHER_API_KEY", "metric");
 
         call.enqueue(new Callback<WeatherResponse>() {
@@ -33,12 +33,13 @@ public class WeatherRepository {
             public void onResponse(Call<WeatherResponse> call, Response<WeatherResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     WeatherResponse data = response.body();
-                    String suggestionText = "It’s " + data.main.temp + "°C with " + data.weather.get(0).description;
+                    String suggestionText = "It’s " + data.main.temp + "°C, " + data.weather.get(0).description;
                     WeatherSuggestions suggestion = new WeatherSuggestions(email, location, getTodayDate(), suggestionText);
 
                     storeWeatherSuggestion(suggestion, callback);
                 } else {
                     callback.onFailure("API error: " + response.code());
+                    Log.e("APIERROR", "API error: " + response.code());
                 }
             }
 

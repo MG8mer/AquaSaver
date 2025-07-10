@@ -18,31 +18,17 @@ public class ClimateAlertsFragment extends Fragment {
 
     private FragmentClimateAlertsBinding binding;
     private ClimateAlertsViewModel climateAlertsViewModel;
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-        TextView tvSuggestions = view.findViewById(R.id.text_climate_alerts);
-
-        tvSuggestions.setText("Loading smart suggestions..."); //TEST
-    }
-
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_climate_alerts, container, false);
-
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        binding = FragmentClimateAlertsBinding.inflate(inflater, container, false);
         climateAlertsViewModel = new ViewModelProvider(this).get(ClimateAlertsViewModel.class);
-        TextView text_climate_alerts = view.findViewById(R.id.text_climate_alerts);
 
         climateAlertsViewModel.getSuggestionLiveData().observe(getViewLifecycleOwner(), suggestion -> {
-            text_climate_alerts.setText(suggestion);
+            binding.textClimateAlerts.setText(suggestion);
         });
 
-        //climateAlertsViewModel.fetchSuggestion(weatherInfo);
-
-        return view;
+        return binding.getRoot();
     }
 
     @Override
