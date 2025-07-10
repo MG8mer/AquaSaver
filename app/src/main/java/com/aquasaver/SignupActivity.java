@@ -32,7 +32,7 @@ import com.example.aquasaver.dao.UserProfileDao;
 import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.db.AppDatabase;
 import androidx.room.Room;
-import com.example.aquasaver.R;
+import com.aquasaver.R;
 
 public class SignupActivity extends AppCompatActivity {
 

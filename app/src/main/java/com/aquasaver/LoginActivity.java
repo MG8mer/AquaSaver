@@ -7,11 +7,12 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import com.example.aquasaver.db.AppDatabase;
-import com.example.aquasaver.dao.UserProfileDao;
-import com.example.aquasaver.model.UserProfile;
 import androidx.room.Room;
-import com.example.aquasaver.R;
+
+import com.aquasaver.R;
+import com.example.aquasaver.dao.UserProfileDao;
+import com.example.aquasaver.db.AppDatabase;
+import com.example.aquasaver.model.UserProfile;
 
 public class LoginActivity extends AppCompatActivity {
 
