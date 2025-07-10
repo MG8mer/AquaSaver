@@ -21,7 +21,7 @@ import com.example.aquasaver.dao.*;    // DAO (database operations) --> houses f
                 Challenges.class,
                 ChallengeProgress.class
         },
-        version = 1,
+        version = 2,
         exportSchema = true
 )
 @TypeConverters({Converters.class})
