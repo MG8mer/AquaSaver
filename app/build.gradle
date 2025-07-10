@@ -20,8 +20,10 @@ android {
         targetSdk 35
         versionCode 1
         versionName "1.0"
-        def weatherapiKey = localProperties['API_KEY'] ?: ""
-        buildConfigField "String", "API_KEY", "\"${weatherapiKey}\""
+        def weatherapiKey = localProperties['WEATHER_API_KEY'] ?: ""
+        buildConfigField "String", "WEATHER_API_KEY", "\"${weatherapiKey}\""
+        def openaiapiKey = localProperties['OPENAI_API_KEY'] ?: ""
+        buildConfigField "String", "OPENAI_API_KEY", "\"${openaiapiKey}\""
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions {

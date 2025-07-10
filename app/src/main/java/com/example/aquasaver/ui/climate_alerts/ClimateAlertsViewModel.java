@@ -9,9 +9,8 @@ import androidx.lifecycle.ViewModel;
 import com.example.aquasaver.smart_suggestions.ai_logic.ChatRequest;
 import com.example.aquasaver.smart_suggestions.ai_logic.ChatResponse;
 import com.example.aquasaver.smart_suggestions.ai_logic.OpenAIService;
-
-import com.example.aquasaver.data.WeatherRepository;
-
+import com.example.aquasaver.smart_suggestions.ai_logic.OpenAIClient;
+import com.example.aquasaver.smart_suggestions.weatherapi.WeatherRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,22 +22,24 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ClimateAlertsViewModel extends ViewModel {
-    private MutableLiveData<String> suggestionLiveData = new MutableLiveData<>();
-    private OpenAIService openAIService;
+
+    private final MutableLiveData<String> suggestionLiveData = new MutableLiveData<>();
+    private final OpenAIService openAIService;
 
     public ClimateAlertsViewModel() {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://api.openai.com/") //FIX LINK
+                .baseUrl("https://api.openai.com/")  // ✅ Make sure trailing slash exists
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
         openAIService = retrofit.create(OpenAIService.class);
     }
 
-    public LiveData<String> getSuggestionsLiveData() {
+    public LiveData<String> getSuggestionLiveData() {
         return suggestionLiveData;
     }
 
+    // This uses your OpenAI service manually
     public void fetchSuggestion(String weatherInfo) {
         List<ChatRequest.Message> messages = new ArrayList<>();
         messages.add(new ChatRequest.Message("system", "You are an expert in water conservation."));
@@ -55,25 +56,62 @@ public class ClimateAlertsViewModel extends ViewModel {
                     Log.d("OpenAI", "API call successful - Suggestion: " + suggestion);
                 } else {
                     suggestionLiveData.postValue("Failed to get suggestions.");
-                    Log.e("OpenAI", "API Error: " + response.errorBody());
+                    Log.e("OpenAI", "API error: " + response.errorBody());
                 }
             }
 
             @Override
             public void onFailure(Call<ChatResponse> call, Throwable t) {
                 suggestionLiveData.postValue("Network error, please try again.");
+                Log.e("OpenAI", "API call failed", t);
             }
         });
     }
 
-    public void loadSmartSuggestions(String email, String location) { //FIX THIS
-        WeatherRepository.getTodayWeather(email, location, weather -> {
-            String prompt = "Weather: " + weather + ". Suggest water-saving tips.";
-            OpenAIClient.getSmartSuggestion(prompt, suggestions -> {
-                suggestionsLiveData.postValue(suggestions);
-            });
+    // This uses your custom helper method which wraps both weather fetching and OpenAI
+    public void loadSmartSuggestions(String email, String location) {
+        WeatherRepository.getTodayWeather(email, location, new WeatherRepository.WeatherDataCallback() {
+            @Override
+            public void onSuccess(String weather) {
+                if (weather == null) {
+                    suggestionLiveData.postValue("Could not fetch weather.");
+                    return;
+                }
+
+                String prompt = "Weather: " + weather + ". Suggest water-saving tips.";
+
+                OpenAIClient.getSmartSuggestion(prompt,
+                        new OpenAIClient.SuggestionCallback() {
+                            @Override
+                            public void onSuggestionReceived(String suggestion) {
+                                suggestionLiveData.postValue(suggestion);
+                            }
+
+                            @Override
+                            public void onError(String error) {
+                                suggestionLiveData.postValue("Failed to get smart suggestion: " + error);
+                            }
+                        });
+            }
+
+            @Override
+            public void onFailure(String error) {
+                suggestionLiveData.postValue("Failed to fetch weather: " + error);
+            }
+        });
+
+            OpenAIClient.getSmartSuggestion(prompt,
+                    new OpenAIClient.SuggestionCallback() {
+                        @Override
+                        public void onSuggestionReceived(String suggestion) {
+                            suggestionLiveData.postValue(suggestion);
+                        }
+
+                        @Override
+                        public void onError(String error) {
+                            suggestionLiveData.postValue("Failed to get smart suggestion: " + error);
+                        }
+                    });
         });
     }
 }
-
-

@@ -1,8 +1,10 @@
 package com.example.aquasaver.ui.activities;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
@@ -19,6 +21,19 @@ public class ClimateAlertsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_climate_alerts);  // ← create this layout!
 
+        SharedPreferences prefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
+
+        String email = prefs.getString("username", null);
+        String location = prefs.getString("location", null);
+
+        if (email != null && location != null) {
+            // Proceed with your weather functions
+            Log.d("ClimateAlerts", "Email: " + email + ", Location: " + location);
+        } else {
+            // Handle case where user data isn't available
+            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
+        }
+
         tvSuggestions = findViewById(R.id.tvSuggestions);
 
         viewModel = new ViewModelProvider(this).get(ClimateAlertsViewModel.class);
@@ -34,6 +49,6 @@ public class ClimateAlertsActivity extends AppCompatActivity {
         });
 
         // Trigger AI/weather logic here (e.g., fetch suggestions)
-        viewModel.loadSmartSuggestions();
+        viewModel.loadSmartSuggestions(email, location);
     }
 }

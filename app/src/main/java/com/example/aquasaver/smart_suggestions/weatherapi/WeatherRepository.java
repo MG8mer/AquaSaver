@@ -1,11 +1,7 @@
-package com.example.aquasaver.data;
+package com.example.aquasaver.smart_suggestions.weatherapi;
 
 import android.content.Context;
-import android.util.Log;
 
-import com.example.aquasaver.smart_suggestions.weatherapi.WeatherAPIClient;
-import com.example.aquasaver.smart_suggestions.weatherapi.WeatherApi;
-import com.example.aquasaver.smart_suggestions.weatherapi.WeatherResponse;
 import com.example.aquasaver.model.WeatherSuggestions;
 import com.example.aquasaver.dao.WeatherSuggestionsDao;
 import com.example.aquasaver.db.AppDatabase;
@@ -25,6 +21,10 @@ public class WeatherRepository {
         this.context = context;
         this.db = AppDatabase.getInstance(context);
         this.suggestionsDao = db.weatherSuggestionsDao();
+    }
+    public interface WeatherDataCallback {
+        void onSuccess(String weather);
+        void onFailure(String error);
     }
 
     public static void getTodayWeather(String email, String location, WeatherDataCallback callback) {

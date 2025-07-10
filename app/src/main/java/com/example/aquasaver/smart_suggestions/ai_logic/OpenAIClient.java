@@ -1,13 +1,19 @@
 package com.example.aquasaver.smart_suggestions.ai_logic;
 
+import static com.example.aquasaver.BuildConfig.OPENAI_API_KEY;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+
+import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class OpenAIClient {
     private static final String BASE_URL = "https://api.openai.com/v1/"; //NEED TO UPDATE THIS LINK TO PROPER PATH
@@ -28,24 +34,59 @@ public class OpenAIClient {
                 })
                 .build();
     }
+    public interface SuggestionCallback {
+        void onSuggestionReceived(String suggestion);
+        void onError(String error);
+    }
 
-    public void getSmartSuggestion(String prompt, Callback callback) {
-        // Build your JSON request body for chat completion or completion API
+    public static void getSmartSuggestion(String prompt, SuggestionCallback callback) {
         JSONObject json = new JSONObject();
         try {
-            json.put("model", "o4-mini");
+            json.put("model", "gpt-3.5-turbo-instruct"); // o4-mini is not a valid OpenAI model for completions
             json.put("prompt", prompt);
             json.put("max_tokens", 100);
         } catch (JSONException e) {
-            e.printStackTrace();
+            callback.onError("Failed to build JSON body: " + e.getMessage());
+            return;
         }
 
-        RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), json.toString());
+        RequestBody body = RequestBody.create(
+                MediaType.parse("application/json; charset=utf-8"),
+                json.toString()
+        );
+
         Request request = new Request.Builder()
-                .url(BASE_URL + "completions")
+                .url(BASE_URL + "v1/completions") // make sure it's correct
+                .header("Authorization", "Bearer " + OPENAI_API_KEY) // Add your API key
                 .post(body)
                 .build();
 
-        client.newCall(request).enqueue(callback);
+        client.newCall(request).enqueue(new okhttp3.Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                callback.onError("Network error: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.isSuccessful() && response.body() != null) {
+                    String responseBody = response.body().string();
+                    try {
+                        JSONObject jsonResponse = new JSONObject(responseBody);
+                        String suggestion = jsonResponse
+                                .getJSONArray("choices")
+                                .getJSONObject(0)
+                                .getString("text")
+                                .trim();
+                        callback.onSuggestionReceived(suggestion);
+                    } catch (JSONException e) {
+                        callback.onError("Failed to parse response: " + e.getMessage());
+                    }
+                } else {
+                    callback.onError("API error: " + response.code());
+                }
+            }
+        });
+
     }
 }
