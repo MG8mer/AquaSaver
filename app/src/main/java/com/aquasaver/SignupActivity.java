@@ -1,4 +1,4 @@
-package com.aquasaver;
+package com.example.aquasaver;
 
 import android.Manifest;
 import android.util.Log;
@@ -32,7 +32,6 @@ import com.example.aquasaver.dao.UserProfileDao;
 import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.db.AppDatabase;
 import androidx.room.Room;
-import com.aquasaver.R;
 
 public class SignupActivity extends AppCompatActivity {
 
