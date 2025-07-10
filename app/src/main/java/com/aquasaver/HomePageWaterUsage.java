@@ -165,7 +165,14 @@ public class HomePageWaterUsage extends AppCompatActivity {
 
     private void updatePieChart(float usage) {
         ArrayList<PieEntry> entries = new ArrayList<>();
-        float remaining = Math.max(100 - usage, 0);
+
+        // Convert gallons to liters
+        float usageLiters = usage * 3.78541f;
+
+        // Define total in liters (100 gallons)
+        float totalLiters = 378.541f;
+
+        float remaining = Math.max(totalLiters - usageLiters, 0);
 
         entries.add(new PieEntry(usage, "Used"));
         entries.add(new PieEntry(remaining, "Remaining"));
