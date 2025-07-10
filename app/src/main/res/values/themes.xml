@@ -3,6 +3,7 @@
     <style name="Theme.AquaSaver" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <item name="fontFamily">@font/roboto</item>
 
+
         <item name="android:textSize">14sp</item>
         <!-- Primary brand color -->
         <item name="colorPrimary">@color/colorPrimary</item>

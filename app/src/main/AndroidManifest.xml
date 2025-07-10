@@ -27,9 +27,20 @@
 <!--            </intent-filter>-->
 <!--        </activity>-->
 
-<!--    THIS SECTION SETS THE MAINACTIVITY AS ACTIVITY ON LAUNCH-->
-        <activity android:name="com.aquasaver.SignupActivity"/>
-        <activity android:name="com.example.aquasaver.ui.activities.MainActivity"
+<!--&lt;!&ndash;    THIS SECTION SETS THE MAINACTIVITY AS ACTIVITY ON LAUNCH&ndash;&gt;-->
+<!--        <activity android:name="com.aquasaver.SignupActivity"/>-->
+<!--        <activity android:name="com.example.aquasaver.ui.activities.MainActivity"-->
+<!--            android:exported="true"-->
+<!--            android:label="@string/app_name"-->
+<!--            android:theme="@style/Theme.AquaSaver.NoActionBar">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
+<!--        </activity>-->
+
+<!--            THIS SECTION SETS THE HOME PAGE AS ACTIVITY ON LAUNCH-->
+        <activity android:name="com.aquasaver.HomePageWaterUsage"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.AquaSaver.NoActionBar">
@@ -38,7 +49,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.aquasaver.LoginActivity" />
+
+        <activity android:name="com.example.aquasaver.ui.activities.MainActivity" />
 
         <meta-data
             android:name="preloaded_fonts"

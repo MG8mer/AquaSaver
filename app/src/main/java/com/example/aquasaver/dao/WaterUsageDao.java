@@ -47,4 +47,14 @@ public interface WaterUsageDao {
 
     @Query("SELECT * FROM water_usage_log WHERE user_email = :userEmail AND date >= :startDateTimestamp AND date <= :endDateTimestamp ORDER BY date DESC")
     List<WaterUsage> getLogsForUserInDateRange(String userEmail, long startDateTimestamp, long endDateTimestamp); //Returns a list of logs for a specific user within a date range.
+
+    @Query("SELECT SUM(amount_liters) " +
+            "FROM water_usage_log " +
+            "WHERE date(date / 1000, 'unixepoch') = date('now') " +
+            "AND user_email = :email")
+    Float getLitersUsedToday(String email);
+
+    @Query("SELECT SUM(amount_liters) FROM water_usage_log WHERE user_email = :email AND date BETWEEN :start AND :end")
+    float getLitersUsedBetween(String email, long start, long end);
+
 }
