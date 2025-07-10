@@ -7,9 +7,11 @@ pluginManagement {
                 includeGroupByRegex("androidx.*")
             }
         }
-        gradlePluginPortal()
         mavenCentral()
-        maven(url = "https://jitpack.io") // optional: only if needed for plugins
+        gradlePluginPortal()
+    }
+    plugins {
+        id("com.android.application") version "8.10.1"
     }
 }
 
@@ -18,7 +20,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven(url = "https://jitpack.io") // optional: only if using dependencies from JitPack
+        maven(url = "https://jitpack.io")
     }
 }
 

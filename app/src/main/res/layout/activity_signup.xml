@@ -2,112 +2,209 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#B3E5FC">
+    android:background="@drawable/gradient_background"
+    android:padding="24dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp"
-        android:gravity="center_horizontal">
+        android:gravity="center_horizontal"
+        android:padding="16dp"
+        android:background="@drawable/form_background">
 
-        <!-- Top Center Title -->
         <TextView
             android:id="@+id/profileTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="User Profile"
-            android:textSize="22sp"
+            android:textSize="24sp"
             android:textStyle="bold"
-            android:textColor="#000000"
+            android:textColor="#0077B6"
             android:layout_marginBottom="24dp" />
 
-        <!-- Username -->
+        <!-- Email field -->
         <EditText
-            android:id="@+id/signupUsername"
+            android:id="@+id/signupEmail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:hint="Username"
-            android:inputType="textPersonName"
-            android:layout_marginTop="8dp" />
+            android:hint="Email"
+            android:inputType="textEmailAddress"
+            android:background="@drawable/input_field"
+            android:padding="14dp"
+            android:textColor="#000000"
+            android:layout_marginBottom="16dp" />
 
-        <!-- Password -->
         <EditText
             android:id="@+id/signupPassword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minHeight="48dp"
             android:hint="Password"
             android:inputType="textPassword"
-            android:layout_marginTop="16dp" />
-
-        <!-- Location label -->
-        <TextView
-            android:id="@+id/labelLocationPrefTracker"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Location"
-            android:textSize="18sp"
+            android:background="@drawable/input_field"
+            android:padding="14dp"
             android:textColor="#000000"
-            android:layout_marginTop="16dp"
-            android:paddingBottom="4dp" />
+            android:layout_marginBottom="16dp" />
 
-        <!-- Location (auto-filled) -->
-        <EditText
-            android:id="@+id/location"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:hint="Location"
-            android:inputType="text" />
-
-        <!-- Goal Dropdown with Water Usage Tracker Label to the left -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="16dp"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/labelLocationPrefTracker"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Location Tracking"
+                android:textSize="16sp"
+                android:textColor="#333333"
+                android:layout_marginEnd="12dp" />
+
+            <Switch
+                android:id="@+id/locationTrackingSwitch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:minWidth="48dp"
+                android:padding="12dp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/labelLocationPref"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Location"
+            android:textSize="16sp"
+            android:textColor="#333333"
+            android:layout_marginBottom="4dp" />
+
+        <EditText
+            android:id="@+id/location"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Location"
+            android:inputType="text"
+            android:background="@drawable/input_field"
+            android:padding="14dp"
+            android:textColor="#000000"
+            android:layout_marginBottom="16dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
 
             <TextView
                 android:id="@+id/labelGoalTracker"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Water-usage Goal tracker"
+                android:text="Water-Usage GoalTracker"
                 android:textSize="16sp"
-                android:textColor="#000000"
+                android:textColor="#333333"
                 android:layout_marginEnd="12dp" />
 
             <Spinner
                 android:id="@+id/goalSpinner"
-                android:layout_width="120dp"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
                 android:padding="8dp" />
         </LinearLayout>
 
-        <!-- Notification preference (left-aligned) -->
-        <Switch
-            android:id="@+id/notifications"
+        <!-- Notifications block -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Enable Notifications"
-            android:gravity="start"
-            android:layout_marginTop="16dp"
-            android:minWidth="48dp"
+            android:orientation="horizontal"
             android:minHeight="48dp"
-            android:padding="8dp" />
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
 
-        <!-- Submit button -->
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Enable Notifications"
+                android:textSize="16sp"
+                android:textColor="#333333" />
+
+            <Switch
+                android:id="@+id/notifications"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:minWidth="48dp"
+                android:padding="12dp" />
+        </LinearLayout>
+
+        <!-- Extra notification options visible only if notifications enabled -->
+        <LinearLayout
+            android:id="@+id/extraNotificationOptions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Weather Alerts"
+                    android:textSize="16sp"
+                    android:textColor="#333333"
+                    android:layout_marginEnd="12dp" />
+
+                <Switch
+                    android:id="@+id/weatherAlertSwitch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:minWidth="48dp"
+                    android:padding="12dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Reminder Time"
+                    android:textSize="16sp"
+                    android:textColor="#333333"
+                    android:layout_marginEnd="12dp" />
+
+                <Switch
+                    android:id="@+id/reminderTimeSwitch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:minWidth="48dp"
+                    android:padding="12dp" />
+            </LinearLayout>
+        </LinearLayout>
+
         <Button
             android:id="@+id/signupSubmit"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Sign Up"
-            android:layout_marginTop="24dp"
-            android:backgroundTint="#0288D1"
-            android:textColor="#FFFFFF" />
-
+            android:backgroundTint="#0077B6"
+            android:textColor="#FFFFFF"
+            android:padding="14dp" />
     </LinearLayout>
 </ScrollView>
