@@ -11,7 +11,7 @@ public class ChatRequest {
     public List<Message> messages;
 
     public ChatRequest(List<Message> messages) {
-        this.model = "gpt-3.5-turbo"; // default model
+        this.model = "gpt-4.1-nano";
         this.messages = messages;
     }
 
