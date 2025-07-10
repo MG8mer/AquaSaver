@@ -1,7 +1,6 @@
 package com.example.aquasaver;
 
 import android.Manifest;
-import android.util.Log;
 import android.annotation.SuppressLint;
 
 import com.example.aquasaver.model.enums.GoalType;

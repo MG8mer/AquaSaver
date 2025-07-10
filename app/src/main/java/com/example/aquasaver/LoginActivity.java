@@ -1,4 +1,4 @@
-package com.aquasaver;
+package com.example.aquasaver;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,7 +10,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.room.Room;
 
 
-import com.example.aquasaver.R;
 import com.example.aquasaver.dao.UserProfileDao;
 import com.example.aquasaver.db.AppDatabase;
 import com.example.aquasaver.model.UserProfile;
@@ -58,7 +57,7 @@ public class LoginActivity extends AppCompatActivity {
 
         // Navigate to SignupActivity
         signupBtn.setOnClickListener(v -> {
-            Intent intent = new Intent(LoginActivity.this, SignupActivity.class);
+            Intent intent = new Intent(LoginActivity.this, com.example.aquasaver.SignupActivity.class);
 
             // Optional: Clear old signup data
             getSharedPreferences("UserProfile", MODE_PRIVATE).edit().clear().apply();

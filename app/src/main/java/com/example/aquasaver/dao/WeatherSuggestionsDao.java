@@ -8,7 +8,7 @@ import androidx.room.Query;
 import androidx.room.Update;
 
 // Import WeatherSuggestions class
-import com.example.aquasaver.entities.WeatherSuggestions;
+import com.example.aquasaver.model.WeatherSuggestions;
 
 import java.util.Date;
 import java.util.List;

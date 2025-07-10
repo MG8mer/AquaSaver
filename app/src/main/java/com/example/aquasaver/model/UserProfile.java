@@ -1,10 +1,10 @@
-package com.example.aquasaver.entities;
+package com.example.aquasaver.model;
 
 import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 
-import com.example.aquasaver.entities.enums.GoalType;
+import com.example.aquasaver.model.enums.GoalType;
 
 import java.util.Date;
 

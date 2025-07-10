@@ -9,7 +9,7 @@ import androidx.room.Update;
 
 
 // Import user profile class
-import com.example.aquasaver.entities.UserProfile;
+import com.example.aquasaver.model.UserProfile;
 
 import java.util.List;
 
@@ -25,11 +25,11 @@ public interface UserProfileDao {
     @Delete
     int deleteUserProfile(UserProfile userProfile);
 
-    @Query("DELETE FROM user_profiles WHERE email = :email AND location = :location")
-    int deleteUserProfileByIds(String email, String location); //Deletes a user profile based on email and location and returns # of rows deleted
+    @Query("DELETE FROM user_profiles WHERE email = :email AND password = :password")
+    int deleteUserProfileByIds(String email, String password ); //Deletes a user profile based on email and password and returns # of rows deleted
 
-    @Query("SELECT * FROM user_profiles WHERE email = :email AND location = :location LIMIT 1")
-    UserProfile getUserProfileByIds(String email, String location); //Retrieves a specific user profile by its composite primary key (email and location).
+    @Query("SELECT * FROM user_profiles WHERE email = :email AND password = :password LIMIT 1")
+    UserProfile getUserProfileByIds(String email, String password); //Retrieves a specific user profile by its composite primary key (email and password).
 
     @Query("SELECT * FROM user_profiles WHERE email = :email")
     List<UserProfile> getUserProfilesByEmail(String email); // Returns a list of all user profiles associated with a given email
@@ -37,14 +37,6 @@ public interface UserProfileDao {
     @Query("SELECT * FROM user_profiles")
     List<UserProfile> getAllUserProfiles();
 
-    @Query("SELECT EXISTS(SELECT 1 FROM user_profiles WHERE email = :email AND location = :location LIMIT 1)")
-    boolean doesProfileExist(String email, String location);
-
-    @Query("SELECT EXISTS(SELECT 1 FROM user_profiles WHERE email = :email)")
-    boolean doesProfileExist(String email);
-
-
-    @Query("SELECT * FROM user_profiles WHERE email = :email LIMIT 1")
-    UserProfile getUserByEmail(String email);
-
+    @Query("SELECT EXISTS(SELECT 1 FROM user_profiles WHERE email = :email AND password = :password LIMIT 1)")
+    boolean doesProfileExist(String email, String password);
 }
