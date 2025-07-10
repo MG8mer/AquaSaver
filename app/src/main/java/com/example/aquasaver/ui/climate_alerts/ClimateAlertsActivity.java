@@ -17,10 +17,12 @@ public class ClimateAlertsActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d("Oncreate Test", "Testing on create");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_climate_alerts);
 
         tvSuggestions = findViewById(R.id.tvSuggestions);
+        viewModel = new ViewModelProvider(this).get(ClimateAlertsViewModel.class);
 
         // Get stored user info
         SharedPreferences prefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
@@ -32,22 +34,23 @@ public class ClimateAlertsActivity extends AppCompatActivity {
             tvSuggestions.setText("Please log in and set your location.");
             Log.w("ClimateAlertsActivity", "Missing user info: email=" + email + ", location=" + location);
             return; // Stop here, can't load suggestions without user data
+        } else {
+            viewModel.loadSmartSuggestions(this, email, location);
+            Log.d("ClimateAlertsActivity", "User info loaded: email=" + email + ", location=" + location);
         }
 
-        viewModel = new ViewModelProvider(this).get(ClimateAlertsViewModel.class);
 
         // Observe LiveData from ViewModel and update UI
         viewModel.getSuggestionLiveData().observe(this, suggestions -> {
+            Log.d("ClimateAlertsActivityx", "Suggestions test" + suggestions);
             if (suggestions != null && !suggestions.isEmpty()) {
                 tvSuggestions.setText(suggestions);
-                Log.d("ClimateAlertsActivity", "Suggestions loaded");
+                Log.d("ClimateAlertsActivity1", "Suggestions loaded" + suggestions);
             } else {
                 tvSuggestions.setText("No suggestions available.");
-                Log.d("ClimateAlertsActivity", "No suggestions received");
+                Log.d("ClimateAlertsActivity2", "No suggestions received");
             }
         });
 
-        // Load smart suggestions with valid user data
-        viewModel.loadSmartSuggestions(email, location);
     }
 }

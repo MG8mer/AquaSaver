@@ -6,6 +6,8 @@ import android.util.Log;
 import com.example.aquasaver.model.WeatherSuggestions;
 import com.example.aquasaver.dao.WeatherSuggestionsDao;
 import com.example.aquasaver.db.AppDatabase;
+import com.example.aquasaver.BuildConfig;
+
 
 import java.util.Date;
 
@@ -14,7 +16,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class WeatherRepository {
-    private static WeatherSuggestionsDao suggestionsDao;
+    private final WeatherSuggestionsDao suggestionsDao;
     private final AppDatabase db;
     private final Context context;
 
@@ -24,10 +26,10 @@ public class WeatherRepository {
         this.suggestionsDao = db.weatherSuggestionsDao();
     }
 
-    public static void getTodayWeather(String email, String location, WeatherDataCallback callback) {
+    public void getTodayWeather(String email, String location, WeatherDataCallback callback) {
         WeatherAPI api = WeatherAPIClient.getWeatherApi();
-        Call<WeatherResponse> call = api.getWeather(location, "WEATHER_API_KEY", "metric");
-
+        Call<WeatherResponse> call = api.getWeather(location, BuildConfig.WEATHER_API_KEY, "metric");
+        Log.d("WeatherRepo", "Calling weather API for: " + location);
         call.enqueue(new Callback<WeatherResponse>() {
             @Override
             public void onResponse(Call<WeatherResponse> call, Response<WeatherResponse> response) {
@@ -35,11 +37,11 @@ public class WeatherRepository {
                     WeatherResponse data = response.body();
                     String suggestionText = "It’s " + data.main.temp + "°C, " + data.weather.get(0).description;
                     WeatherSuggestions suggestion = new WeatherSuggestions(email, location, getTodayDate(), suggestionText);
+                    Log.d("WeatherRepo", "API success: " + data.main.temp + ", " + data.weather.get(0).description);
 
                     storeWeatherSuggestion(suggestion, callback);
                 } else {
                     callback.onFailure("API error: " + response.code());
-                    Log.e("APIERROR", "API error: " + response.code());
                 }
             }
 
@@ -49,16 +51,17 @@ public class WeatherRepository {
             }
         });
     }
-    private static void storeWeatherSuggestion(WeatherSuggestions suggestion, WeatherDataCallback callback) {
+
+    private void storeWeatherSuggestion(WeatherSuggestions suggestion, WeatherDataCallback callback) {
         new Thread(() -> {
             suggestionsDao.insertSuggestion(suggestion);
-            Log.d("DB_CHECK", "Weather suggestion stored successfully" + suggestion.toString());
+            Log.d("DB_CHECK", "Weather suggestion stored successfully: " + suggestion.toString());
+            callback.onSuccess(suggestion.toString());
             callback.onWeatherDataLoaded(suggestion);
         }).start();
     }
 
     private static Date getTodayDate() {
-        // implement date truncation if needed
         return new Date();
     }
 

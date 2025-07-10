@@ -1,5 +1,6 @@
 package com.example.aquasaver.ui.climate_alerts;
 
+import android.content.Context;
 import android.util.Log;
 
 import androidx.lifecycle.LiveData;
@@ -66,6 +67,7 @@ public class ClimateAlertsViewModel extends ViewModel {
         openAIService.getChatResponse(request).enqueue(new Callback<ChatResponse>() {
             @Override
             public void onResponse(Call<ChatResponse> call, Response<ChatResponse> response) {
+                Log.d("FetchWeather", "Successful On Response");
                 if (response.isSuccessful() && response.body() != null) {
                     String suggestion = response.body().choices.get(0).message.content;
                     suggestionLiveData.postValue(suggestion);
@@ -94,15 +96,21 @@ public class ClimateAlertsViewModel extends ViewModel {
             }
         });
     }
-    public void loadSmartSuggestions(String email, String location) {
-        WeatherRepository.getTodayWeather(email, location, new WeatherDataCallback() {
+    public void loadSmartSuggestions(Context context, String email, String location) {
+        WeatherRepository weatherRepository = new WeatherRepository(context);
+        Log.d("CAVMTest", "Loading smart suggestions");
+        weatherRepository.getTodayWeather(email, location, new WeatherDataCallback() {
             @Override
             public void onSuccess(String weather) {
+                Log.d("CAVMTestx", "On success");
                 if (weather == null || weather.isEmpty()) {
+                    Log.d("FetchingWeathery", "Did not fetch weather");
                     suggestionLiveData.postValue("Could not fetch weather.");
                     return;
                 }
+                Log.d("FetchSuggestionStart", "Weather passed: " + weather);
                 fetchSuggestion("Weather: " + weather + ". Suggest water-saving tips.");
+                Log.d("FetchSuggestionDone", "Fetch call completed");
             }
 
             @Override
@@ -112,6 +120,7 @@ public class ClimateAlertsViewModel extends ViewModel {
 
             @Override
             public void onFailure(String error) {
+                Log.d("CAVMOF", "On Failure");
                 suggestionLiveData.postValue("Failed to fetch weather: " + error);
             }
         });
