@@ -17,7 +17,7 @@ import java.util.List;
 public interface WeatherSuggestionsDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE) //single insert
-    Date insertSuggestion(WeatherSuggestions weatherSuggestion); // Returns row ID of the newly inserted suggestion
+    Long insertSuggestion(WeatherSuggestions weatherSuggestion); // Returns row ID of the newly inserted suggestion
 
     @Insert(onConflict = OnConflictStrategy.REPLACE) //multiple inserts
     void insertAllSuggestions(List<WeatherSuggestions> suggestions);

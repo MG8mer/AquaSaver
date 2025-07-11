@@ -1,7 +1,9 @@
 package com.aquasaver;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -12,6 +14,7 @@ import com.example.aquasaver.dao.UserProfileDao;
 import com.example.aquasaver.model.UserProfile;
 import androidx.room.Room;
 import com.example.aquasaver.R;
+import com.example.aquasaver.ui.main_pages.MainActivity;
 
 public class LoginActivity extends AppCompatActivity {
     EditText username, password;
@@ -31,7 +34,7 @@ public class LoginActivity extends AppCompatActivity {
         AppDatabase db = Room.databaseBuilder(
                 getApplicationContext(),
                 AppDatabase.class,
-                "aqua_db"
+                "aqua_saver.db"
         ).allowMainThreadQueries().build(); // for development only
 
         UserProfileDao userDao = db.userProfileDao();
@@ -46,8 +49,24 @@ public class LoginActivity extends AppCompatActivity {
             } else {
                 UserProfile existingUser = userDao.getUserProfileByIds(user, pass);
                 if (existingUser != null) {
+                    Log.d("LoginActivity", "Login success: saving user data: " +
+                            existingUser.getEmail() + ", " + existingUser.getLocation());
                     Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
+                    // Save to SharedPreferences
+                    getSharedPreferences("UserProfile", MODE_PRIVATE).edit()
+                            .putString("username", existingUser.getEmail())
+                            .putString("location", existingUser.getLocation())
+                            .apply();
+                    SharedPreferences testPrefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
+                    String testUser = testPrefs.getString("username", "default");
+                    String testLoc = testPrefs.getString("location", "default");
+                    Log.d("LoginActivity", "TEST READ: username=" + testUser + ", location=" + testLoc);
+
+                    // Navigate to MainActivity
+                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                    startActivity(intent);
                 } else {
+                    Log.d("LoginActivity", "Testing login failure");
                     Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show();
                 }
             }

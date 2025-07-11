@@ -28,7 +28,7 @@ public class ClimateAlertsActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
         String email = prefs.getString("username", null);
         String location = prefs.getString("location", null);
-
+        Log.d("ClimateAlertsActivity", "Fetched from prefs: username=" + email + ", location=" + location);
         if (email == null || location == null) {
             Toast.makeText(this, "User not logged in or location missing", Toast.LENGTH_LONG).show();
             tvSuggestions.setText("Please log in and set your location.");

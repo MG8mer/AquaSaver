@@ -3,6 +3,7 @@ package com.example.aquasaver.smart_suggestions.weatherapi;
 import android.content.Context;
 import android.util.Log;
 
+import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.model.WeatherSuggestions;
 import com.example.aquasaver.dao.WeatherSuggestionsDao;
 import com.example.aquasaver.db.AppDatabase;
@@ -37,7 +38,7 @@ public class WeatherRepository {
             public void onResponse(Call<WeatherResponse> call, Response<WeatherResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     WeatherResponse data = response.body();
-                    String weatherReport = "It’s " + data.main.temp + "°C, " + data.weather.get(0).description;
+                    String weatherReport = data.main.temp + "°C," + data.weather.get(0).description;
 
                     Log.d("WeatherRepo", "Weather report: " + weatherReport);
 
@@ -58,10 +59,15 @@ public class WeatherRepository {
         return suggestionsDao.getTodaySuggestion(email, date);
     }
 
-    public void insertSuggestion(WeatherSuggestions suggestion) {
+    public void insertSuggestion(String email, WeatherSuggestions suggestion) {
         new Thread(() -> {
-            suggestionsDao.insertSuggestion(suggestion);
-            Log.d("DB_CHECK", "Weather suggestion stored successfully: " + suggestion.toString());
+            UserProfile user = db.userProfileDao().getUserByEmail(email);
+            if (user != null) {
+                suggestionsDao.insertSuggestion(suggestion);
+                Log.d("DB_CHECK", "Weather suggestion stored successfully: " + suggestion.toString());
+            } else {
+                Log.e("DB", "User not found: " + email);
+            }
         }).start();
     }
     public void deleteSuggestionsForUser(String userEmail) {

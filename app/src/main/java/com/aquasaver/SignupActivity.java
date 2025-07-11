@@ -90,7 +90,7 @@ public class SignupActivity extends AppCompatActivity {
         db = Room.databaseBuilder(
                 getApplicationContext(),
                 AppDatabase.class,
-                "aqua_db"
+                "aqua_saver.db"
         ).allowMainThreadQueries().build();   // OK for demo, move to background thread later
 
         userDao = db.userProfileDao();

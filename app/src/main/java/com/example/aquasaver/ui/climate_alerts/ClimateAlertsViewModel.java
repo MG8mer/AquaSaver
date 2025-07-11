@@ -102,33 +102,35 @@ public class ClimateAlertsViewModel extends ViewModel {
         WeatherRepository weatherRepository = new WeatherRepository(context);
         Date today = getTodayDateTruncated();
 
-        WeatherSuggestions existing = weatherRepository.getTodaySuggestion(email, today);
-
-        if (existing != null) {
-            suggestionLiveData.postValue(existing.getUsageSuggestionText());
-        } else {
-            weatherRepository.getTodayWeather(email, location, new WeatherDataCallback() {
-                @Override
-                public void onSuccess(String weatherReport) {
-                    if (weatherReport == null || weatherReport.isEmpty()) {
-                        suggestionLiveData.postValue("Could not fetch weather.");
-                        return;
+        new Thread(() -> {
+            WeatherSuggestions existing = weatherRepository.getTodaySuggestion(email, today);
+            if (existing != null) {
+                suggestionLiveData.postValue(existing.getUsageSuggestionText());
+                Log.d("ClimateAlertsViewModel", "Using existing suggestion: " + existing.getUsageSuggestionText());
+            } else {
+                weatherRepository.getTodayWeather(email, location, new WeatherDataCallback() {
+                    @Override
+                    public void onSuccess(String weatherReport) {
+                        if (weatherReport == null || weatherReport.isEmpty()) {
+                            suggestionLiveData.postValue("Could not fetch weather.");
+                            return;
+                        }
+                        fetchSuggestion("It's " + weatherReport + ". Suggest water-saving tips.", usageSuggestion -> {
+                            WeatherSuggestions suggestion = new WeatherSuggestions(
+                                    email, location, today, weatherReport, usageSuggestion
+                            );
+                            weatherRepository.insertSuggestion(email, suggestion);
+                            suggestionLiveData.postValue(usageSuggestion);
+                        });
                     }
-                    fetchSuggestion("Weather: " + weatherReport + ". Suggest water-saving tips.", usageSuggestion -> {
-                        WeatherSuggestions suggestion = new WeatherSuggestions(
-                                email, location, today, weatherReport, usageSuggestion
-                        );
-                        weatherRepository.insertSuggestion(suggestion);
-                        suggestionLiveData.postValue(usageSuggestion);
-                    });
-                }
 
-                @Override
-                public void onFailure(String error) {
-                    suggestionLiveData.postValue("Failed to fetch weather: " + error);
-                }
-            });
-        }
+                    @Override
+                    public void onFailure(String error) {
+                        suggestionLiveData.postValue("Failed to fetch weather: " + error);
+                    }
+                });
+            }
+        }).start();
     }
 
 }
