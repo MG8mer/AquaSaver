@@ -57,14 +57,6 @@ public class LoginActivity extends AppCompatActivity {
                             .putString("username", existingUser.getEmail())
                             .putString("location", existingUser.getLocation())
                             .apply();
-                    SharedPreferences testPrefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
-                    String testUser = testPrefs.getString("username", "default");
-                    String testLoc = testPrefs.getString("location", "default");
-                    Log.d("LoginActivity", "TEST READ: username=" + testUser + ", location=" + testLoc);
-
-                    // Navigate to MainActivity
-                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                    startActivity(intent);
                 } else {
                     Log.d("LoginActivity", "Testing login failure");
                     Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show();
