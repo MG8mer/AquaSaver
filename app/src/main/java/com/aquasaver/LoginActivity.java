@@ -53,10 +53,6 @@ public class LoginActivity extends AppCompatActivity {
                             existingUser.getEmail() + ", " + existingUser.getLocation());
                     Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
                     // Save to SharedPreferences
-                    getSharedPreferences("UserProfile", MODE_PRIVATE).edit()
-                            .putString("username", existingUser.getEmail())
-                            .putString("location", existingUser.getLocation())
-                            .apply();
                 } else {
                     Log.d("LoginActivity", "Testing login failure");
                     Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show();
