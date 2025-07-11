@@ -17,6 +17,8 @@ import com.example.aquasaver.smart_suggestions.weatherapi.WeatherRepository.Weat
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
@@ -51,13 +53,24 @@ public class ClimateAlertsViewModel extends ViewModel {
 
         openAIService = retrofit.create(OpenAIService.class);
     }
+    private static Date getTodayDateTruncated() {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
+    }
 
     public LiveData<String> getSuggestionLiveData() {
         return suggestionLiveData;
     }
 
-    // This uses your OpenAI service manually
-    public void fetchSuggestion(String weatherInfo) {
+    public interface SuggestionCallback {
+        void onResult(String suggestion);
+    }
+
+    public void fetchSuggestion(String weatherInfo, SuggestionCallback callback) {
         List<ChatRequest.Message> messages = new ArrayList<>();
         messages.add(new ChatRequest.Message("system", "You are an expert in water conservation."));
         messages.add(new ChatRequest.Message("user", weatherInfo));
@@ -67,63 +80,55 @@ public class ClimateAlertsViewModel extends ViewModel {
         openAIService.getChatResponse(request).enqueue(new Callback<ChatResponse>() {
             @Override
             public void onResponse(Call<ChatResponse> call, Response<ChatResponse> response) {
-                Log.d("FetchWeather", "Successful On Response");
-                if (response.isSuccessful() && response.body() != null) {
+                if (response.isSuccessful() && response.body() != null && !response.body().choices.isEmpty()) {
                     String suggestion = response.body().choices.get(0).message.content;
-                    suggestionLiveData.postValue(suggestion);
                     Log.d("OpenAI", "API call successful - Suggestion: " + suggestion);
+                    callback.onResult(suggestion);
                 } else {
-                    suggestionLiveData.postValue("Failed to get suggestions.");
-                    String errorMsg = "Failed to get suggestions.";
-                    if (response.errorBody() != null) {
-                        try {
-                            errorMsg += " Error: " + response.errorBody().string();
-                        } catch (IOException e) {
-                            Log.e("OpenAI", "Error reading error body", e);
-                        }
-                    } else if (response.body() != null && response.body().choices.isEmpty()) {
-                        errorMsg = "Failed to get suggestions: No choices returned.";
-                    }
-                    suggestionLiveData.postValue(errorMsg);
-                    Log.e("OpenAI", "API error - Code: " + response.code() + ", Message: " + errorMsg);
+                    callback.onResult("Failed to get suggestions.");
+                    Log.e("OpenAI", "API error - Code: " + response.code());
                 }
             }
 
             @Override
             public void onFailure(Call<ChatResponse> call, Throwable t) {
-                suggestionLiveData.postValue("Network error, please try again.");
+                callback.onResult("Network error, please try again.");
                 Log.e("OpenAI", "API call failed", t);
             }
         });
     }
+
     public void loadSmartSuggestions(Context context, String email, String location) {
         WeatherRepository weatherRepository = new WeatherRepository(context);
-        Log.d("CAVMTest", "Loading smart suggestions");
-        weatherRepository.getTodayWeather(email, location, new WeatherDataCallback() {
-            @Override
-            public void onSuccess(String weather) {
-                Log.d("CAVMTestx", "On success");
-                if (weather == null || weather.isEmpty()) {
-                    Log.d("FetchingWeathery", "Did not fetch weather");
-                    suggestionLiveData.postValue("Could not fetch weather.");
-                    return;
+        Date today = getTodayDateTruncated();
+
+        WeatherSuggestions existing = weatherRepository.getTodaySuggestion(email, today);
+
+        if (existing != null) {
+            suggestionLiveData.postValue(existing.getUsageSuggestionText());
+        } else {
+            weatherRepository.getTodayWeather(email, location, new WeatherDataCallback() {
+                @Override
+                public void onSuccess(String weatherReport) {
+                    if (weatherReport == null || weatherReport.isEmpty()) {
+                        suggestionLiveData.postValue("Could not fetch weather.");
+                        return;
+                    }
+                    fetchSuggestion("Weather: " + weatherReport + ". Suggest water-saving tips.", usageSuggestion -> {
+                        WeatherSuggestions suggestion = new WeatherSuggestions(
+                                email, location, today, weatherReport, usageSuggestion
+                        );
+                        weatherRepository.insertSuggestion(suggestion);
+                        suggestionLiveData.postValue(usageSuggestion);
+                    });
                 }
-                Log.d("FetchSuggestionStart", "Weather passed: " + weather);
-                fetchSuggestion("Weather: " + weather + ". Suggest water-saving tips.");
-                Log.d("FetchSuggestionDone", "Fetch call completed");
-            }
 
-            @Override
-            public void onWeatherDataLoaded(WeatherSuggestions suggestions) {
-                // store or show past suggestions
-            }
-
-            @Override
-            public void onFailure(String error) {
-                Log.d("CAVMOF", "On Failure");
-                suggestionLiveData.postValue("Failed to fetch weather: " + error);
-            }
-        });
+                @Override
+                public void onFailure(String error) {
+                    suggestionLiveData.postValue("Failed to fetch weather: " + error);
+                }
+            });
+        }
     }
 
 }

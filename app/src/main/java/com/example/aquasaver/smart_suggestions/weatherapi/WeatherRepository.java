@@ -29,17 +29,20 @@ public class WeatherRepository {
     public void getTodayWeather(String email, String location, WeatherDataCallback callback) {
         WeatherAPI api = WeatherAPIClient.getWeatherApi();
         Call<WeatherResponse> call = api.getWeather(location, BuildConfig.WEATHER_API_KEY, "metric");
+
         Log.d("WeatherRepo", "Calling weather API for: " + location);
+
         call.enqueue(new Callback<WeatherResponse>() {
             @Override
             public void onResponse(Call<WeatherResponse> call, Response<WeatherResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     WeatherResponse data = response.body();
-                    String suggestionText = "It’s " + data.main.temp + "°C, " + data.weather.get(0).description;
-                    WeatherSuggestions suggestion = new WeatherSuggestions(email, location, getTodayDate(), suggestionText);
-                    Log.d("WeatherRepo", "API success: " + data.main.temp + ", " + data.weather.get(0).description);
+                    String weatherReport = "It’s " + data.main.temp + "°C, " + data.weather.get(0).description;
 
-                    storeWeatherSuggestion(suggestion, callback);
+                    Log.d("WeatherRepo", "Weather report: " + weatherReport);
+
+                    // Return ONLY the weather report
+                    callback.onSuccess(weatherReport);
                 } else {
                     callback.onFailure("API error: " + response.code());
                 }
@@ -51,15 +54,23 @@ public class WeatherRepository {
             }
         });
     }
+    public WeatherSuggestions getTodaySuggestion(String email, Date date) {
+        return suggestionsDao.getTodaySuggestion(email, date);
+    }
 
-    private void storeWeatherSuggestion(WeatherSuggestions suggestion, WeatherDataCallback callback) {
+    public void insertSuggestion(WeatherSuggestions suggestion) {
         new Thread(() -> {
             suggestionsDao.insertSuggestion(suggestion);
             Log.d("DB_CHECK", "Weather suggestion stored successfully: " + suggestion.toString());
-            callback.onSuccess(suggestion.toString());
-            callback.onWeatherDataLoaded(suggestion);
         }).start();
     }
+    public void deleteSuggestionsForUser(String userEmail) {
+        new Thread(() -> {
+            int rowsDeleted = suggestionsDao.deleteSuggestionsForUser(userEmail);
+            Log.d("DB_CHECK", "Deleted " + rowsDeleted + " weather suggestions for user: " + userEmail);
+        }).start();
+    }
+
 
     private static Date getTodayDate() {
         return new Date();
@@ -67,7 +78,6 @@ public class WeatherRepository {
 
     public interface WeatherDataCallback {
         void onSuccess(String weather);
-        void onWeatherDataLoaded(WeatherSuggestions suggestions);
         void onFailure(String error);
     }
 }
