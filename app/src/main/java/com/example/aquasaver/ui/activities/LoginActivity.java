@@ -1,4 +1,4 @@
-package com.aquasaver;
+package com.example.aquasaver.ui.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
