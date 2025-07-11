@@ -1,16 +1,16 @@
-package com.example.aquasaver.ui.activities;
+package com.example.aquasaver.ui.main_pages;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.WindowManager;
 
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
@@ -18,11 +18,15 @@ import com.example.aquasaver.R;
 import com.example.aquasaver.databinding.ActivityMainBinding;
 import com.google.android.material.navigation.NavigationView;
 
+import androidx.navigation.fragment.NavHostFragment;
+
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
     private AppBarConfiguration appBarConfiguration;
     private MainViewModel mainViewModel;
+
+    private Toolbar toolbar;
 
 
     @Override
@@ -34,7 +38,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         // Setup Toolbar
-        setSupportActionBar(binding.appBarMain.toolbar);
+        toolbar = binding.appBarMain.toolbar;
+        setSupportActionBar(toolbar);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.colorPrimaryVariant));
 
@@ -44,8 +49,6 @@ public class MainActivity extends AppCompatActivity {
         // Initialize ViewModel
         mainViewModel = new ViewModelProvider(this).get(MainViewModel.class);
 
-        // Fetch weather for user's location (replace with dynamic later)
-        mainViewModel.fetchWeather("London");
     }
 
     private void setupNavigation() {
@@ -57,7 +60,15 @@ public class MainActivity extends AppCompatActivity {
                 .setOpenableLayout(drawer)
                 .build();
 
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawer.addDrawerListener(toggle);
+        toggle.syncState();
+
+        NavHostFragment navHostFragment = (NavHostFragment)
+                getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+
+        NavController navController = navHostFragment.getNavController();
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(navView, navController);
     }
@@ -69,8 +80,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onSupportNavigateUp() {
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-        return NavigationUI.navigateUp(navController, appBarConfiguration)
-                || super.onSupportNavigateUp();
+        NavHostFragment navHostFragment = (NavHostFragment)
+                getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+        NavController navController = navHostFragment.getNavController();
+        return navController.navigateUp() || super.onSupportNavigateUp();
     }
 }

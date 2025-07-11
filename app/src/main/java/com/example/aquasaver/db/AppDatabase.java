@@ -1,13 +1,17 @@
 package com.example.aquasaver.db;
 
 import android.content.Context;
+import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.room.TypeConverters;
+import androidx.room.migration.Migration;
+import androidx.sqlite.db.SupportSQLiteDatabase;
 
-import com.example.aquasaver.entities.*;  // model --> houses all database entities
+import com.example.aquasaver.model.*;  // model --> houses all database entities
 import com.example.aquasaver.dao.*;    // DAO (database operations) --> houses files storing database operations for each entity
 
 @Database(
@@ -21,7 +25,7 @@ import com.example.aquasaver.dao.*;    // DAO (database operations) --> houses f
                 Challenges.class,
                 ChallengeProgress.class
         },
-        version = 2,
+        version = 3,
         exportSchema = true
 )
 @TypeConverters({Converters.class})
@@ -40,16 +44,29 @@ public abstract class AppDatabase extends RoomDatabase {
     private static volatile AppDatabase INSTANCE;
 
     public static AppDatabase getInstance(Context context) {
+        Log.d("AppDatabase", "getInstance called. Current INSTANCE: " + (INSTANCE == null ? "null" : "exists"));
         if (INSTANCE == null) {
             synchronized (AppDatabase.class) {
                 if (INSTANCE == null) {
+                    Log.d("AppDatabase", "Creating new AppDatabase instance  for version 3 with MIGRATION_2_3.");
                     INSTANCE = Room.databaseBuilder(
                                     context.getApplicationContext(),
                                     AppDatabase.class,
-                                    "aqua_saver.db").build();
+                                    "aqua_saver.db"
+                            )
+                            .addMigrations(MIGRATION_2_3)
+                            .build();
+                    Log.d("AppDatabase", "AppDatabase instance built.");
                 }
             }
         }
         return INSTANCE;
     }
+
+    static final Migration MIGRATION_2_3 = new Migration(2, 3) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE WeatherSuggestions ADD COLUMN weatherReport TEXT");
+        }
+    };
 }

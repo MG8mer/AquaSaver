@@ -7,9 +7,12 @@ pluginManagement {
                 includeGroupByRegex("androidx.*")
             }
         }
-        gradlePluginPortal()
         mavenCentral()
-        maven(url = "https://jitpack.io") // optional: only if needed for plugins
+        gradlePluginPortal()
+    }
+    plugins {
+        id("com.android.application") version "8.3.0" apply false
+        id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin") version "2.0.1" apply false
     }
 }
 
@@ -18,7 +21,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven(url = "https://jitpack.io") // optional: only if using dependencies from JitPack
+        maven(url = "https://jitpack.io")
     }
 }
 

@@ -1,4 +1,4 @@
-package com.example.aquasaver.entities;
+package com.example.aquasaver.model;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
