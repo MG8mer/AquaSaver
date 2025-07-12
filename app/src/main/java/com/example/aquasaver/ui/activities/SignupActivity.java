@@ -40,7 +40,7 @@ public class SignupActivity extends AppCompatActivity {
         setContentView(R.layout.activity_signup);
 
         // Link UI elements
-        username = findViewById(R.id.signupUsername);
+        username = findViewById(R.id.signupEmail);
         password = findViewById(R.id.signupPassword);
         locationField = findViewById(R.id.location);
         goalSpinner = findViewById(R.id.goalSpinner);
