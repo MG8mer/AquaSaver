@@ -15,7 +15,7 @@
         android:layout_marginBottom="@dimen/activity_vertical_margin"
         android:layout_marginStart="@dimen/activity_horizontal_margin"
         android:layout_marginEnd="@dimen/activity_horizontal_margin"
-        android:divider="@drawable/vertical_thin_divider"
+        android:divider="@drawable/vertical_empty_divider"
         android:showDividers="middle"
         >
 

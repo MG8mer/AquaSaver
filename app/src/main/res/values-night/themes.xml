@@ -27,6 +27,7 @@
 
         <!-- Outline and error -->
         <item name="colorOutline">@color/nightColorOutline</item>
+        <item name="colorOutlineVariant">@color/colorOutlineVariant</item>
         <item name="colorError">@color/nightColorError</item>
         <item name="colorOnError">@color/nightColorOnError</item>
 

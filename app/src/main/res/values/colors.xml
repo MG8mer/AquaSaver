@@ -24,6 +24,7 @@
     <color name="colorOnSurfaceVariant">#444444</color>
 
     <color name="colorOutline">#6E6E6E</color>
+    <color name="colorOutlineVariant">#C2C7D1</color>
 
     <!--    night colors-->
     <color name="nightColorPrimary">#AFC7FF</color>
@@ -49,5 +50,6 @@
     <color name="nightColorOnSurfaceVariant">#C4C6D0</color>
 
     <color name="nightColorOutline">#8D9199</color>
+    <color name="nightColorOutlineVariant">#8C919C</color>
 
 </resources>
