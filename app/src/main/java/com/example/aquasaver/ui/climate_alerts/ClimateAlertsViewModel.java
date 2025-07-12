@@ -1,13 +1,19 @@
 package com.example.aquasaver.ui.climate_alerts;
 
+import android.app.Application;
 import android.content.Context;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.aquasaver.BuildConfig;
+import com.example.aquasaver.dao.UserProfileDao;
+import com.example.aquasaver.db.AppDatabase;
+import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.model.WeatherSuggestions;
 import com.example.aquasaver.smart_suggestions.ai_logic.ChatRequest;
 import com.example.aquasaver.smart_suggestions.ai_logic.ChatResponse;
@@ -20,6 +26,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -32,9 +40,15 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class ClimateAlertsViewModel extends ViewModel {
 
     private final MutableLiveData<String> suggestionLiveData = new MutableLiveData<>();
+
+    private final MutableLiveData<String> locationLiveData = new MutableLiveData<>();
     private final OpenAIService openAIService;
 
+
+
+
     public ClimateAlertsViewModel() {
+
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://api.openai.com/")  //
                 .addConverterFactory(GsonConverterFactory.create())
@@ -64,6 +78,28 @@ public class ClimateAlertsViewModel extends ViewModel {
 
     public LiveData<String> getSuggestionLiveData() {
         return suggestionLiveData;
+    }
+
+
+    public LiveData<String> getLocation() {
+        return locationLiveData;
+    }
+
+    public void setLocation(String location) {
+        if(location!=null) {
+            String city = null;
+            if (location != null) {
+                String[] parts = location.split(",");
+                if (parts.length > 0) {
+                    city = parts[0].trim();  // Usually the city or street — depends on format
+                }
+            }
+
+            locationLiveData.setValue(city + ": ");
+        } else {
+            locationLiveData.setValue("No location set");
+        }
+
     }
 
     public interface SuggestionCallback {
