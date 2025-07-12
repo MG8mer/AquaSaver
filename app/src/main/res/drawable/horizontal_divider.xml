@@ -2,5 +2,5 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
     <size android:height="1dp" />
-    <solid android:color="?attr/colorOutlineVariant" /> <!-- change this to your desired color -->
+    <solid android:color="?attr/colorOutline" /> <!-- change this to your desired color -->
 </shape>

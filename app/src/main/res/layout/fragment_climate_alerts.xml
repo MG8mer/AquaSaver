@@ -24,43 +24,62 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-<!--        Today's forcast section-->
+<!--        Label, Temperature, and Weather Icon -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="@dimen/divider_margin">
+            android:orientation="vertical">
 
             <TextView
-                android:id="@+id/text_temperature"
-                android:layout_width="0dp"
-                android:layout_weight="1"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="27\u00B0"
-                android:textSize="80sp"
-                android:textColor="@color/colorOnSurface"
-                android:textAlignment="center"/>
+                android:text="Today's Forcast:"
+                android:textSize="@dimen/header_size"
+                android:layout_marginStart="16dp"
+                android:layout_marginBottom="16dp" />
 
+<!--        temp and weather icon-->
             <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                >
+                android:orientation="horizontal"
+                android:layout_marginBottom="@dimen/divider_margin">
 
-                <ImageView
-                    android:id="@+id/imageView"
-                    android:layout_width="120dp"
-                    android:layout_height="120dp"
-                    android:scaleType="fitXY"
-                    android:layout_gravity="center"
-                    android:src="@drawable/climate_alerts_weather"
-                    />
+                <TextView
+                    android:id="@+id/text_temperature"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="27\u00B0"
+                    android:textSize="50sp"
+                    android:textColor="@color/colorOnSurface"
+                    android:textAlignment="center"/>
+
+                <!--    weather icon-->
+                <LinearLayout
+                    android:layout_height="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    >
+
+                    <ImageView
+                        android:id="@+id/weatherIcon"
+                        android:layout_width="70dp"
+                        android:layout_height="70dp"
+                        android:scaleType="fitXY"
+                        android:layout_gravity="center"
+                        android:src="@drawable/climate_alerts_weather"
+                        />
+                </LinearLayout>
+
+
             </LinearLayout>
-
 
         </LinearLayout>
 
+
+        <!--  drought map section-->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -71,11 +90,11 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Dought Map of [Location]:"
+                android:text="Dought Map"
                 android:textSize="@dimen/header_size"
                 android:layout_marginStart="16dp"
                 android:layout_marginBottom="16dp" />
-
+            <!--  drought map-->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -93,22 +112,117 @@
         </LinearLayout>
 
 
-
         <!--        Climate Alert Suggestions section -->
-        <TextView
-            android:id="@+id/text_climate_alerts"
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:orientation="vertical"
             android:layout_marginTop="@dimen/divider_margin"
-            android:layout_marginEnd="8dp"
-            android:text="Suggestions will appear here"
-            android:textAlignment="center"
-            android:textSize="20sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginBottom="@dimen/divider_margin">
+
+            <TextView
+                android:id="@+id/climateAlertsLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Climate Alerts:"
+                android:textSize="@dimen/header_size"
+                android:layout_marginStart="16dp"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Alert #1 -->
+            <!-- Red Alert Box -->
+            <LinearLayout
+                android:id="@+id/alertBox1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#DC2626"
+                android:orientation="vertical"
+                android:padding="12dp"
+                android:elevation="2dp"
+                app:layout_constraintTop_toBottomOf="@id/climateAlertsLabel"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="8dp">
+
+                <TextView
+                    android:id="@+id/alertTitle1"
+                    android:textSize="16sp"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <TextView
+                    android:id="@+id/alertText1"
+                    android:textSize="14sp"
+                    android:textColor="#FFF9C4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <!-- Alert #2 -->
+            <!-- Yellow Alert Box -->
+            <LinearLayout
+                android:id="@+id/alertBox2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#FBBF24"
+                android:orientation="vertical"
+                android:padding="12dp"
+                android:elevation="2dp"
+                app:layout_constraintTop_toBottomOf="@id/alertBox1"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="8dp">
+
+                <TextView
+                    android:id="@+id/alertTitle2"
+                    android:textSize="16sp"
+                    android:textColor="#000000"
+                    android:textStyle="bold"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <TextView
+                    android:id="@+id/alertText2"
+                    android:textSize="14sp"
+                    android:textColor="#4B5563"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/text_climate_alerts"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="@dimen/divider_margin"
+                android:layout_marginEnd="8dp"
+                android:text="Suggestions will appear here"
+                android:textAlignment="center"
+                android:textSize="20sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+
+        </LinearLayout>
+
+        <!-- Learn More -->
+        <TextView
+            android:id="@+id/learnMore"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="→ Learn More"
+            android:textSize="16sp"
+            android:textColor="?attr/colorOnSurface"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/alertBox2"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:layout_marginTop="16dp" />
+
 
     </LinearLayout>
 
