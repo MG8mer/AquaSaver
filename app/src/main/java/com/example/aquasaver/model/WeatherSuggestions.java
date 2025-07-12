@@ -29,6 +29,10 @@ public class WeatherSuggestions {
     @ColumnInfo(name = "date")
     public Date date;
 
+    @ColumnInfo(name = "weather_report")
+    public String weatherReport;
+
+
     @ColumnInfo(name = "usage_suggestion_text")
     public String usageSuggestionText; // The actual suggestion string from the LLM
 
@@ -36,10 +40,11 @@ public class WeatherSuggestions {
     public String rawWeatherDataJson; // The raw JSON data from the LLM
 
     // Constructor
-    public WeatherSuggestions(@NonNull String userEmail, String location, Date date, String usageSuggestionText) {
+    public WeatherSuggestions(@NonNull String userEmail, String location, Date date, String weatherReport, String usageSuggestionText) {
         this.userEmail = userEmail;
         this.location = location;
         this.date = date;
+        this.weatherReport = weatherReport;
         this.usageSuggestionText = usageSuggestionText;
     }
 
@@ -56,6 +61,19 @@ public class WeatherSuggestions {
     public Date getDate() { return date; }
     public void setDate(Date date) { this.date = date; }
 
+    public String getWeatherReport() { return weatherReport; }
+    public void setWeatherReport(String weatherReport) { this.weatherReport = weatherReport; }
+
     public String getUsageSuggestionText() { return usageSuggestionText; }
     public void setUsageSuggestionText(String usageSuggestionText) { this.usageSuggestionText = usageSuggestionText; }
+
+    @Override
+    public String toString() {
+        return "WeatherSuggestions{" +
+                "email='" + userEmail + '\'' +
+                ", location='" + location + '\'' +
+                ", date=" + date +
+                ", suggestionText='" + usageSuggestionText + '\'' +
+                '}';
+    }
 }

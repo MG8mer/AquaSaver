@@ -29,7 +29,7 @@ public interface UserProfileDao {
     int deleteUserProfileByIds(String email, String password ); //Deletes a user profile based on email and password and returns # of rows deleted
 
     @Query("SELECT * FROM user_profiles WHERE email = :email AND password = :password LIMIT 1")
-    UserProfile getUserProfileByIds(String email, String password); //Retrieves a specific user profile by its composite primary key (email and password).
+    UserProfile getUserProfileByIds(String email, String password); //Retrieves a specific user profile by its composite primary key (email and location).
 
     @Query("SELECT * FROM user_profiles WHERE email = :email")
     List<UserProfile> getUserProfilesByEmail(String email); // Returns a list of all user profiles associated with a given email

@@ -1,4 +1,4 @@
-package com.example.aquasaver.ui.activities;
+package com.example.aquasaver.ui.main_pages;
 
 import android.os.Bundle;
 import android.view.Menu;
@@ -49,8 +49,6 @@ public class MainActivity extends AppCompatActivity {
         // Initialize ViewModel
         mainViewModel = new ViewModelProvider(this).get(MainViewModel.class);
 
-        // Fetch weather for user's location (replace with dynamic later)
-        mainViewModel.fetchWeather("London");
     }
 
     private void setupNavigation() {

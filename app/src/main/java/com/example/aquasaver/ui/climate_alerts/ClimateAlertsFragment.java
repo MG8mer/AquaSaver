@@ -7,27 +7,28 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.aquasaver.R;
 import com.example.aquasaver.databinding.FragmentClimateAlertsBinding;
 
 public class ClimateAlertsFragment extends Fragment {
 
     private FragmentClimateAlertsBinding binding;
+    private ClimateAlertsViewModel climateAlertsViewModel;
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             ViewGroup container, Bundle savedInstanceState) {
-        ClimateAlertsViewModel climateAlertsViewModel =
-                new ViewModelProvider(this).get(ClimateAlertsViewModel.class);
-
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentClimateAlertsBinding.inflate(inflater, container, false);
-        View root = binding.getRoot();
+        climateAlertsViewModel = new ViewModelProvider(this).get(ClimateAlertsViewModel.class);
 
-        final TextView textView = binding.textClimateAlerts;
-        climateAlertsViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
-        return root;
+        climateAlertsViewModel.getSuggestionLiveData().observe(getViewLifecycleOwner(), suggestion -> {
+            binding.textClimateAlerts.setText(suggestion);
+        });
+
+        return binding.getRoot();
     }
 
     @Override
