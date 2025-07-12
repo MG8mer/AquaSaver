@@ -2,6 +2,8 @@ package com.example.aquasaver.ui.climate_alerts;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,9 +14,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.aquasaver.R;
 import com.example.aquasaver.databinding.FragmentClimateAlertsBinding;
 import com.example.aquasaver.smart_suggestions.weatherapi.WeatherRepository;
 
@@ -93,6 +97,24 @@ public class ClimateAlertsFragment extends Fragment {
                 binding.alertText2.setText("");
             }
         });
+
+        Context context = getContext();
+        if (context != null) {
+            Drawable drawable = ContextCompat.getDrawable(context, R.drawable.rounded_bg);
+            if (drawable != null) {
+                drawable = drawable.mutate();
+                drawable.setTint(Color.parseColor("#DC2626"));
+
+                binding.alertBox1.setBackground(drawable);
+            }
+
+            Drawable drawable1 = ContextCompat.getDrawable(context, R.drawable.rounded_bg);
+            if (drawable1 != null) {
+                drawable1 = drawable1.mutate();
+                drawable1.setTint(Color.parseColor("#FBBF24"));
+                binding.alertBox2.setBackground(drawable1);
+            }
+        }
 
         return binding.getRoot();
     }
