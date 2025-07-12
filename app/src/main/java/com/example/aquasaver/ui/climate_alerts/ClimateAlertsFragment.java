@@ -35,6 +35,9 @@ public class ClimateAlertsFragment extends Fragment {
         binding = FragmentClimateAlertsBinding.inflate(inflater, container, false);
 
         temperatureText = binding.temperatureText;
+        viewModel = new ViewModelProvider(this).get(ClimateAlertsViewModel.class);
+
+
 
         // Get user preferences
         SharedPreferences prefs = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
@@ -48,11 +51,16 @@ public class ClimateAlertsFragment extends Fragment {
             return binding.getRoot();
         }
 
-        viewModel.setLocation(location);
+       Log.d("CLIMATE", "Location before set: " + location);
+viewModel.setLocation(location);
+Log.d("CLIMATE", "Set location done");
 
-        viewModel.getLocation().observe(getViewLifecycleOwner(), loc -> {
-            binding.locationText.setText(loc != null ? loc : "No location set");
-        });
+viewModel.getLocation().observe(getViewLifecycleOwner(), loc -> {
+    Log.d("CLIMATE", "Observed location: " + loc);
+    if (binding.locationText != null) {
+        binding.locationText.setText(loc != null ? loc : "No location set");
+    }
+});
 
         WeatherRepository repository = new WeatherRepository(requireContext());
         repository.getTodayWeather(email, location, new WeatherRepository.WeatherDataCallback() {
