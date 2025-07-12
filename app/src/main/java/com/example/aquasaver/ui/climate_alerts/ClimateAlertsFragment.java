@@ -50,7 +50,7 @@ public class ClimateAlertsFragment extends Fragment {
 
         viewModel.setLocation(location);
 
-        viewModel.getLocationLiveData().observe(getViewLifecycleOwner(), loc -> {
+        viewModel.getLocation().observe(getViewLifecycleOwner(), loc -> {
             binding.locationText.setText(loc != null ? loc : "No location set");
         });
 

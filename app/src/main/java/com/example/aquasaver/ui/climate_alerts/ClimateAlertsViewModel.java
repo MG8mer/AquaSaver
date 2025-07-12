@@ -68,7 +68,7 @@ public class ClimateAlertsViewModel extends ViewModel {
         return suggestionLiveData;
     }
 
-    public LiveData<String> getLocationLiveData() {
+    public LiveData<String> getLocation() {
         return locationLiveData;
     }
 
