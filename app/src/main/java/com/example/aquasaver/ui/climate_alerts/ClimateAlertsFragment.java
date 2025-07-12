@@ -30,7 +30,7 @@ public class ClimateAlertsFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentClimateAlertsBinding.inflate(inflater, container, false);
 
-        locationText = binding.locationText; // Use binding references
+        locationText = binding.locationText;
         temperatureText = binding.temperatureText;
 
         // Get user preferences
@@ -74,7 +74,6 @@ public class ClimateAlertsFragment extends Fragment {
             if (suggestions != null && !suggestions.isEmpty()) {
                 String[] lines = suggestions.split("\\n");
 
-                // Optionally parse for title/text if you follow a pattern
                 if (lines.length >= 2) {
                     binding.alertTitle1.setText("Alert 1");
                     binding.alertText1.setText(lines[0]);
