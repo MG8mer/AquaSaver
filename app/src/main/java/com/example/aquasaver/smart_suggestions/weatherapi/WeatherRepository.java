@@ -41,6 +41,7 @@ public class WeatherRepository {
                     String weatherReport = data.main.temp + "°C," + data.weather.get(0).description;
 
                     Log.d("WeatherRepo", "Weather report: " + weatherReport);
+                    Log.d("WeatherRepo", "getTodayWeather called for location: " + location);
 
                     // Return ONLY the weather report
                     callback.onSuccess(weatherReport);

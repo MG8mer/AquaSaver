@@ -33,16 +33,13 @@ public class ClimateAlertsFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentClimateAlertsBinding.inflate(inflater, container, false);
-
         temperatureText = binding.temperatureText;
         viewModel = new ViewModelProvider(this).get(ClimateAlertsViewModel.class);
 
-
-
         // Get user preferences
-        SharedPreferences prefs = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
-        String email = prefs.getString("username", null);
-        String location = prefs.getString("location", null);
+        SharedPreferences userPrefs = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
+        String email = userPrefs.getString("username", null);
+        String location = userPrefs.getString("location", null);
 
         if (email == null || location == null) {
             Toast.makeText(getContext(), "User not logged in or location missing", Toast.LENGTH_LONG).show();
@@ -51,39 +48,105 @@ public class ClimateAlertsFragment extends Fragment {
             return binding.getRoot();
         }
 
-       Log.d("CLIMATE", "Location before set: " + location);
-viewModel.setLocation(location);
-Log.d("CLIMATE", "Set location done");
-
-viewModel.getLocation().observe(getViewLifecycleOwner(), loc -> {
-    Log.d("CLIMATE", "Observed location: " + loc);
-    if (binding.locationText != null) {
-        binding.locationText.setText(loc != null ? loc : "No location set");
-    }
-});
-
-        WeatherRepository repository = new WeatherRepository(requireContext());
-        repository.getTodayWeather(email, location, new WeatherRepository.WeatherDataCallback() {
-            @Override
-            public void onSuccess(String weather) {
-                requireActivity().runOnUiThread(() -> {
-                    String[] parts = weather.split(",");
-                    if (parts.length > 0) temperatureText.setText(parts[0]);
-                    //if (parts.length > 1) updateWeatherIcon(parts[1].trim());
-                });
-            }
-
-            @Override
-            public void onFailure(String error) {
-                Log.e("ClimateAlertsFragment", "Weather API Error: " + error);
-                requireActivity().runOnUiThread(() ->
-                        temperatureText.setText("N/A")
-                );
+        Log.d("CLIMATE", "Location before set: " + location);
+        viewModel.setLocation(location);
+        viewModel.getLocation().observe(getViewLifecycleOwner(), loc -> {
+            Log.d("CLIMATE", "Observed location: " + loc);
+            if (binding.locationText != null) {
+                binding.locationText.setText(loc != null ? loc : "No location set");
             }
         });
 
-        // Set up viewmodel
-        viewModel = new ViewModelProvider(this).get(ClimateAlertsViewModel.class);
+        // Weather fetch logic
+        SharedPreferences weatherPrefs = requireActivity().getSharedPreferences("weather_prefs", Context.MODE_PRIVATE);
+        long lastFetch = weatherPrefs.getLong("last_fetch_time", 0);
+        long now = System.currentTimeMillis();
+        String cachedWeather = weatherPrefs.getString("last_weather", null);
+        boolean shouldFetch = cachedWeather == null || (now - lastFetch) > (60 * 60 * 1000); // 1 hour or no cache
+        Log.d("CLIMATE", "Should fetch: " + shouldFetch);
+        Log.d("CLIMATE", "Now: " + now + ", Last fetch: " + lastFetch + ", Delta: " + (now - lastFetch));
+        WeatherRepository repository = new WeatherRepository(requireContext());
+
+        if (shouldFetch) {
+            Log.d("CLIMATE", "Fetching new weather from API...");
+            repository.getTodayWeather(email, location, new WeatherRepository.WeatherDataCallback() {
+                @Override
+                public void onSuccess(String weather) {
+                    requireActivity().runOnUiThread(() -> {
+                        Log.d("CLIMATE", "Weather API returned: " + weather);
+
+                        String[] parts = weather.split(",");
+                        if (parts.length > 0) {
+                            temperatureText.setText(parts[0]);
+
+                            SharedPreferences prefs = requireActivity().getSharedPreferences("weather_prefs", Context.MODE_PRIVATE);
+                            prefs.edit()
+                                    .putLong("last_fetch_time", System.currentTimeMillis())
+                                    .putString("last_weather", weather)
+                                    .apply();
+
+                            Log.d("CLIMATE", "Weather cached: " + weather);
+                        } else {
+                            temperatureText.setText("N/A");
+                            Log.w("CLIMATE", "Weather response malformed: " + weather);
+                        }
+                    });
+                }
+
+                @Override
+                public void onFailure(String error) {
+                    Log.e("ClimateAlertsFragment", "Weather API Error: " + error);
+                    requireActivity().runOnUiThread(() -> temperatureText.setText("N/A"));
+                }
+            });
+        } else {
+            Log.d("CLIMATE", "Using cached weather");
+            if (cachedWeather != null) {
+                String[] parts = cachedWeather.split(",");
+                if (parts.length > 0) {
+                    temperatureText.setText(parts[0]);
+                    Log.d("CLIMATE", "Loaded cached weather: " + cachedWeather);
+                } else {
+                    Log.w("CLIMATE", "Cached weather was invalid format: " + cachedWeather);
+                    temperatureText.setText("N/A");
+                }
+            } else {
+                Log.w("CLIMATE", "No cached weather found! Forcing fetch...");
+                // Fallback to fetch
+                repository.getTodayWeather(email, location, new WeatherRepository.WeatherDataCallback() {
+                    @Override
+                    public void onSuccess(String weather) {
+                        requireActivity().runOnUiThread(() -> {
+                            Log.d("CLIMATE", "Fallback Weather API returned: " + weather);
+
+                            String[] parts = weather.split(",");
+                            if (parts.length > 0) {
+                                temperatureText.setText(parts[0]);
+
+                                SharedPreferences prefs = requireActivity().getSharedPreferences("weather_prefs", Context.MODE_PRIVATE);
+                                prefs.edit()
+                                        .putLong("last_fetch_time", System.currentTimeMillis())
+                                        .putString("last_weather", weather)
+                                        .apply();
+
+                                Log.d("CLIMATE", "Weather cached (fallback): " + weather);
+                            } else {
+                                temperatureText.setText("N/A");
+                                Log.w("CLIMATE", "Fallback weather response malformed: " + weather);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onFailure(String error) {
+                        Log.e("ClimateAlertsFragment", "Fallback Weather API Error: " + error);
+                        requireActivity().runOnUiThread(() -> temperatureText.setText("N/A"));
+                    }
+                });
+            }
+        }
+
+        // Smart Suggestions Logic
         viewModel.loadSmartSuggestions(requireContext(), email, location);
         viewModel.getSuggestionLiveData().observe(getViewLifecycleOwner(), suggestions -> {
             if (suggestions != null && !suggestions.isEmpty()) {
@@ -96,12 +159,10 @@ viewModel.getLocation().observe(getViewLifecycleOwner(), loc -> {
                     binding.alertTitle2.setText("Alert 2");
                     binding.alertText2.setText(lines[1]);
                 } else {
-                    // Fallback if less than 2 lines
                     binding.alertText1.setText(lines[0]);
                     binding.alertText2.setText("No second suggestion.");
                 }
 
-                // Hide unused text view
                 binding.textClimateAlerts.setVisibility(View.GONE);
             } else {
                 binding.alertText1.setText("No suggestions available.");
@@ -109,25 +170,37 @@ viewModel.getLocation().observe(getViewLifecycleOwner(), loc -> {
             }
         });
 
+        // UI styling for alert boxes
         Context context = getContext();
         if (context != null) {
-            Drawable drawable = ContextCompat.getDrawable(context, R.drawable.rounded_bg);
-            if (drawable != null) {
-                drawable = drawable.mutate();
-                drawable.setTint(Color.parseColor("#DC2626"));
-
-                binding.alertBox1.setBackground(drawable);
+            Drawable redBox = ContextCompat.getDrawable(context, R.drawable.rounded_bg);
+            if (redBox != null) {
+                redBox = redBox.mutate();
+                redBox.setTint(Color.parseColor("#DC2626"));
+                binding.alertBox1.setBackground(redBox);
             }
 
-            Drawable drawable1 = ContextCompat.getDrawable(context, R.drawable.rounded_bg);
-            if (drawable1 != null) {
-                drawable1 = drawable1.mutate();
-                drawable1.setTint(Color.parseColor("#FBBF24"));
-                binding.alertBox2.setBackground(drawable1);
+            Drawable yellowBox = ContextCompat.getDrawable(context, R.drawable.rounded_bg);
+            if (yellowBox != null) {
+                yellowBox = yellowBox.mutate();
+                yellowBox.setTint(Color.parseColor("#FBBF24"));
+                binding.alertBox2.setBackground(yellowBox);
             }
         }
 
         return binding.getRoot();
+    }
+
+    private boolean shouldFetchWeather(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("weather_prefs", Context.MODE_PRIVATE);
+        long lastFetchTime = prefs.getLong("last_fetch_time", 0);
+        long oneHourMillis = 60 * 60 * 1000; // 1 hour
+        return (System.currentTimeMillis() - lastFetchTime) > oneHourMillis;
+    }
+
+    private void updateLastFetchTime(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences("weather_prefs", Context.MODE_PRIVATE);
+        prefs.edit().putLong("last_fetch_time", System.currentTimeMillis()).apply();
     }
 
     /*private void updateWeatherIcon(String description) {
