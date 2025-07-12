@@ -1,4 +1,4 @@
-package com.example.aquasaver;
+package com.aquasaver;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -9,18 +9,14 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.room.Room;
-
-
-import com.example.aquasaver.dao.UserProfileDao;
 import com.example.aquasaver.db.AppDatabase;
+import com.example.aquasaver.dao.UserProfileDao;
 import com.example.aquasaver.model.UserProfile;
 import androidx.room.Room;
 import com.example.aquasaver.R;
 import com.example.aquasaver.ui.main_pages.MainActivity;
 
 public class LoginActivity extends AppCompatActivity {
-
     EditText username, password;
     Button loginBtn, signupBtn;
 
@@ -43,11 +39,11 @@ public class LoginActivity extends AppCompatActivity {
 
         UserProfileDao userDao = db.userProfileDao();
 
+        // Handle Login
         loginBtn.setOnClickListener(v -> {
             String user = username.getText().toString().trim();
             String pass = password.getText().toString().trim();
 
-            // Handling login (SignupActivity.java handels SIGNING UP)
             if (user.isEmpty() || pass.isEmpty()) {
                 Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
             } else {
@@ -70,7 +66,7 @@ public class LoginActivity extends AppCompatActivity {
 
         // Navigate to SignupActivity
         signupBtn.setOnClickListener(v -> {
-            Intent intent = new Intent(LoginActivity.this, com.example.aquasaver.SignupActivity.class);
+            Intent intent = new Intent(LoginActivity.this, SignupActivity.class);
 
             // Optional: Clear old signup data
             getSharedPreferences("UserProfile", MODE_PRIVATE).edit().clear().apply();

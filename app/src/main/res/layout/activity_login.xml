@@ -2,77 +2,81 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp"
-    android:background="@drawable/gradient_background">
+    android:background="#B3E5FC">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:gravity="center_horizontal"
-        android:padding="16dp"
-        android:background="@drawable/form_background">
+        android:padding="24dp"
+        android:gravity="center_horizontal">
 
-        <!-- Water Drop Logo -->
         <ImageView
             android:layout_width="100dp"
             android:layout_height="100dp"
             android:src="@drawable/baseline_water_drop_24"
-            android:contentDescription="Water Drop Logo"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="12dp" />
+            android:layout_marginTop="40dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Welcome to AquaSaver"
-            android:textSize="24sp"
+            android:textSize="22sp"
             android:textStyle="bold"
             android:textColor="#0077B6"
-            android:layout_marginBottom="24dp" />
+            android:layout_marginTop="16dp" />
 
         <EditText
             android:id="@+id/username"
+            android:minHeight="48dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Username / Email"
             android:inputType="textEmailAddress"
-            android:background="@drawable/input_field"
-            android:padding="14dp"
-            android:textColor="#000000"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginTop="32dp" />
 
         <EditText
             android:id="@+id/password"
+            android:minHeight="48dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Password"
             android:inputType="textPassword"
-            android:background="@drawable/input_field"
-            android:padding="14dp"
-            android:textColor="#000000"
-            android:layout_marginBottom="24dp" />
+            android:layout_marginTop="16dp" />
 
         <Button
             android:id="@+id/loginBtn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Login"
-            android:textSize="16sp"
-            android:textColor="#FFFFFF"
-            android:backgroundTint="#0077B6"
-            android:padding="14dp"
-            android:layout_marginBottom="12dp" />
+            android:layout_marginTop="24dp" />
 
         <Button
             android:id="@+id/signupBtn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Sign Up"
-            android:textSize="16sp"
-            android:textColor="#0077B6"
-            android:backgroundTint="#E0F7FA"
-            android:padding="14dp" />
+            android:layout_marginTop="12dp" />
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Forgot Username"
+                android:textColor="#000000"
+                android:layout_marginEnd="24dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Forgot Password"
+                android:textColor="#000000" />
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>
