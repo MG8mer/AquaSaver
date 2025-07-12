@@ -28,13 +28,12 @@ public class ClimateAlertsFragment extends Fragment {
 
     private FragmentClimateAlertsBinding binding;
     private ClimateAlertsViewModel viewModel;
-    TextView locationText, temperatureText;
+    TextView temperatureText;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentClimateAlertsBinding.inflate(inflater, container, false);
 
-        locationText = binding.locationText;
         temperatureText = binding.temperatureText;
 
         // Get user preferences
@@ -49,7 +48,13 @@ public class ClimateAlertsFragment extends Fragment {
             return binding.getRoot();
         }
 
-        locationText.setText(location);
+        viewModel.setLocation(location);
+
+        viewModel.getLocationLiveData().observe(getViewLifecycleOwner(), locationText -> {
+            if (locationText != null) {
+                viewModel.setLocation(locationText);
+            }
+        });
 
         WeatherRepository repository = new WeatherRepository(requireContext());
         repository.getTodayWeather(email, location, new WeatherRepository.WeatherDataCallback() {

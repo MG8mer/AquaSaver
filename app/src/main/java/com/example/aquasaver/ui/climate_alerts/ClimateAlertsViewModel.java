@@ -32,6 +32,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class ClimateAlertsViewModel extends ViewModel {
 
     private final MutableLiveData<String> suggestionLiveData = new MutableLiveData<>();
+
+    private final MutableLiveData<String> locationLiveData = new MutableLiveData<>();
     private final OpenAIService openAIService;
 
     public ClimateAlertsViewModel() {
@@ -64,6 +66,29 @@ public class ClimateAlertsViewModel extends ViewModel {
 
     public LiveData<String> getSuggestionLiveData() {
         return suggestionLiveData;
+    }
+
+    public LiveData<String> getLocationLiveData() {
+        return locationLiveData;
+    }
+
+    public void setLocation(String location) {
+        if(location!=null) {
+            String city = null;
+            if (location != null) {
+                String[] parts = location.split(",");
+                if (parts.length > 0) {
+                    city = parts[0].trim();  // Usually the city or street — depends on format
+                }
+            }
+            if(city!=null) {
+                locationLiveData.setValue(city + ": ");
+            } else {
+                locationLiveData.setValue(location + ": ");
+            }
+        } else {
+            locationLiveData.setValue("No location set");
+        }
     }
 
     public interface SuggestionCallback {
