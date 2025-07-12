@@ -15,6 +15,8 @@ import com.example.aquasaver.model.UserProfile;
 import androidx.room.Room;
 import com.example.aquasaver.R;
 import com.example.aquasaver.ui.main_pages.MainActivity;
+import com.example.aquasaver.ui.main_pages.SignupActivity;
+
 
 public class LoginActivity extends AppCompatActivity {
     EditText username, password;
