@@ -50,10 +50,8 @@ public class ClimateAlertsFragment extends Fragment {
 
         viewModel.setLocation(location);
 
-        viewModel.getLocationLiveData().observe(getViewLifecycleOwner(), locationText -> {
-            if (locationText != null) {
-                viewModel.setLocation(locationText);
-            }
+        viewModel.getLocationLiveData().observe(getViewLifecycleOwner(), loc -> {
+            binding.locationText.setText(loc != null ? loc : "No location set");
         });
 
         WeatherRepository repository = new WeatherRepository(requireContext());
