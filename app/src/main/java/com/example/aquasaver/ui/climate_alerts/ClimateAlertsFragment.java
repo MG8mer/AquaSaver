@@ -2,6 +2,8 @@ package com.example.aquasaver.ui.climate_alerts;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,9 +14,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.aquasaver.R;
 import com.example.aquasaver.databinding.FragmentClimateAlertsBinding;
 import com.example.aquasaver.smart_suggestions.weatherapi.WeatherRepository;
 
@@ -24,14 +28,16 @@ public class ClimateAlertsFragment extends Fragment {
 
     private FragmentClimateAlertsBinding binding;
     private ClimateAlertsViewModel viewModel;
-    TextView locationText, temperatureText;
+    TextView temperatureText;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentClimateAlertsBinding.inflate(inflater, container, false);
 
-        locationText = binding.locationText; // Use binding references
         temperatureText = binding.temperatureText;
+        viewModel = new ViewModelProvider(this).get(ClimateAlertsViewModel.class);
+
+
 
         // Get user preferences
         SharedPreferences prefs = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
@@ -45,7 +51,16 @@ public class ClimateAlertsFragment extends Fragment {
             return binding.getRoot();
         }
 
-        locationText.setText(location);
+       Log.d("CLIMATE", "Location before set: " + location);
+viewModel.setLocation(location);
+Log.d("CLIMATE", "Set location done");
+
+viewModel.getLocation().observe(getViewLifecycleOwner(), loc -> {
+    Log.d("CLIMATE", "Observed location: " + loc);
+    if (binding.locationText != null) {
+        binding.locationText.setText(loc != null ? loc : "No location set");
+    }
+});
 
         WeatherRepository repository = new WeatherRepository(requireContext());
         repository.getTodayWeather(email, location, new WeatherRepository.WeatherDataCallback() {
@@ -74,7 +89,6 @@ public class ClimateAlertsFragment extends Fragment {
             if (suggestions != null && !suggestions.isEmpty()) {
                 String[] lines = suggestions.split("\\n");
 
-                // Optionally parse for title/text if you follow a pattern
                 if (lines.length >= 2) {
                     binding.alertTitle1.setText("Alert 1");
                     binding.alertText1.setText(lines[0]);
@@ -94,6 +108,24 @@ public class ClimateAlertsFragment extends Fragment {
                 binding.alertText2.setText("");
             }
         });
+
+        Context context = getContext();
+        if (context != null) {
+            Drawable drawable = ContextCompat.getDrawable(context, R.drawable.rounded_bg);
+            if (drawable != null) {
+                drawable = drawable.mutate();
+                drawable.setTint(Color.parseColor("#DC2626"));
+
+                binding.alertBox1.setBackground(drawable);
+            }
+
+            Drawable drawable1 = ContextCompat.getDrawable(context, R.drawable.rounded_bg);
+            if (drawable1 != null) {
+                drawable1 = drawable1.mutate();
+                drawable1.setTint(Color.parseColor("#FBBF24"));
+                binding.alertBox2.setBackground(drawable1);
+            }
+        }
 
         return binding.getRoot();
     }
