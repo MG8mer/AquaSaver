@@ -14,6 +14,7 @@
         android:background="@drawable/form_background">
 
         <TextView
+            android:id="@+id/profileTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="User Profile"
@@ -22,12 +23,13 @@
             android:textColor="#0077B6"
             android:layout_marginBottom="24dp" />
 
+        <!-- Email field -->
         <EditText
-            android:id="@+id/signupUsername"
+            android:id="@+id/signupEmail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Username"
-            android:inputType="textPersonName"
+            android:hint="Email"
+            android:inputType="textEmailAddress"
             android:background="@drawable/input_field"
             android:padding="14dp"
             android:textColor="#000000"
@@ -44,7 +46,33 @@
             android:textColor="#000000"
             android:layout_marginBottom="16dp" />
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/labelLocationPrefTracker"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Location Tracking"
+                android:textSize="16sp"
+                android:textColor="#333333"
+                android:layout_marginEnd="12dp" />
+
+            <Switch
+                android:id="@+id/locationTrackingSwitch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:minWidth="48dp"
+                android:padding="12dp" />
+        </LinearLayout>
+
         <TextView
+            android:id="@+id/labelLocationPref"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Location"
@@ -71,6 +99,7 @@
             android:layout_marginBottom="16dp">
 
             <TextView
+                android:id="@+id/labelGoalTracker"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Water-Usage GoalTracker"
@@ -86,14 +115,14 @@
                 android:padding="8dp" />
         </LinearLayout>
 
-        <!-- Notifications -->
+        <!-- Notifications block -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:minHeight="48dp"
             android:gravity="center_vertical"
-            android:layout_marginBottom="8dp">
+            android:layout_marginBottom="16dp">
 
             <TextView
                 android:layout_width="0dp"
@@ -112,7 +141,7 @@
                 android:padding="12dp" />
         </LinearLayout>
 
-        <!-- Hidden by default -->
+        <!-- Extra notification options visible only if notifications enabled -->
         <LinearLayout
             android:id="@+id/extraNotificationOptions"
             android:layout_width="match_parent"
@@ -121,21 +150,52 @@
             android:visibility="gone"
             android:layout_marginBottom="16dp">
 
-            <Switch
-                android:id="@+id/weatherAlertSwitch"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Enable Weather Alerts"
-                android:textSize="16sp"
-                android:padding="8dp" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
 
-            <Switch
-                android:id="@+id/reminderTimeSwitch"
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Weather Alerts"
+                    android:textSize="16sp"
+                    android:textColor="#333333"
+                    android:layout_marginEnd="12dp" />
+
+                <Switch
+                    android:id="@+id/weatherAlertSwitch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:minWidth="48dp"
+                    android:padding="12dp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Set Reminder Times"
-                android:textSize="16sp"
-                android:padding="8dp" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Reminder Time"
+                    android:textSize="16sp"
+                    android:textColor="#333333"
+                    android:layout_marginEnd="12dp" />
+
+                <Switch
+                    android:id="@+id/reminderTimeSwitch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:minWidth="48dp"
+                    android:padding="12dp" />
+            </LinearLayout>
         </LinearLayout>
 
         <Button
