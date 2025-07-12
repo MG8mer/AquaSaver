@@ -12,12 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AquaSaver"
         tools:targetApi="31">
+<!--    THIS BLOCK SETS LOGIN ACTIVITY AS LAUNCH ACTIVITY-->
 
-<!--        THIS SECTION SETS THE LOGINACTIVITY AS ACTIVITY ON LAUNCH-->
-
-<!--        <activity android:name="com.aquasaver.SignupActivity"/>-->
-<!--        <activity android:name="com.example.aquasaver.ui.activities.MainActivity" />-->
-<!--        <activity android:name="com.aquasaver.LoginActivity"-->
+<!--        <activity android:name="com.example.aquasaver.ui.main_pages.LoginActivity"-->
 <!--            android:exported="true"-->
 <!--            android:label="@string/app_name"-->
 <!--            android:theme="@style/Theme.AquaSaver.NoActionBar">-->
@@ -26,11 +23,18 @@
 <!--                <category android:name="android.intent.category.LAUNCHER" />-->
 <!--            </intent-filter>-->
 <!--        </activity>-->
+<!--        <activity android:name="com.example.aquasaver.ui.main_pages.SignupActivity" />-->
+<!--        <activity android:name="com.example.aquasaver.ui.main_pages.MainActivity" />-->
 
-<!--    THIS SECTION SETS THE MAINACTIVITY AS ACTIVITY ON LAUNCH-->
-        <activity android:name="com.aquasaver.SignupActivity"/>
-        <activity android:name="com.example.aquasaver.ui.main_pages.MainActivity"
-        android:exported="true"
+
+
+<!--    THIS BLOCK SETS MAIN ACTIVITY AS LAUNCH ACTIVITY-->
+
+        <activity android:name="com.example.aquasaver.ui.main_pages.LoginActivity" />
+        <activity android:name="com.example.aquasaver.ui.main_pages.SignupActivity" />
+        <activity
+            android:name="com.example.aquasaver.ui.main_pages.MainActivity"
+            android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.AquaSaver.NoActionBar">
             <intent-filter>
@@ -38,8 +42,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <!-- <activity android:name="com.example.aquasaver.ui.climate_alerts.ClimateAlertsActivity"/> -->
-        <!-- <activity android:name="com.aquasaver.LoginActivity" /> -->
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />
