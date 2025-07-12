@@ -52,8 +52,18 @@ public class LoginActivity extends AppCompatActivity {
                     Log.d("LoginActivity", "Login success: saving user data: " +
                             existingUser.getEmail() + ", " + existingUser.getLocation());
                     Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
-                    // Save to SharedPreferences
-                } else {
+
+                    SharedPreferences prefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
+                    prefs.edit()
+                            .putString("username", existingUser.getEmail())
+                            .putString("location", existingUser.getLocation())
+                            .apply();
+
+                    // Navigate to MainActivity
+                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                    startActivity(intent);
+                }
+                else {
                     Log.d("LoginActivity", "Testing login failure");
                     Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show();
                 }
