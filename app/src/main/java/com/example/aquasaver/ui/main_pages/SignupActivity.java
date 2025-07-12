@@ -98,11 +98,7 @@ public class SignupActivity extends AppCompatActivity {
         notifications.setOnCheckedChangeListener((buttonView, isChecked) -> {
             extraNotificationOptions.setVisibility(isChecked ? View.VISIBLE : View.GONE);
         });
-        db = Room.databaseBuilder(
-                getApplicationContext(),
-                AppDatabase.class,
-                "aqua_db"
-        ).allowMainThreadQueries().build();
+        db = AppDatabase.getInstance(this);
 
         userDao = db.userProfileDao();
 

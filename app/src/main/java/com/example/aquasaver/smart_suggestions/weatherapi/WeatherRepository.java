@@ -27,7 +27,7 @@ public class WeatherRepository {
         this.suggestionsDao = db.weatherSuggestionsDao();
     }
 
-    public void getTodayWeather(String email, String location, WeatherDataCallback callback) {
+        public void getTodayWeather(String email, String location, WeatherDataCallback callback) {
         WeatherAPI api = WeatherAPIClient.getWeatherApi();
         Call<WeatherResponse> call = api.getWeather(location, BuildConfig.WEATHER_API_KEY, "metric");
 
