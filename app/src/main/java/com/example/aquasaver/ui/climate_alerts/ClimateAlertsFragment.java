@@ -68,16 +68,32 @@ public class ClimateAlertsFragment extends Fragment {
         });
 
         // Set up viewmodel
-        /*viewModel = new ViewModelProvider(this).get(ClimateAlertsViewModel.class);
+        viewModel = new ViewModelProvider(this).get(ClimateAlertsViewModel.class);
         viewModel.loadSmartSuggestions(requireContext(), email, location);
-
         viewModel.getSuggestionLiveData().observe(getViewLifecycleOwner(), suggestions -> {
             if (suggestions != null && !suggestions.isEmpty()) {
-                binding.textClimateAlerts.setText(Html.fromHtml(suggestions, Html.FROM_HTML_MODE_LEGACY));
+                String[] lines = suggestions.split("\\n");
+
+                // Optionally parse for title/text if you follow a pattern
+                if (lines.length >= 2) {
+                    binding.alertTitle1.setText("Alert 1");
+                    binding.alertText1.setText(lines[0]);
+
+                    binding.alertTitle2.setText("Alert 2");
+                    binding.alertText2.setText(lines[1]);
+                } else {
+                    // Fallback if less than 2 lines
+                    binding.alertText1.setText(lines[0]);
+                    binding.alertText2.setText("No second suggestion.");
+                }
+
+                // Hide unused text view
+                binding.textClimateAlerts.setVisibility(View.GONE);
             } else {
-                binding.textClimateAlerts.setText("No suggestions available.");
+                binding.alertText1.setText("No suggestions available.");
+                binding.alertText2.setText("");
             }
-        }); */
+        });
 
         return binding.getRoot();
     }
