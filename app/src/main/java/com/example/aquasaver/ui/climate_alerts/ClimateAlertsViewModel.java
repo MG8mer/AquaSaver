@@ -140,7 +140,7 @@ public class ClimateAlertsViewModel extends ViewModel {
                             suggestionLiveData.postValue("Could not fetch weather.");
                             return;
                         }
-                        fetchSuggestion("It's " + weatherReport + ". Suggest 5 water-saving tips. Only output the reason and action on separate lines", usageSuggestion -> {
+                        fetchSuggestion("It's " + weatherReport + ". Suggest 5 water-saving tips.", usageSuggestion -> {
                             WeatherSuggestions suggestion = new WeatherSuggestions(
                                     email, location, today, weatherReport, usageSuggestion
                             );
