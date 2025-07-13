@@ -25,7 +25,7 @@
             android:textSize="@dimen/body_size" />
 
         <Button
-            android:id="@+id/Week"
+            android:id="@+id/week"
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
