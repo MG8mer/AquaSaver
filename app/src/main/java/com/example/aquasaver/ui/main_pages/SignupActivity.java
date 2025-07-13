@@ -114,6 +114,7 @@ public class SignupActivity extends AppCompatActivity {
             boolean reminder = reminderTimeSwitch.isChecked();
             boolean useGps = locationTrackingSwitch.isChecked();
             Date joinDate = new Date();
+            Date lastStreakUpdate = new Date();
 
             String selected = goalSpinner.getSelectedItem().toString();
             GoalType goalType = null;
@@ -125,8 +126,10 @@ public class SignupActivity extends AppCompatActivity {
                 case "weekly":
                     goalType = GoalType.WEEKLY;
                     break;
+                case "monthly":
+                    goalType = GoalType.MONTHLY;
+                    break;
             }
-
 
 
 
@@ -144,7 +147,7 @@ public class SignupActivity extends AppCompatActivity {
                 else {
                     // Placeholders:
                     // reminderTime: "12:00 AM"
-                    UserProfile newUser = new UserProfile(userEmail, pass, loc, useGps, goalType, notify, "12:00 AM", weatherAlert, joinDate);
+                    UserProfile newUser = new UserProfile(userEmail, pass, loc, useGps, goalType, notify, "12:00 AM", weatherAlert, joinDate, lastStreakUpdate);
 
                     userDao.insertUserProfile(newUser);
                     // Save profile data

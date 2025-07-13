@@ -40,8 +40,15 @@ public class UserProfile {
     @ColumnInfo(name = "join_date")
     public Date joinDate;
 
+    @ColumnInfo(name = "streak")
+    public int streak = 0;
+
+    @ColumnInfo(name = "last_streak_update")
+    public Date lastStreakUpdate;
+
+
     public UserProfile(@NonNull String email, String passwordHash, String location, boolean useGPS,
-                       GoalType goalType, boolean notificationsOn, String reminderTime, boolean weatherAlertsEnabled, Date joinDate) { // Constructor
+                       GoalType goalType, boolean notificationsOn, String reminderTime, boolean weatherAlertsEnabled, Date joinDate, Date lastStreakUpdate) { // Constructor
         this.email = email;
         this.location = location;
         this.passwordHash = passwordHash;
@@ -51,6 +58,7 @@ public class UserProfile {
         this.reminderTime = reminderTime;
         this.weatherAlertsEnabled = weatherAlertsEnabled;
         this.joinDate = joinDate;
+        this.lastStreakUpdate = lastStreakUpdate;
     }
 
     public String getEmail() { // Getter for email
@@ -116,5 +124,9 @@ public class UserProfile {
     public void setJoinDate(Date joinDate) { // Setter for joinDate
         this.joinDate = joinDate;
     }
+    public int getStreak() { return streak; }
+    public void setStreak(int streak) { this.streak = streak; }
 
+    public Date getLastStreakUpdate() { return lastStreakUpdate; }
+    public void setLastStreakUpdate(Date lastStreakUpdate) { this.lastStreakUpdate = lastStreakUpdate; }
 }

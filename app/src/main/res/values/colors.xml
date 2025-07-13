@@ -50,4 +50,10 @@
 
     <color name="nightColorOutline">#8D9199</color>
 
+    <color name="progress_blue">#1E90FF</color>       <!-- Dodger Blue -->
+    <color name="progress_yellow">#FFD700</color>     <!-- Gold -->
+    <color name="progress_orange">#FFA500</color>     <!-- Orange -->
+    <color name="progress_red">#FF4500</color>        <!-- Orange Red -->
+
+
 </resources>

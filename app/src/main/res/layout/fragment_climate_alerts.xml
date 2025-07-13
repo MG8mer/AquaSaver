@@ -13,8 +13,9 @@
         android:padding="16dp"
         tools:context=".ui.climate_alerts.ClimateAlertsFragment">
 
+
         <!-- Forecast Section Label -->
-        <TextView
+        <!-- <TextView
             android:id="@+id/forecastLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -22,10 +23,10 @@
             android:text="Today's Forecast:"
             android:textSize="@dimen/header_size"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent" /> -->
 
         <!-- Location Text -->
-        <TextView
+        <!-- <TextView
             android:id="@+id/locationText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -40,10 +41,10 @@
             android:textSize="@dimen/body_size"
             app:layout_constraintBottom_toTopOf="@+id/divider1"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/forecastLabel" />
+            app:layout_constraintTop_toBottomOf="@+id/forecastLabel" /> -->
 
         <!-- Temperature -->
-        <TextView
+        <!-- <TextView
             android:id="@+id/temperatureText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -52,10 +53,10 @@
             android:textStyle="bold"
             android:textColor="#1D4ED8"
             app:layout_constraintStart_toEndOf="@+id/locationText"
-            app:layout_constraintTop_toBottomOf="@+id/forecastLabel" />
+            app:layout_constraintTop_toBottomOf="@+id/forecastLabel" /> -->
 
         <!-- Weather Icon -->
-        <ImageView
+        <!--<ImageView
             android:id="@+id/weatherIcon"
             android:layout_width="48dp"
             android:layout_height="48dp"
@@ -65,7 +66,7 @@
             android:scaleType="fitCenter"
             android:src="@drawable/default_weather_icon"
             app:layout_constraintStart_toEndOf="@+id/temperatureText"
-            app:layout_constraintTop_toBottomOf="@+id/forecastLabel" />
+            app:layout_constraintTop_toBottomOf="@+id/forecastLabel" /> -->
 
         <!-- Divider 1 -->
         <View
@@ -75,8 +76,7 @@
             android:layout_marginTop="@dimen/divider_margin"
             android:background="@drawable/horizontal_divider"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/temperatureText" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <!-- Drought Map Section Label -->
         <TextView
@@ -115,198 +115,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/droughtMapImage" />
 
-        <!-- Climate Alerts Label -->
-        <TextView
-            android:id="@+id/climateAlertsLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/activity_horizontal_margin"
-            android:layout_marginTop="@dimen/divider_margin"
-            android:text="Climate Alerts:"
-            android:textSize="@dimen/header_size"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/divider2" />
-
-        <!-- Alert Box 1 -->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/alertBox1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/alert_bg"
-            android:elevation="2dp"
-            android:padding="12dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/climateAlertsLabel">
-
-            <TextView
-                android:id="@+id/alertTitle1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Alert Title"
-                android:textColor="#004D40"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:id="@+id/alertText1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="alert text"
-                android:textColor="#333333"
-                android:textSize="14sp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/alertTitle1" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <!-- Alert Box 2 -->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/alertBox2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/alert_bg"
-            android:elevation="2dp"
-            android:padding="12dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/alertBox1">
-
-            <TextView
-                android:id="@+id/alertTitle2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Alert Title"
-                android:textColor="#004D40"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:id="@+id/alertText2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="alert text"
-                android:textColor="#333333"
-                android:textSize="14sp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/alertTitle2" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <!-- Alert Box 3 -->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/alertBox3"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/alert_bg"
-            android:elevation="2dp"
-            android:padding="12dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/alertBox2">
-
-            <TextView
-                android:id="@+id/alertTitle3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Alert Title"
-                android:textColor="#004D40"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:id="@+id/alertText3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="alert text"
-                android:textColor="#333333"
-                android:textSize="14sp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/alertTitle3" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <!-- Alert Box 4 -->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/alertBox4"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/alert_bg"
-            android:elevation="2dp"
-            android:padding="12dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/alertBox3">
-
-            <TextView
-                android:id="@+id/alertTitle4"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Alert Title"
-                android:textColor="#004D40"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:id="@+id/alertText4"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="alert text"
-                android:textColor="#333333"
-                android:textSize="14sp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/alertTitle4" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <!-- Alert Box 5 -->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/alertBox5"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/alert_bg"
-            android:elevation="2dp"
-            android:padding="12dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/alertBox4">
-
-            <TextView
-                android:id="@+id/alertTitle5"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Alert Title"
-                android:textColor="#004D40"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:id="@+id/alertText5"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="alert text"
-                android:textColor="#333333"
-                android:textSize="14sp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/alertTitle5" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
         <!-- Climate Alert Suggestions -->
         <TextView
             android:id="@+id/text_climate_alerts"
@@ -318,8 +126,8 @@
             android:textAlignment="center"
             android:textSize="20sp"
             app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/alertBox5" />
+            app:layout_constraintStart_toStartOf="parent"
+            />
 <!-- Divider 3 -->
     <View
         android:id="@+id/divider3"

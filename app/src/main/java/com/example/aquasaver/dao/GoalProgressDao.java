@@ -36,4 +36,8 @@ public interface GoalProgressDao {
     List<GoalProgress> getUserGoalProgressByCompletion(String userEmail, boolean on_target); // Returns the progress of all goals
 
 
+    @Query("SELECT * FROM goal_progress WHERE user_email = :email AND DATE(progress_date / 1000, 'unixepoch') = DATE('now')")
+    GoalProgress getTodayProgress(String email);
+
+
 }
