@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat;
 import androidx.room.Room;
 
 import com.example.aquasaver.R;
+import com.example.aquasaver.dao.GoalProgressDao;
 import com.example.aquasaver.dao.UserProfileDao;
 import com.example.aquasaver.dao.WaterUsageDao;
 import com.example.aquasaver.db.AppDatabase;
@@ -25,9 +26,11 @@ import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.dao.UserProfileDao;
-
+import com.example.aquasaver.model.GoalProgress;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 public class HomePageWaterUsage extends AppCompatActivity {
 
@@ -42,6 +45,11 @@ public class HomePageWaterUsage extends AppCompatActivity {
     AppDatabase db;
     WaterUsageDao waterUsageDao;
     UserProfileDao userProfileDao;
+
+    GoalProgressDao goalProgressDao;
+    UserProfile user;
+
+    String goalType;
 
 
     @Override
@@ -78,7 +86,7 @@ public class HomePageWaterUsage extends AppCompatActivity {
         });
 
         decrementButton.setOnClickListener(v -> {
-            if (timerValue >= 10) {
+            if (timerValue >= 1) {
                 timerValue -= 1;
                 updateTimerLabel();
             }
@@ -92,9 +100,31 @@ public class HomePageWaterUsage extends AppCompatActivity {
                     "aqua_db"
             ).fallbackToDestructiveMigration().build();
             waterUsageDao = db.waterUsageDao();
+            userProfileDao = db.userProfileDao();
+            goalProgressDao = db.goalProgressDao();
 
+
+            user = userProfileDao.getUserByEmail("bro@gmail.com"); // REPLACE bro@gmail.com PROPER LOGIC TO OBTAIN USER EMAIL
+            goalType = user.getGoalType().toString();
+            float totalUsagePre;
+
+            // REPLACE bro@gmail.com PROPER LOGIC TO OBTAIN USER EMAIL
+            if (goalType.equals("DAILY"))
+            {
+                long[] todayWindow = computeTodayWindow();
+                totalUsagePre = waterUsageDao.getLitersUsedBetween("bro@gmail.com", todayWindow[0], todayWindow[1]);
+            }
+            else
+            {
+                long[] weekWindow = computeCurrentWeekWindow();
+                totalUsagePre = waterUsageDao.getLitersUsedBetween("bro@gmail.com", weekWindow[0], weekWindow[1]);
+            }
+            List<GoalProgress> goalProgressList = goalProgressDao.getAllProgressForUser("bro@gmail.com");
+            float goal = goalProgressList.get(0).getGoalAmount();
             runOnUiThread(() -> {
                 // safe to use db here
+                updatePieChart(totalUsagePre, goal);
+
                 logWaterUsage.setOnClickListener(v -> {
                     if (db == null) {
                         Toast.makeText(this, "Database is not ready yet. Please wait.", Toast.LENGTH_SHORT).show();
@@ -132,19 +162,32 @@ public class HomePageWaterUsage extends AppCompatActivity {
 
 
                     // REPLACE BELOW LINE WITH LOGIC TO OBTAIN ACTUAL USER CREDENTIALS
-                    WaterUsage waterUsage = new WaterUsage("example@gmail.com", currentDate, litersUsed, selectedActivity);
+                    WaterUsage waterUsage = new WaterUsage("bro@gmail.com", currentDate, litersUsed, selectedActivity);
 
                     new Thread(() -> {
                         waterUsageDao.insertLog(waterUsage);
+                        float totalUsage;
+                        // REPLACE bro@gmail.com PROPER LOGIC TO OBTAIN USER EMAIL
+                        if (goalType.equals("DAILY")){
+                            long[] todayWindow = computeTodayWindow();
+                            Float totalWrapper = waterUsageDao.getLitersUsedBetween("bro@gmail.com", todayWindow[0], todayWindow[1]);
+                            totalUsage  = (totalWrapper != null) ? totalWrapper : 0f;
+                        }
+                        else {
+                            long[] weekWindow = computeCurrentWeekWindow();
+                            Float totalWrapper = waterUsageDao.getLitersUsedBetween("bro@gmail.com", weekWindow[0], weekWindow[1]);
+                            totalUsage  = (totalWrapper != null) ? totalWrapper : 0f;                        }
 
-                        float totalUsage = waterUsageDao.getLitersUsedToday("example@gmail.com");
+                        GoalProgress mostRecentGoal = goalProgressList.get(0);
+                        mostRecentGoal.setAmountLogged(totalUsage);
+                        mostRecentGoal.setProgressDate(new Date());
 
 
                         runOnUiThread(() -> {
                             // Reset and update UI
                             timerValue = 0;
                             updateTimerLabel();
-                            updatePieChart(totalUsage);
+                            updatePieChart(totalUsage, goal);
                             Toast.makeText(this, "Water usage logged", Toast.LENGTH_SHORT).show();
 
                             if (selectedLayout != null) {
@@ -163,14 +206,14 @@ public class HomePageWaterUsage extends AppCompatActivity {
         timerLabel.setText("Timer: " + timerValue + " min");
     }
 
-    private void updatePieChart(float usage) {
+    private void updatePieChart(float usage, float goal) {
         ArrayList<PieEntry> entries = new ArrayList<>();
 
         // Convert gallons to liters
         float usageLiters = usage * 3.78541f;
 
-        // Define total in liters (100 gallons)
-        float totalLiters = 378.541f;
+        // Define total in liters
+        float totalLiters = goal*3.78541f;
 
         float remaining = Math.max(totalLiters - usageLiters, 0);
 
@@ -188,7 +231,14 @@ public class HomePageWaterUsage extends AppCompatActivity {
         PieData data = new PieData(dataSet);
         pieChart.setData(data);
 
-        pieChart.setCenterText(usage + " gallons\n" + ((usage / 100) * 100) + "% used today");
+        if (goalType.equals("DAILY"))
+        {
+            pieChart.setCenterText(usage + " liters\n" + ((usage / goal) * goal) + "% used today");
+
+        }
+        else {
+            pieChart.setCenterText(usage + " liters\n" + ((usage / goal) * goal) + "% used this week");
+        }
         pieChart.setCenterTextSize(16f);
         pieChart.setCenterTextColor(Color.BLACK);
 
@@ -205,4 +255,51 @@ public class HomePageWaterUsage extends AppCompatActivity {
         selectedLayout = layout;
         selectedActivity = activity;
     }
+
+    // This method returns a two item array, where
+    // the first item is the start of the day at 12 am and
+    // the second item is the end of the day right before the next
+    // 12 am.
+    public static long[] computeTodayWindow() {
+        Calendar cal = Calendar.getInstance();
+        // start of today
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE,      0);
+        cal.set(Calendar.SECOND,      0);
+        cal.set(Calendar.MILLISECOND, 0);
+        long start = cal.getTimeInMillis();
+
+        // start of tomorrow
+        cal.add(Calendar.DAY_OF_YEAR, 1);
+        long end = cal.getTimeInMillis();
+
+        return new long[]{ start, end };
+    }
+
+
+    // This method returns a two item array, where the first
+    // item is the start of the current week and the second
+    // is the end of that current week.
+
+    // This method is fixed so the start of the week is the most
+    // recent Monday and the end is the Sunday right before the next
+    // Monday.
+    public static long[] computeCurrentWeekWindow() {
+        Calendar now = Calendar.getInstance();
+        int todayDow = now.get(Calendar.DAY_OF_WEEK);
+        int daysSinceMonday = (todayDow + 5) % 7;
+        Calendar weekStart = (Calendar) now.clone();
+        weekStart.add(Calendar.DAY_OF_YEAR, -daysSinceMonday);
+        weekStart.set(Calendar.HOUR_OF_DAY, 0);
+        weekStart.set(Calendar.MINUTE,      0);
+        weekStart.set(Calendar.SECOND,      0);
+        weekStart.set(Calendar.MILLISECOND, 0);
+        long start = weekStart.getTimeInMillis();
+        weekStart.add(Calendar.DAY_OF_YEAR, 7);
+        long end = weekStart.getTimeInMillis();
+
+        return new long[]{ start, end };
+    }
+
 }
+

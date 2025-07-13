@@ -2,6 +2,9 @@ package com.aquasaver;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+
+import com.example.aquasaver.dao.GoalProgressDao;
+import com.example.aquasaver.model.GoalProgress;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import android.content.SharedPreferences;
@@ -47,6 +50,7 @@ public class SignupActivity extends AppCompatActivity {
     private SharedPreferences prefs;
     private AppDatabase db;
     private UserProfileDao userDao;
+    private GoalProgressDao goalProgressDao;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,6 +98,7 @@ public class SignupActivity extends AppCompatActivity {
         ).allowMainThreadQueries().build();   // OK for demo, move to background thread later
 
         userDao = db.userProfileDao();
+        goalProgressDao = db.goalProgressDao();
 
         // Signup button click: validate and save profile
 
@@ -125,8 +130,16 @@ public class SignupActivity extends AppCompatActivity {
                 // useGPS: false
                 // reminderTime: "12:00 AM"
                 UserProfile newUser = new UserProfile(user, pass, loc, false, goal, notify, "12:00 AM", weatherAlert, joinDate);
-
+                GoalProgress userGp;
+                if (goal == GoalType.DAILY)
+                {
+                    userGp = new GoalProgress(user, 0, joinDate, true, 300);
+                }
+                else {
+                    userGp = new GoalProgress(user, 0, joinDate, true, 2100);
+                }
                 userDao.insertUserProfile(newUser);
+                goalProgressDao.insertGoalProgress(userGp);
                 // Save profile data
                 prefs.edit()
                         .putString("username", user)
