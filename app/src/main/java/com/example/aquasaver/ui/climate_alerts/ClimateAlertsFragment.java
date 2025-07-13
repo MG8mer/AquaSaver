@@ -182,7 +182,7 @@ public class ClimateAlertsFragment extends Fragment {
                 };
 
                 int index = 0;
-                Matcher matcher = Pattern.compile("\\d+\\.\\s\\*\\*(.*?)\\*\\*:?\\s*(.*?)(?=\\n\\s*\\d+\\.|\\n\\s*$)", Pattern.DOTALL)
+                Matcher matcher = Pattern.compile("(?m)^\\d+\\.\\s\\*\\*(.*?)\\*\\*:?\\s*(.*?)(?=^\\d+\\.\\s\\*\\*|\\z)", Pattern.DOTALL)
                         .matcher(suggestions);
 
                 while (matcher.find() && index < alertTitles.length) {
@@ -206,24 +206,6 @@ public class ClimateAlertsFragment extends Fragment {
                 binding.alertText5.setText("");
             }
         });
-
-        // UI styling for alert boxes
-        Context context = getContext();
-        if (context != null) {
-            Drawable redBox = ContextCompat.getDrawable(context, R.drawable.rounded_bg);
-            if (redBox != null) {
-                redBox = redBox.mutate();
-                redBox.setTint(Color.parseColor("#DC2626"));
-                binding.alertBox1.setBackground(redBox);
-            }
-
-            Drawable yellowBox = ContextCompat.getDrawable(context, R.drawable.rounded_bg);
-            if (yellowBox != null) {
-                yellowBox = yellowBox.mutate();
-                yellowBox.setTint(Color.parseColor("#FBBF24"));
-                binding.alertBox2.setBackground(yellowBox);
-            }
-        }
 
         return binding.getRoot();
     }
