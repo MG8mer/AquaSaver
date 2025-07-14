@@ -181,7 +181,9 @@ public class HomePageWaterUsage extends AppCompatActivity {
                         GoalProgress mostRecentGoal = goalProgressList.get(0);
                         mostRecentGoal.setAmountLogged(totalUsage);
                         mostRecentGoal.setProgressDate(new Date());
+                        mostRecentGoal.setOnTarget(totalUsage <= goal);
 
+                        goalProgressDao.updateGoalProgress(mostRecentGoal);
 
                         runOnUiThread(() -> {
                             // Reset and update UI
