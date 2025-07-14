@@ -11,7 +11,8 @@ pluginManagement {
         gradlePluginPortal()
     }
     plugins {
-        id("com.android.application") version "8.11.1"
+        id("com.android.application") version "8.1.1"
+        id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin") version "2.0.1" // ✅ ADD THIS LINE
     }
 }
 
