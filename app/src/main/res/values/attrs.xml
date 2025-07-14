@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand Colors -->
+    <attr name="colorPrimary" format="color"/>
+    <attr name="colorPrimaryVariant" format="color"/>
+    <attr name="colorOnPrimary" format="color"/>
+
+    <attr name="colorSecondary" format="color"/>
+    <attr name="colorSecondaryVariant" format="color"/>
+    <attr name="colorOnSecondary" format="color"/>
+
+    <!-- Tertiary -->
+    <attr name="colorTertiary" format="color"/>
+    <attr name="colorOnTertiary" format="color"/>
+
+    <!-- Background / Surface -->
+    <attr name="colorOnBackground" format="color"/>
+    <attr name="colorSurface" format="color"/>
+    <attr name="colorOnSurface" format="color"/>
+    <attr name="colorSurfaceVariant" format="color"/>
+    <attr name="colorOnSurfaceVariant" format="color"/>
+
+    <!-- Outline / Error -->
+    <attr name="colorOutline" format="color"/>
+    <attr name="colorError" format="color"/>
+    <attr name="colorOnError" format="color"/>
+</resources>
