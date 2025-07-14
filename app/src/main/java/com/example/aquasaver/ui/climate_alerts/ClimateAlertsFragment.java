@@ -40,7 +40,7 @@ public class ClimateAlertsFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentClimateAlertsBinding.inflate(inflater, container, false);
-        temperatureText = binding.temperatureText;
+        //temperatureText = binding.temperatureText;
         viewModel = new ViewModelProvider(this).get(ClimateAlertsViewModel.class);
 
         // Get user preferences
@@ -55,7 +55,7 @@ public class ClimateAlertsFragment extends Fragment {
             return binding.getRoot();
         }
 
-        Log.d("CLIMATE", "Location before set: " + location);
+        /*Log.d("CLIMATE", "Location before set: " + location);
         viewModel.setLocation(location);
         viewModel.getLocation().observe(getViewLifecycleOwner(), loc -> {
             Log.d("CLIMATE", "Observed location: " + loc);
@@ -151,10 +151,10 @@ public class ClimateAlertsFragment extends Fragment {
                     }
                 });
             }
-        }
+        } */
 
         // Smart Suggestions Logic
-        viewModel.loadSmartSuggestions(requireContext(), email, location);
+        /*viewModel.loadSmartSuggestions(requireContext(), email, location);
         viewModel.getSuggestionLiveData().observe(getViewLifecycleOwner(), suggestions -> {
             if (suggestions != null && !suggestions.isEmpty()) {
                 // Extract just the 5 numbered tips using regex
@@ -205,7 +205,7 @@ public class ClimateAlertsFragment extends Fragment {
                 binding.alertText4.setText("");
                 binding.alertText5.setText("");
             }
-        });
+        }); */
 
         return binding.getRoot();
     }
