@@ -5,24 +5,30 @@ import android.content.SharedPreferences;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.format.DateUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import com.example.aquasaver.challenges.ChallengeWithProgress;
+import com.example.aquasaver.dao.ChallengesDao;
 import com.example.aquasaver.databinding.FragmentGoalsBinding;
 import com.example.aquasaver.db.AppDatabase;
+import com.example.aquasaver.model.ChallengeProgress;
+import com.example.aquasaver.model.Challenges;
 import com.example.aquasaver.model.GoalProgress;
+import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.dao.GoalProgressDao;
 import com.example.aquasaver.dao.UserProfileDao;
-import com.example.aquasaver.model.UserProfile;
+import com.example.aquasaver.dao.ChallengesDao;
 
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.Executors;
 
 public class GoalsFragment extends Fragment {
@@ -48,43 +54,10 @@ public class GoalsFragment extends Fragment {
         binding.goalTypeText.setText("Type: Daily");
         binding.goalAmountText.setText("Goal Amount: " + GOAL_AMOUNT + " L");
 
-        loadGoalProgress(email); // Also calls updateGoalProgress within
+        loadGoalProgress(email);
+        loadChallenges(email);
 
         return root;
-    }
-
-    private void updateGoalProgress(String email, GoalProgress todayGoal) {
-        GoalProgressDao progressDao = AppDatabase.getInstance(getContext()).goalProgressDao();
-        UserProfileDao userDao = AppDatabase.getInstance(getContext()).userProfileDao();
-
-        Executors.newSingleThreadExecutor().execute(() -> {
-            if (todayGoal == null) return;
-
-            boolean onTarget = todayGoal.getAmountLogged() <= GOAL_AMOUNT;
-            todayGoal.setOnTarget(onTarget);
-            progressDao.updateGoalProgress(todayGoal);
-
-            UserProfile user = userDao.getUserByEmail(email);
-            Date today = new Date();
-            Date lastUpdate = user.getLastStreakUpdate();
-
-            boolean isNewDay = lastUpdate == null || !DateUtils.isToday(lastUpdate.getTime());
-
-            if (isNewDay) {
-                if (onTarget) {
-                    user.setStreak(user.getStreak() + 1);
-                } else {
-                    user.setStreak(0);
-                }
-                user.setLastStreakUpdate(today);
-                userDao.updateUserProfile(user);
-            }
-
-                int streakCount = user.getStreak();
-                requireActivity().runOnUiThread(() ->
-                        binding.streakText.setText("Streak: " + streakCount + " days 🔥")
-                );
-        });
     }
 
     private void loadGoalProgress(String email) {
@@ -112,6 +85,78 @@ public class GoalsFragment extends Fragment {
 
             updateGoalProgress(email, todayProgress);
         });
+    }
+
+    private void updateGoalProgress(String email, GoalProgress todayGoal) {
+        GoalProgressDao progressDao = AppDatabase.getInstance(getContext()).goalProgressDao();
+        UserProfileDao userDao = AppDatabase.getInstance(getContext()).userProfileDao();
+
+        Executors.newSingleThreadExecutor().execute(() -> {
+            if (todayGoal == null) return;
+
+            boolean onTarget = todayGoal.getAmountLogged() <= GOAL_AMOUNT;
+            todayGoal.setOnTarget(onTarget);
+            progressDao.updateGoalProgress(todayGoal);
+
+            UserProfile user = userDao.getUserByEmail(email);
+            Date today = new Date();
+            Date lastUpdate = user.getLastStreakUpdate();
+
+            boolean isNewDay = lastUpdate == null || !DateUtils.isToday(lastUpdate.getTime());
+
+            if (isNewDay) {
+                user.setStreak(onTarget ? user.getStreak() + 1 : 0);
+                user.setLastStreakUpdate(today);
+                userDao.updateUserProfile(user);
+            }
+
+            int streakCount = user.getStreak();
+            requireActivity().runOnUiThread(() ->
+                    binding.streakText.setText("Streak: " + streakCount + " days 🔥")
+            );
+        });
+    }
+
+    private void loadChallenges(String email) {
+        ChallengesDao dao = AppDatabase.getInstance(requireContext()).challengesDao();
+
+        Executors.newSingleThreadExecutor().execute(() -> {
+            List<ChallengeWithProgress> challengeList = dao.getAllChallengesWithProgress(email); // must use @Transaction in DAO
+
+            requireActivity().runOnUiThread(() -> populateChallenges(challengeList));
+        });
+    }
+
+    private void populateChallenges(List<ChallengeWithProgress> challengeListWithProgress) {
+        LinearLayout challengeList = binding.challengeListLayout;
+        challengeList.removeAllViews();
+
+        for (int i = 0; i < challengeListWithProgress.size(); i++) {
+            ChallengeWithProgress entry = challengeListWithProgress.get(i);
+            Challenges challenge = entry.challenge;
+            ChallengeProgress progress = entry.progress;
+
+            String statusSymbol = getStatusSymbol(progress);
+            String displayText = (i + 1) + ". " + statusSymbol + " " + challenge.getDescription();
+
+            TextView textView = new TextView(getContext());
+            textView.setText(displayText);
+            textView.setTextSize(16);
+            textView.setPadding(0, 8, 0, 8);
+            challengeList.addView(textView);
+        }
+    }
+
+    private String getStatusSymbol(ChallengeProgress progress) {
+        if (progress == null) {
+            return "⬜"; // Not started
+        } else if (progress.completion) {
+            return "✅"; // Completed
+        } else if (progress.currentProgress > 0) {
+            return "🟦"; // In progress
+        } else {
+            return "⬜"; // Not started
+        }
     }
 
     private void updateProgressBar(int current, int total) {

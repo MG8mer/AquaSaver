@@ -3,6 +3,8 @@ package com.example.aquasaver.ui.main_pages;
 import android.Manifest;
 import android.annotation.SuppressLint;
 
+import com.example.aquasaver.challenges.ChallengeSeeder;
+import com.example.aquasaver.model.Challenges;
 import com.example.aquasaver.model.enums.GoalType;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -150,7 +152,13 @@ public class SignupActivity extends AppCompatActivity {
                     UserProfile newUser = new UserProfile(userEmail, pass, loc, useGps, goalType, notify, "12:00 AM", weatherAlert, joinDate, lastStreakUpdate);
 
                     userDao.insertUserProfile(newUser);
-                    // Save profile data
+                    // Then populate challenges
+                    List<Challenges> defaultChallenges = ChallengeSeeder.getDefaultChallenges(newUser.getEmail());
+                    for (Challenges challenge : defaultChallenges) {
+                        db.challengesDao().insertChallenge(challenge);
+                    }
+
+                        // Save profile data
                     prefs.edit()
                             .putString("username", userEmail)
                             .putString("password", pass)
