@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -28,16 +29,19 @@ import com.example.aquasaver.model.GoalProgress;
 import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.dao.GoalProgressDao;
 import com.example.aquasaver.dao.UserProfileDao;
-import com.example.aquasaver.dao.ChallengesDao;
+import com.example.aquasaver.dao.ChallengeProgressDao;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class GoalsFragment extends Fragment {
 
     private FragmentGoalsBinding binding;
     private static final int GOAL_AMOUNT = 100;
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -59,7 +63,7 @@ public class GoalsFragment extends Fragment {
 
         ChallengesDao dao = AppDatabase.getInstance(requireContext()).challengesDao();
 
-        Executors.newSingleThreadExecutor().execute(() -> {
+        executor.execute(() -> {
             try {
                 List<Challenges> challenges = dao.getUserChallenges(email);
                 Log.d("GoalsFragment", "Challenges: " + challenges.size());
@@ -78,6 +82,7 @@ public class GoalsFragment extends Fragment {
         Button recordButton = root.findViewById(R.id.recordChallengeButton);
         LinearLayout dropdown = root.findViewById(R.id.challengeDropdown);
 
+        // Toggle dropdown visibility
         recordButton.setOnClickListener(v -> {
             if (dropdown.getVisibility() == View.GONE) {
                 dropdown.setVisibility(View.VISIBLE);
@@ -86,13 +91,42 @@ public class GoalsFragment extends Fragment {
             }
         });
 
+        // === DYNAMIC CHECKBOXES SETUP ===
+        LinearLayout checkboxContainer = root.findViewById(R.id.challengeCheckboxContainer);
+        checkboxContainer.removeAllViews();
+
+        String[] challengeNames = {"Challenge 1", "Challenge 2", "Challenge 3"}; // Replace with real challenges if you want
+
+        for (String name : challengeNames) {
+            CheckBox checkBox = new CheckBox(getContext());
+            checkBox.setText(name);
+            checkboxContainer.addView(checkBox);
+        }
+
+        // Submit button handler
+        Button submitButton = root.findViewById(R.id.submitChallengeProgressButton);
+        submitButton.setOnClickListener(v -> {
+            for (int i = 0; i < checkboxContainer.getChildCount(); i++) {
+                View child = checkboxContainer.getChildAt(i);
+                if (child instanceof CheckBox) {
+                    CheckBox cb = (CheckBox) child;
+                    boolean checked = cb.isChecked();
+                    String challengeName = cb.getText().toString();
+
+                    Log.d("GoalsFragment", "Challenge: " + challengeName + " Checked: " + checked);
+                }
+            }
+            Toast.makeText(getContext(), "Challenge progress submitted", Toast.LENGTH_SHORT).show();
+            dropdown.setVisibility(View.GONE);
+        });
+
         return root;
     }
 
     private void loadGoalProgress(String email) {
         GoalProgressDao dao = AppDatabase.getInstance(requireContext()).goalProgressDao();
 
-        Executors.newSingleThreadExecutor().execute(() -> {
+        executor.execute(() -> {
             GoalProgress todayProgress = dao.getTodayProgress(email);
 
             if (todayProgress == null) {
@@ -111,28 +145,27 @@ public class GoalsFragment extends Fragment {
                 binding.challengesCompletedText.setText(onTarget ? "On Target ✅" : "Over Limit ❌");
                 updateProgressBar(progress, GOAL_AMOUNT);
             });
-            Executors.newSingleThreadExecutor().execute(() -> {
+
+            // Update streak info on background thread but UI on main thread
+            executor.execute(() -> {
                 try {
-                    requireActivity().runOnUiThread(() -> {
-                        updateGoalProgress(email, todayProgress);
-                        Log.d("GoalsFragment", "Goal progress updated");
-                    });
+                    updateGoalProgress(email, todayProgress);
+                    Log.d("GoalsFragment", "Goal progress updated");
                 } catch (Exception e) {
-                    Log.e("GoalsFragment", "Error loading challenges", e);
+                    Log.e("GoalsFragment", "Error updating goal progress", e);
                 }
             });
-
-
         });
     }
 
     private void updateGoalProgress(String email, GoalProgress todayGoal) {
-        GoalProgressDao progressDao = AppDatabase.getInstance(getContext()).goalProgressDao();
-        UserProfileDao userDao = AppDatabase.getInstance(getContext()).userProfileDao();
+        GoalProgressDao progressDao = AppDatabase.getInstance(requireContext()).goalProgressDao();
+        UserProfileDao userDao = AppDatabase.getInstance(requireContext()).userProfileDao();
 
-        Executors.newSingleThreadExecutor().execute(() -> {
-            if (todayGoal == null) return;
+        if (todayGoal == null) return;
 
+        // Run DB updates in background
+        executor.execute(() -> {
             boolean onTarget = todayGoal.getAmountLogged() <= GOAL_AMOUNT;
             todayGoal.setOnTarget(onTarget);
             progressDao.updateGoalProgress(todayGoal);
@@ -159,7 +192,7 @@ public class GoalsFragment extends Fragment {
     private void loadChallenges(String email) {
         ChallengesDao dao = AppDatabase.getInstance(requireContext()).challengesDao();
 
-        Executors.newSingleThreadExecutor().execute(() -> {
+        executor.execute(() -> {
             List<ChallengeWithProgress> challengeList = dao.getAllChallengesWithProgress(email); // must use @Transaction in DAO
 
             requireActivity().runOnUiThread(() -> populateChallenges(challengeList));
@@ -170,10 +203,12 @@ public class GoalsFragment extends Fragment {
         LinearLayout challengeList = binding.challengeListLayout;
         challengeList.removeAllViews();
         Log.d("GoalsFragment", "Challenges loaded: " + challengeListWithProgress.size());
+
         if (challengeListWithProgress.isEmpty()) {
             TextView emptyText = new TextView(getContext());
             emptyText.setText("No challenges found.");
             challengeList.addView(emptyText);
+            return;
         }
 
         for (int i = 0; i < challengeListWithProgress.size(); i++) {
@@ -182,7 +217,7 @@ public class GoalsFragment extends Fragment {
             ChallengeProgress progress = entry.progress;
 
             String statusSymbol = getStatusSymbol(progress);
-            String displayText = (i + 1) + ". " + statusSymbol + " " + challenge.getDescription();
+            String displayText = (i + 1) + ". " + challenge.getTitle() + "\n" + statusSymbol + " " + challenge.getDescription();
 
             TextView textView = new TextView(getContext());
             textView.setText(displayText);
@@ -220,25 +255,68 @@ public class GoalsFragment extends Fragment {
 
             GradientDrawable shape = new GradientDrawable();
             shape.setCornerRadius(10);
-            shape.setColor(getSegmentColor(i, filledSegments));
+            shape.setColor(getSegmentColor(i, filledSegments, segments));
 
             segment.setBackground(shape);
             binding.progressBarContainer.addView(segment);
         }
     }
 
-    private int getSegmentColor(int index, int filledSegments) {
+    // Added segments param for consistency
+    private int getSegmentColor(int index, int filledSegments, int totalSegments) {
         if (index >= filledSegments) return 0xFFD3D3D3; // Light gray (unfilled)
 
-        float percent = index / 12f;
+        float percent = index / (float) totalSegments;
         if (percent < 0.5f) return 0xFF1E90FF;   // Blue
         else if (percent < 0.75f) return 0xFFFFD700; // Yellow
         else return 0xFFFF4500;   // Red-orange
+    }
+
+    public void updateChallengeCompletion(String userEmail, Map<String, Boolean> completionMap) {
+        ChallengeProgressDao challengeProgressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
+        ChallengesDao challengesDao = AppDatabase.getInstance(requireContext()).challengesDao();
+
+        executor.execute(() -> {
+            for (Map.Entry<String, Boolean> entry : completionMap.entrySet()) {
+                String title = entry.getKey();
+                boolean completed = entry.getValue();
+
+                ChallengeProgress progress = challengeProgressDao.getChallengeProgressById(title);
+                if (progress != null && progress.getUserEmail().equals(userEmail)) {
+                    progress.setCompletion(completed);
+
+                    if (completed) {
+                        // Fetch the challenge goal amount from Challenges table
+                        Challenges challenge = challengesDao.getChallengeByTitle(title);
+                        if (challenge != null) {
+                            float goalAmount = challenge.getGoalAmount(); // Assuming Challenges has getGoalAmount()
+                            progress.setCurrentProgress(goalAmount);
+                        }
+                    }
+
+                    challengeProgressDao.updateChallengeProgress(progress);
+                }
+            }
+        });
+    }
+    private void showChallengesWithCheckboxes(List<Challenges> challenges) {
+        LinearLayout checkboxContainer = binding.challengeDropdown.findViewById(R.id.challengeCheckboxContainer);
+        checkboxContainer.removeAllViews();  // clear old checkboxes
+
+        Context context = requireContext();
+
+        for (Challenges challenge : challenges) {
+            CheckBox checkBox = new CheckBox(context);
+            checkBox.setText(challenge.getTitle() + ": \n" + challenge.getDescription());
+            checkBox.setTag(challenge.getTitle());  // store some identifier if needed
+            checkboxContainer.addView(checkBox);
+        }
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+        executor.shutdown();
     }
 }

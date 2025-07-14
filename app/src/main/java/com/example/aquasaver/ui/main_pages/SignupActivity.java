@@ -163,8 +163,8 @@ public class SignupActivity extends AppCompatActivity {
                     ChallengesDao challengesDao = db.challengesDao();
                     int count = challengesDao.countChallengesForUser(userEmail);
                     if (count == 0) {
-                        List<Challenges> defaultChallenges = ChallengeSeeder.getDefaultChallenges(userEmail);
-                        for (Challenges challenge : defaultChallenges) {
+                        List<Challenges> challenges = ChallengeSeeder.getRandomChallenges(userEmail, 3);
+                        for (Challenges challenge : challenges) {
                             challengesDao.insertChallenge(challenge);
                             Log.d("SignupActivity", "Inserted challenge: " + challenge.getTitle());
                         }

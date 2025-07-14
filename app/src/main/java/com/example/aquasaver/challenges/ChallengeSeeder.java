@@ -4,6 +4,7 @@ import com.example.aquasaver.model.Challenges;
 import com.example.aquasaver.model.enums.ChallengeGoalType;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -27,4 +28,10 @@ public class ChallengeSeeder {
 
         return challenges;
     }
+    public static List<Challenges> getRandomChallenges(String userEmail, int count) {
+        List<Challenges> allChallenges = getDefaultChallenges(userEmail);
+        Collections.shuffle(allChallenges);
+        return allChallenges.subList(0, Math.min(count, allChallenges.size()));
+    }
+
 }

@@ -68,6 +68,8 @@ public interface ChallengesDao
 
     @Query("SELECT COUNT(*) FROM Challenges WHERE user_email = :email")
     int countChallengesForUser(String email);
+    @Query("SELECT * FROM challenges WHERE title = :title LIMIT 1")
+    Challenges getChallengeByTitle(String title);
 
 
 }

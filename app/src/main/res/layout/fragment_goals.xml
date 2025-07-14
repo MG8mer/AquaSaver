@@ -151,25 +151,22 @@
                 android:textSize="16sp"
                 android:layout_marginBottom="8dp" />
 
-            <!-- Add more views like checkboxes or radio buttons for challenges -->
-            <CheckBox
-                android:id="@+id/challenge1"
-                android:layout_width="wrap_content"
+            <!-- New container for checkboxes -->
+            <LinearLayout
+                android:id="@+id/challengeCheckboxContainer"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Take a 5 minute shower" />
+                android:orientation="vertical" />
 
-            <CheckBox
-                android:id="@+id/challenge2"
+            <Button
+                android:id="@+id/submitChallengeProgressButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Stay under 50% of your water goal (5/7)" />
-
-            <CheckBox
-                android:id="@+id/challenge3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Run a full load of laundry" />
+                android:text="Submit Completed Challenges"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="12dp"/>
         </LinearLayout>
+
 
         <!-- Challenge Page Indicator -->
         <LinearLayout
