@@ -5,9 +5,11 @@ import android.content.SharedPreferences;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.format.DateUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,6 +17,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import com.example.aquasaver.R;
 import com.example.aquasaver.challenges.ChallengeWithProgress;
 import com.example.aquasaver.dao.ChallengesDao;
 import com.example.aquasaver.databinding.FragmentGoalsBinding;
@@ -54,8 +57,34 @@ public class GoalsFragment extends Fragment {
         binding.goalTypeText.setText("Type: Daily");
         binding.goalAmountText.setText("Goal Amount: " + GOAL_AMOUNT + " L");
 
-        loadGoalProgress(email);
-        loadChallenges(email);
+        ChallengesDao dao = AppDatabase.getInstance(requireContext()).challengesDao();
+
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                List<Challenges> challenges = dao.getUserChallenges(email);
+                Log.d("GoalsFragment", "Challenges: " + challenges.size());
+                requireActivity().runOnUiThread(() -> {
+                    if (challenges.isEmpty()) {
+                        Toast.makeText(getContext(), "No challenges found", Toast.LENGTH_SHORT).show();
+                    }
+                    loadGoalProgress(email);
+                    loadChallenges(email);
+                });
+            } catch (Exception e) {
+                Log.e("GoalsFragment", "Error loading challenges", e);
+            }
+        });
+
+        Button recordButton = root.findViewById(R.id.recordChallengeButton);
+        LinearLayout dropdown = root.findViewById(R.id.challengeDropdown);
+
+        recordButton.setOnClickListener(v -> {
+            if (dropdown.getVisibility() == View.GONE) {
+                dropdown.setVisibility(View.VISIBLE);
+            } else {
+                dropdown.setVisibility(View.GONE);
+            }
+        });
 
         return root;
     }
@@ -82,8 +111,18 @@ public class GoalsFragment extends Fragment {
                 binding.challengesCompletedText.setText(onTarget ? "On Target ✅" : "Over Limit ❌");
                 updateProgressBar(progress, GOAL_AMOUNT);
             });
+            Executors.newSingleThreadExecutor().execute(() -> {
+                try {
+                    requireActivity().runOnUiThread(() -> {
+                        updateGoalProgress(email, todayProgress);
+                        Log.d("GoalsFragment", "Goal progress updated");
+                    });
+                } catch (Exception e) {
+                    Log.e("GoalsFragment", "Error loading challenges", e);
+                }
+            });
 
-            updateGoalProgress(email, todayProgress);
+
         });
     }
 
@@ -130,6 +169,12 @@ public class GoalsFragment extends Fragment {
     private void populateChallenges(List<ChallengeWithProgress> challengeListWithProgress) {
         LinearLayout challengeList = binding.challengeListLayout;
         challengeList.removeAllViews();
+        Log.d("GoalsFragment", "Challenges loaded: " + challengeListWithProgress.size());
+        if (challengeListWithProgress.isEmpty()) {
+            TextView emptyText = new TextView(getContext());
+            emptyText.setText("No challenges found.");
+            challengeList.addView(emptyText);
+        }
 
         for (int i = 0; i < challengeListWithProgress.size(); i++) {
             ChallengeWithProgress entry = challengeListWithProgress.get(i);

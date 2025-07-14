@@ -8,9 +8,11 @@
     tools:context=".ui.goals.GoalsFragment">
 
     <LinearLayout
-        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingBottom="32dp">
 
         <!-- Title -->
         <TextView
@@ -18,17 +20,17 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Your Goals"
-            android:textSize="24sp"
+            android:textSize="26sp"
             android:textStyle="bold"
-            android:layout_gravity="center_horizontal"
-            android:paddingBottom="16dp" />
+            android:paddingBottom="24dp" />
 
-        <!-- Goal Type and Amount -->
+        <!-- Goal Info Row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingBottom="8dp">
+            android:paddingBottom="16dp"
+            android:gravity="center_vertical">
 
             <TextView
                 android:id="@+id/goalTypeText"
@@ -43,7 +45,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Goal Amount: 100 L"
+                android:text="Goal: 100 L"
                 android:textSize="16sp"
                 android:gravity="end" />
         </LinearLayout>
@@ -52,67 +54,75 @@
         <LinearLayout
             android:id="@+id/progressBarContainer"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="20dp"
             android:orientation="horizontal"
             android:gravity="center"
-            android:layout_marginVertical="8dp">
+            android:layout_marginBottom="16dp"
+            android:background="#EEE"
+            android:padding="2dp"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:layout_marginTop="8dp">
 
-            <!-- Example segment colors -->
-            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="16dp" android:background="@color/progress_blue"/>
-            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="16dp" android:background="@color/progress_blue"/>
-            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="16dp" android:background="@color/progress_blue"/>
-            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="16dp" android:background="@color/progress_blue"/>
-            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="16dp" android:background="@color/progress_yellow"/>
-            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="16dp" android:background="@color/progress_yellow"/>
-            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="16dp" android:background="@color/progress_yellow"/>
-            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="16dp" android:background="@color/progress_orange"/>
-            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="16dp" android:background="@color/progress_red"/>
-            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="16dp" android:background="@color/progress_red"/>
-            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="16dp" android:background="@color/progress_red"/>
-            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="16dp" android:background="@color/progress_red"/>
+            <!-- Progress Segments -->
+            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:background="@color/progress_blue"/>
+            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:background="@color/progress_blue"/>
+            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:background="@color/progress_blue"/>
+            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:background="@color/progress_blue"/>
+            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:background="@color/progress_yellow"/>
+            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:background="@color/progress_yellow"/>
+            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:background="@color/progress_yellow"/>
+            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:background="@color/progress_orange"/>
+            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:background="@color/progress_red"/>
+            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:background="@color/progress_red"/>
+            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:background="@color/progress_red"/>
+            <View android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:background="@color/progress_red"/>
         </LinearLayout>
 
-        <!-- Streak & Challenges -->
+        <!-- Streak -->
         <TextView
             android:id="@+id/streakText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Streak: 3 days 🔥"
             android:textSize="16sp"
-            android:layout_marginTop="8dp"/>
+            android:layout_marginBottom="4dp" />
 
+        <!-- Challenges Completed -->
         <TextView
             android:id="@+id/challengesCompletedText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Challenges Completed: 2"
             android:textSize="16sp"
-            android:layout_marginBottom="16dp"/>
+            android:layout_marginBottom="16dp" />
 
         <!-- Divider -->
         <View
-            android:layout_marginVertical="12dp"
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="#888888"/>
+            android:layout_marginVertical="16dp"
+            android:background="#CCCCCC" />
 
         <!-- Eco Challenges Header -->
         <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:text="Eco-Challenges"
             android:textSize="20sp"
             android:textStyle="bold"
-            android:layout_marginBottom="4dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_marginBottom="8dp" />
 
-        <!-- Challenge List -->
+        <!-- Challenge List Placeholder -->
         <LinearLayout
             android:id="@+id/challengeListLayout"
-            android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="20dp" />
-
-
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:background="#F5F5F5"
+            android:elevation="2dp"
+            android:layout_marginBottom="16dp" />
         <!-- Record Button -->
         <Button
             android:id="@+id/recordChallengeButton"
@@ -120,18 +130,54 @@
             android:layout_marginTop="12dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"/>
-
-        <!-- Challenge Indicator (carousel dots) -->
+            android:layout_gravity="center"
+            />
+        <!-- Dropdown Panel (initially hidden) -->
         <LinearLayout
-            android:id="@+id/challengeIndicatorLayout"
+            android:id="@+id/challengeDropdown"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:gravity="center"
-            android:orientation="horizontal">
-            <!-- Dynamically add page indicators here -->
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:visibility="gone"
+            android:background="#F5F5F5"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Select a Challenge to Record:"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Add more views like checkboxes or radio buttons for challenges -->
+            <CheckBox
+                android:id="@+id/challenge1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Take a 5 minute shower" />
+
+            <CheckBox
+                android:id="@+id/challenge2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Stay under 50% of your water goal (5/7)" />
+
+            <CheckBox
+                android:id="@+id/challenge3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Run a full load of laundry" />
         </LinearLayout>
 
+        <!-- Challenge Page Indicator -->
+        <LinearLayout
+            android:id="@+id/challengeIndicatorLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="8dp" />
     </LinearLayout>
 </ScrollView>

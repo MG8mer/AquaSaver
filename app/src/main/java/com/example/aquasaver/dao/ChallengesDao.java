@@ -66,4 +66,8 @@ public interface ChallengesDao
     @Query("SELECT * FROM Challenges WHERE user_email = :userEmail")
     List<ChallengeWithProgress> getAllChallengesWithProgress(String userEmail);
 
+    @Query("SELECT COUNT(*) FROM Challenges WHERE user_email = :email")
+    int countChallengesForUser(String email);
+
+
 }
