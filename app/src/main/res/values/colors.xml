@@ -1,0 +1,7 @@
+<resources>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="button_blue">#2196F3</color>
+    <color name="light_blue">#BBDEFB</color>
+    <color name="dark_blue">#1565C0</color>
+</resources>
