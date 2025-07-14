@@ -30,9 +30,9 @@
 <!--        </activity>-->
 
 <!--    THIS SECTION SETS THE LOGIN ACTIVITY AS ACTIVITY ON LAUNCH-->
-        <activity android:name="com.example.aquasaver.ui.main_pages.MainActivity"/>
         <activity android:name="com.example.aquasaver.ui.main_pages.SignupActivity"/>
-        <activity android:name="com.example.aquasaver.ui.main_pages.LoginActivity"
+        <activity android:name="com.example.aquasaver.ui.main_pages.LoginActivity"/>
+        <activity android:name="com.example.aquasaver.ui.main_pages.MainActivity"
         android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.AquaSaver.NoActionBar">
