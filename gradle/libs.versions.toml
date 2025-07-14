@@ -13,6 +13,7 @@ navigationFragment = "2.9.0"
 navigationUi = "2.9.0"
 playServicesLocation = "21.3.0"
 navigationRuntimeAndroid = "2.9.1"
+secretsGradlePlugin = "2.0.1"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -31,3 +32,4 @@ navigation-runtime-android = { group = "androidx.navigation", name = "navigation
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+secretsGradle = { id = "com.google.secrets_gradle_plugin", version.ref = "secretsGradlePlugin" }

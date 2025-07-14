@@ -1,12 +1,12 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 2,
-    "identityHash": "d5f452d5154d341df3989f9ea90cd4eb",
+    "version": 5,
+    "identityHash": "e413d3c0b91e9c625c37d1dd129f2a6e",
     "entities": [
       {
         "tableName": "user_profiles",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`email` TEXT NOT NULL, `location` TEXT, `goal_type` TEXT, `password` TEXT, `use_gps` INTEGER NOT NULL, `notifications_on` INTEGER NOT NULL, `reminder_time` TEXT, `weather_alerts_enabled` INTEGER NOT NULL DEFAULT false, `join_date` INTEGER, PRIMARY KEY(`email`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`email` TEXT NOT NULL, `location` TEXT, `goal_type` TEXT, `password` TEXT, `use_gps` INTEGER NOT NULL, `notifications_on` INTEGER NOT NULL, `reminder_time` TEXT, `weather_alerts_enabled` INTEGER NOT NULL DEFAULT false, `join_date` INTEGER, `streak` INTEGER NOT NULL, `last_streak_update` INTEGER, PRIMARY KEY(`email`))",
         "fields": [
           {
             "fieldPath": "email",
@@ -60,6 +60,18 @@
           {
             "fieldPath": "joinDate",
             "columnName": "join_date",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "streak",
+            "columnName": "streak",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastStreakUpdate",
+            "columnName": "last_streak_update",
             "affinity": "INTEGER",
             "notNull": false
           }
@@ -577,7 +589,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd5f452d5154d341df3989f9ea90cd4eb')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e413d3c0b91e9c625c37d1dd129f2a6e')"
     ]
   }
 }

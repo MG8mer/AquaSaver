@@ -1,4 +1,4 @@
-package com.example.aquasaver.ui.climate_alerts;
+package com.example.aquasaver.ui.conservation_tips;
 
 import android.content.Context;
 import android.util.Log;
@@ -29,14 +29,14 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class ClimateAlertsViewModel extends ViewModel {
+public class ConservationTipsViewModel extends ViewModel {
 
     private final MutableLiveData<String> suggestionLiveData = new MutableLiveData<>();
 
     private final MutableLiveData<String> locationLiveData = new MutableLiveData<>();
     private final OpenAIService openAIService;
 
-    public ClimateAlertsViewModel() {
+    public ConservationTipsViewModel() {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://api.openai.com/")  //
                 .addConverterFactory(GsonConverterFactory.create())
@@ -131,7 +131,7 @@ public class ClimateAlertsViewModel extends ViewModel {
             WeatherSuggestions existing = weatherRepository.getTodaySuggestion(email, today);
             if (existing != null) {
                 suggestionLiveData.postValue(existing.getUsageSuggestionText());
-                Log.d("ClimateAlertsViewModel", "Using existing suggestion: " + existing.getUsageSuggestionText());
+                Log.d("ConservationTipsViewModel", "Using existing suggestion: " + existing.getUsageSuggestionText());
             } else {
                 weatherRepository.getTodayWeather(email, location, new WeatherDataCallback() {
                     @Override

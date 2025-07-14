@@ -21,5 +21,15 @@
             android:icon="@drawable/ic_dialog_alert"
             android:title="@string/menu_climate_alerts" />
 
+        <item
+            android:id="@+id/nav_conservation_tips"
+            android:icon="@drawable/ic_menu_conservation_tips"
+            android:title="@string/menu_conservation_tips" />
+
+        <item
+            android:id="@+id/nav_settings"
+            android:icon="@drawable/ic_menu_settings"
+            android:title="@string/menu_settings" />
+
     </group>
 </menu>
