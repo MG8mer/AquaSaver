@@ -102,34 +102,29 @@ public class GoalsFragment extends Fragment {
         // Submit button handler
         Button submitButton = root.findViewById(R.id.submitChallengeProgressButton);
         submitButton.setOnClickListener(v -> {
-            ChallengesDao challengesDao = AppDatabase.getInstance(requireContext()).challengesDao();
-            ChallengeProgressDao progressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
             executor.execute(() -> {
+                ChallengesDao challengesDao = AppDatabase.getInstance(requireContext()).challengesDao();
+                ChallengeProgressDao progressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
+
                 boolean anyUpdated = false;
+
                 for (int i = 0; i < checkboxContainer.getChildCount(); i++) {
-                View child = checkboxContainer.getChildAt(i);
+                    View child = checkboxContainer.getChildAt(i);
                     if (child instanceof CheckBox) {
                         CheckBox cb = (CheckBox) child;
                         if (cb.isChecked()) {
-                            String challengeTitle = cb.getText().toString();
-                            ChallengeProgress progress = progressDao.getChallengeProgressById(challengeTitle);
-                            if (progress != null) {
-                                progress.setCompletion(true);
-                                Challenges challenge = challengesDao.getChallengeByTitle(challengeTitle);
-                                if (challenge != null) {
-                                    progress.setCurrentProgress(challenge.getGoalAmount());
-                                }
-                                progressDao.updateChallengeProgress(progress);
-                                anyUpdated = true;
-                            }
+                            String challengeTitle = (String) cb.getTag();  // Use getTag() for proper matching
+                            ChallengeProgress progress = progressDao.getChallengeProgressById(challengeTitle, email);
+                            anyUpdated = true;
                         }
                     }
                 }
+
                 if (anyUpdated) {
-                    List<ChallengeWithProgress> updatedChallengeList = challengesDao.getAllChallengesWithProgress(email);
+                    List<ChallengeWithProgress> updatedList = challengesDao.getAllChallengesWithProgress(email);
                     requireActivity().runOnUiThread(() -> {
-                        populateChallenges(updatedChallengeList);
-                        updateCheckboxesWithChallenges(updatedChallengeList);
+                        populateChallenges(updatedList);
+                        updateCheckboxesWithChallenges(updatedList);
                         binding.challengeDropdown.setVisibility(View.GONE);
                         Toast.makeText(getContext(), "Challenges updated!", Toast.LENGTH_SHORT).show();
                     });
@@ -139,7 +134,7 @@ public class GoalsFragment extends Fragment {
                         binding.challengeDropdown.setVisibility(View.GONE);
                     });
                 }
-                });
+            });
         });
         return root;
     }
@@ -319,19 +314,6 @@ public class GoalsFragment extends Fragment {
                 }
             }
         });
-    }
-    private void showChallengesWithCheckboxes(List<Challenges> challenges) {
-        LinearLayout checkboxContainer = binding.challengeCheckboxContainer;
-        checkboxContainer.removeAllViews();  // clear old checkboxes
-
-        Context context = requireContext();
-
-        for (Challenges challenge : challenges) {
-            CheckBox checkBox = new CheckBox(context);
-            checkBox.setText(challenge.getTitle() + ": \n" + challenge.getDescription());
-            checkBox.setTag(challenge.getTitle());  // store some identifier if needed
-            checkboxContainer.addView(checkBox);
-        }
     }
 
     private void updateCheckboxesWithChallenges(List<ChallengeWithProgress> challengeWithProgressList) {
