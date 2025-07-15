@@ -65,7 +65,8 @@ public class GoalsFragment extends Fragment {
 
         executor.execute(() -> {
             try {
-                List<Challenges> challenges = dao.getUserChallenges(email);
+                List<Challenges> challenges = dao.getUserChallenges(email); // for checkboxes
+                List<ChallengeWithProgress> challengeWithProgressList = dao.getAllChallengesWithProgress(email); // for challenge list display
                 Log.d("GoalsFragment", "Challenges: " + challenges.size());
                 requireActivity().runOnUiThread(() -> {
                     if (challenges.isEmpty()) {
@@ -73,6 +74,9 @@ public class GoalsFragment extends Fragment {
                     }
                     loadGoalProgress(email);
                     loadChallenges(email);
+                    updateCheckboxesWithChallenges(challengeWithProgressList);
+                    populateChallenges(challengeWithProgressList);
+
                 });
             } catch (Exception e) {
                 Log.e("GoalsFragment", "Error loading challenges", e);
@@ -95,31 +99,48 @@ public class GoalsFragment extends Fragment {
         LinearLayout checkboxContainer = root.findViewById(R.id.challengeCheckboxContainer);
         checkboxContainer.removeAllViews();
 
-        String[] challengeNames = {"Challenge 1", "Challenge 2", "Challenge 3"}; // Replace with real challenges if you want
-
-        for (String name : challengeNames) {
-            CheckBox checkBox = new CheckBox(getContext());
-            checkBox.setText(name);
-            checkboxContainer.addView(checkBox);
-        }
-
         // Submit button handler
         Button submitButton = root.findViewById(R.id.submitChallengeProgressButton);
         submitButton.setOnClickListener(v -> {
-            for (int i = 0; i < checkboxContainer.getChildCount(); i++) {
+            ChallengesDao challengesDao = AppDatabase.getInstance(requireContext()).challengesDao();
+            ChallengeProgressDao progressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
+            executor.execute(() -> {
+                boolean anyUpdated = false;
+                for (int i = 0; i < checkboxContainer.getChildCount(); i++) {
                 View child = checkboxContainer.getChildAt(i);
-                if (child instanceof CheckBox) {
-                    CheckBox cb = (CheckBox) child;
-                    boolean checked = cb.isChecked();
-                    String challengeName = cb.getText().toString();
-
-                    Log.d("GoalsFragment", "Challenge: " + challengeName + " Checked: " + checked);
+                    if (child instanceof CheckBox) {
+                        CheckBox cb = (CheckBox) child;
+                        if (cb.isChecked()) {
+                            String challengeTitle = cb.getText().toString();
+                            ChallengeProgress progress = progressDao.getChallengeProgressById(challengeTitle);
+                            if (progress != null) {
+                                progress.setCompletion(true);
+                                Challenges challenge = challengesDao.getChallengeByTitle(challengeTitle);
+                                if (challenge != null) {
+                                    progress.setCurrentProgress(challenge.getGoalAmount());
+                                }
+                                progressDao.updateChallengeProgress(progress);
+                                anyUpdated = true;
+                            }
+                        }
+                    }
                 }
-            }
-            Toast.makeText(getContext(), "Challenge progress submitted", Toast.LENGTH_SHORT).show();
-            dropdown.setVisibility(View.GONE);
+                if (anyUpdated) {
+                    List<ChallengeWithProgress> updatedChallengeList = challengesDao.getAllChallengesWithProgress(email);
+                    requireActivity().runOnUiThread(() -> {
+                        populateChallenges(updatedChallengeList);
+                        updateCheckboxesWithChallenges(updatedChallengeList);
+                        binding.challengeDropdown.setVisibility(View.GONE);
+                        Toast.makeText(getContext(), "Challenges updated!", Toast.LENGTH_SHORT).show();
+                    });
+                } else {
+                    requireActivity().runOnUiThread(() -> {
+                        Toast.makeText(getContext(), "No challenges selected", Toast.LENGTH_SHORT).show();
+                        binding.challengeDropdown.setVisibility(View.GONE);
+                    });
+                }
+                });
         });
-
         return root;
     }
 
@@ -300,7 +321,7 @@ public class GoalsFragment extends Fragment {
         });
     }
     private void showChallengesWithCheckboxes(List<Challenges> challenges) {
-        LinearLayout checkboxContainer = binding.challengeDropdown.findViewById(R.id.challengeCheckboxContainer);
+        LinearLayout checkboxContainer = binding.challengeCheckboxContainer;
         checkboxContainer.removeAllViews();  // clear old checkboxes
 
         Context context = requireContext();
@@ -310,6 +331,34 @@ public class GoalsFragment extends Fragment {
             checkBox.setText(challenge.getTitle() + ": \n" + challenge.getDescription());
             checkBox.setTag(challenge.getTitle());  // store some identifier if needed
             checkboxContainer.addView(checkBox);
+        }
+    }
+
+    private void updateCheckboxesWithChallenges(List<ChallengeWithProgress> challengeWithProgressList) {
+        LinearLayout checkboxContainer = binding.challengeCheckboxContainer;
+        checkboxContainer.removeAllViews();
+
+        boolean hasAvailableChallenges = false;
+
+        for (ChallengeWithProgress entry : challengeWithProgressList) {
+            Challenges challenge = entry.challenge;
+            ChallengeProgress progress = entry.progress;
+
+            // Show only challenges not yet completed
+            if (progress == null || !progress.completion) {
+                CheckBox checkBox = new CheckBox(getContext());
+                checkBox.setText(challenge.getDescription());
+                checkBox.setTag(challenge.getTitle()); // Tag it with a unique ID/title for later reference
+                checkboxContainer.addView(checkBox);
+                hasAvailableChallenges = true;
+            }
+        }
+
+        if (!hasAvailableChallenges) {
+            TextView noMoreText = new TextView(getContext());
+            noMoreText.setText("No more challenges available.");
+            noMoreText.setPadding(8, 8, 8, 8);
+            checkboxContainer.addView(noMoreText);
         }
     }
 
