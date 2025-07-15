@@ -30,9 +30,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
+import org.json.JSONObject;
+
+import java.io.IOException;
+
 
 public class ClimateAlertsFragment extends Fragment {
 
+    private OkHttpClient client = new OkHttpClient();
     private FragmentClimateAlertsBinding binding;
     private ClimateAlertsViewModel viewModel;
     TextView temperatureText;
@@ -42,6 +53,9 @@ public class ClimateAlertsFragment extends Fragment {
         binding = FragmentClimateAlertsBinding.inflate(inflater, container, false);
         //temperatureText = binding.temperatureText;
         viewModel = new ViewModelProvider(this).get(ClimateAlertsViewModel.class);
+
+        fetchDroughtData(40.015, -105.27);
+
 
         // Get user preferences
         SharedPreferences userPrefs = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
@@ -208,6 +222,43 @@ public class ClimateAlertsFragment extends Fragment {
         }); */
 
         return binding.getRoot();
+    }
+    private void fetchDroughtData(double lat, double lon) {
+        String url = "http://10.0.2.2:5000/drought?lat=" + lat + "&lon=" + lon;
+
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+                // Optionally update UI on failure with runOnUiThread
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    final String responseData = response.body().string();
+
+                    try {
+                        JSONObject json = new JSONObject(responseData);
+                        final double precipitation = json.getDouble("mean_precipitation_mm");
+
+                        // Update UI on main thread
+                        getActivity().runOnUiThread(() -> {
+                            // For example, update a TextView with the data
+                            TextView tv = binding.textEe;
+                            tv.setText("Mean precipitation: " + precipitation + " mm");
+                        });
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
     }
 
     private boolean shouldFetchWeather(Context context) {
