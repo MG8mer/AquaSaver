@@ -1,0 +1,11 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application dark theme. -->
+    <style name="Base.Theme.HomePageWaterUsage1" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your dark theme here -->
+        <item name="colorSecondaryContainer">#6495ED</item> <!-- Darker blue for buttons -->
+        <item name="colorOnSecondaryContainer">@android:color/white</item> <!-- Text on buttons -->
+        <item name="colorButtonNormal">#6495ED</item> <!-- Button default color -->
+        <item name="rippleColor">#806495ED</item> <!-- Ripple effect -->
+        <!-- Optional: other color overrides -->
+    </style>
+</resources>
