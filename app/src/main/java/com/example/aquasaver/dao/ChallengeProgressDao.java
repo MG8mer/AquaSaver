@@ -53,6 +53,8 @@ public interface ChallengeProgressDao
 
     @Query("SELECT * FROM challenge_progress WHERE title = :title LIMIT 1")
     ChallengeProgress getChallengeProgressById(String title); // Returns the progress of a specific eco-challenge by Id
+    @Query("SELECT * FROM challenge_progress WHERE title = :title AND user_email = :email")
+    ChallengeProgress getChallengeProgressById(String title, String email);
 
     @Query("SELECT * FROM challenge_progress WHERE user_email = :userEmail AND title = :title LIMIT 1")
     ChallengeProgress getChallengeProgressByUserEmailAndTitle(String userEmail, String title);

@@ -40,7 +40,6 @@ import java.util.concurrent.Executors;
 public class GoalsFragment extends Fragment {
 
     private FragmentGoalsBinding binding;
-    private static final int GOAL_AMOUNT = 100;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     @Override
@@ -59,24 +58,32 @@ public class GoalsFragment extends Fragment {
         }
 
         binding.goalTypeText.setText("Type: Daily");
-        binding.goalAmountText.setText("Goal Amount: " + GOAL_AMOUNT + " L");
-
-        ChallengesDao dao = AppDatabase.getInstance(requireContext()).challengesDao();
+        binding.goalAmountText.setText("Goal Amount: Loading...");
 
         executor.execute(() -> {
             try {
-                List<Challenges> challenges = dao.getUserChallenges(email); // for checkboxes
-                List<ChallengeWithProgress> challengeWithProgressList = dao.getAllChallengesWithProgress(email); // for challenge list display
+                ChallengesDao dao = AppDatabase.getInstance(requireContext()).challengesDao();
+                GoalProgressDao goalDao = AppDatabase.getInstance(requireContext()).goalProgressDao();
+
+                List<Challenges> challenges = dao.getUserChallenges(email);
+                List<ChallengeWithProgress> challengeWithProgressList = dao.getAllChallengesWithProgress(email);
+                GoalProgress todayProgress = goalDao.getTodayProgress(email); // 💡 fetch goalProgress here
+
+                int goalAmount = (todayProgress != null) ? todayProgress.getGoalAmount() : 100; // fallback
+
                 Log.d("GoalsFragment", "Challenges: " + challenges.size());
+
                 requireActivity().runOnUiThread(() -> {
                     if (challenges.isEmpty()) {
                         Toast.makeText(getContext(), "No challenges found", Toast.LENGTH_SHORT).show();
                     }
+
+                    binding.goalAmountText.setText("Goal Amount: " + goalAmount + " L");
+
                     loadGoalProgress(email);
                     loadChallenges(email);
                     updateCheckboxesWithChallenges(challengeWithProgressList);
                     populateChallenges(challengeWithProgressList);
-
                 });
             } catch (Exception e) {
                 Log.e("GoalsFragment", "Error loading challenges", e);
@@ -102,34 +109,29 @@ public class GoalsFragment extends Fragment {
         // Submit button handler
         Button submitButton = root.findViewById(R.id.submitChallengeProgressButton);
         submitButton.setOnClickListener(v -> {
-            ChallengesDao challengesDao = AppDatabase.getInstance(requireContext()).challengesDao();
-            ChallengeProgressDao progressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
             executor.execute(() -> {
+                ChallengesDao challengesDao = AppDatabase.getInstance(requireContext()).challengesDao();
+                ChallengeProgressDao progressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
+
                 boolean anyUpdated = false;
+
                 for (int i = 0; i < checkboxContainer.getChildCount(); i++) {
-                View child = checkboxContainer.getChildAt(i);
+                    View child = checkboxContainer.getChildAt(i);
                     if (child instanceof CheckBox) {
                         CheckBox cb = (CheckBox) child;
                         if (cb.isChecked()) {
-                            String challengeTitle = cb.getText().toString();
-                            ChallengeProgress progress = progressDao.getChallengeProgressById(challengeTitle);
-                            if (progress != null) {
-                                progress.setCompletion(true);
-                                Challenges challenge = challengesDao.getChallengeByTitle(challengeTitle);
-                                if (challenge != null) {
-                                    progress.setCurrentProgress(challenge.getGoalAmount());
-                                }
-                                progressDao.updateChallengeProgress(progress);
-                                anyUpdated = true;
-                            }
+                            String challengeTitle = (String) cb.getTag();  // Use getTag() for proper matching
+                            ChallengeProgress progress = progressDao.getChallengeProgressById(challengeTitle, email);
+                            anyUpdated = true;
                         }
                     }
                 }
+
                 if (anyUpdated) {
-                    List<ChallengeWithProgress> updatedChallengeList = challengesDao.getAllChallengesWithProgress(email);
+                    List<ChallengeWithProgress> updatedList = challengesDao.getAllChallengesWithProgress(email);
                     requireActivity().runOnUiThread(() -> {
-                        populateChallenges(updatedChallengeList);
-                        updateCheckboxesWithChallenges(updatedChallengeList);
+                        populateChallenges(updatedList);
+                        updateCheckboxesWithChallenges(updatedList);
                         binding.challengeDropdown.setVisibility(View.GONE);
                         Toast.makeText(getContext(), "Challenges updated!", Toast.LENGTH_SHORT).show();
                     });
@@ -139,7 +141,7 @@ public class GoalsFragment extends Fragment {
                         binding.challengeDropdown.setVisibility(View.GONE);
                     });
                 }
-                });
+            });
         });
         return root;
     }
@@ -154,17 +156,20 @@ public class GoalsFragment extends Fragment {
                 requireActivity().runOnUiThread(() -> {
                     binding.streakText.setText("Streak: 0 days");
                     binding.challengesCompletedText.setText("No progress logged today.");
-                    updateProgressBar(0, GOAL_AMOUNT);
+                    binding.goalAmountText.setText("Goal Amount: 100 L");
+                    updateProgressBar(0, 100);
                 });
                 return;
             }
 
+            int goalAmount = todayProgress.getGoalAmount();
             int progress = (int) todayProgress.getAmountLogged();
             boolean onTarget = todayProgress.getOnTarget();
 
             requireActivity().runOnUiThread(() -> {
                 binding.challengesCompletedText.setText(onTarget ? "On Target ✅" : "Over Limit ❌");
-                updateProgressBar(progress, GOAL_AMOUNT);
+                binding.goalAmountText.setText("Goal Amount: " + goalAmount + " L");
+                updateProgressBar(progress, goalAmount);
             });
 
             // Update streak info on background thread but UI on main thread
@@ -187,7 +192,7 @@ public class GoalsFragment extends Fragment {
 
         // Run DB updates in background
         executor.execute(() -> {
-            boolean onTarget = todayGoal.getAmountLogged() <= GOAL_AMOUNT;
+            boolean onTarget = todayGoal.getAmountLogged() <= todayGoal.getGoalAmount();
             todayGoal.setOnTarget(onTarget);
             progressDao.updateGoalProgress(todayGoal);
 
@@ -319,19 +324,6 @@ public class GoalsFragment extends Fragment {
                 }
             }
         });
-    }
-    private void showChallengesWithCheckboxes(List<Challenges> challenges) {
-        LinearLayout checkboxContainer = binding.challengeCheckboxContainer;
-        checkboxContainer.removeAllViews();  // clear old checkboxes
-
-        Context context = requireContext();
-
-        for (Challenges challenge : challenges) {
-            CheckBox checkBox = new CheckBox(context);
-            checkBox.setText(challenge.getTitle() + ": \n" + challenge.getDescription());
-            checkBox.setTag(challenge.getTitle());  // store some identifier if needed
-            checkboxContainer.addView(checkBox);
-        }
     }
 
     private void updateCheckboxesWithChallenges(List<ChallengeWithProgress> challengeWithProgressList) {

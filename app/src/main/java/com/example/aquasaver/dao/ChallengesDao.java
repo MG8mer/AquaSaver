@@ -70,6 +70,4 @@ public interface ChallengesDao
     int countChallengesForUser(String email);
     @Query("SELECT * FROM challenges WHERE title = :title LIMIT 1")
     Challenges getChallengeByTitle(String title);
-
-
 }
