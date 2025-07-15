@@ -1,18 +1,22 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.AquaSaver" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="Theme.AquaSaver" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="fontFamily">@font/roboto</item>
 
         <item name="android:textSize">14sp</item>
         <!-- Primary brand color -->
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryVariant">@color/colorPrimaryVariant</item>
-        <item name="colorOnPrimary">@color/colorOnPrimary</item>
+        <item name="colorPrimary">@color/button_blue</item>
+        <item name="colorOnPrimary">@color/button_text</item>
+<!--        <item name="colorPrimary">@color/colorPrimary</item>-->
+<!--        <item name="colorPrimaryVariant">@color/colorPrimaryVariant</item>-->
+<!--        <item name="colorOnPrimary">@color/colorOnPrimary</item>-->
 
         <!-- Secondary brand color -->
-        <item name="colorSecondary">@color/colorSecondary</item>
-        <item name="colorSecondaryVariant">@color/colorSecondaryVariant</item>
-        <item name="colorOnSecondary">@color/colorOnSecondary</item>
+<!--        <item name="colorSecondary">@color/colorSecondary</item>-->
+<!--        <item name="colorSecondaryVariant">@color/colorSecondaryVariant</item>-->
+<!--        <item name="colorOnSecondary">@color/colorOnSecondary</item>-->
+        <item name="colorSecondary">@color/blue_light</item>
+        <item name="colorOnSecondary">@color/black</item>
 
         <!-- Tertiary color -->
         <item name="colorTertiary">@color/colorTertiary</item>
@@ -33,6 +37,12 @@
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:statusBarColor">@color/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
+
+        <!-- Ripple effect color -->
+        <item name="rippleColor">#802266ff</item>
+
+        <!-- Custom button style -->
+        <item name="materialButtonStyle">@style/CustomButton</item>
     </style>
 
     <style name="Theme.AquaSaver.NoActionBar">

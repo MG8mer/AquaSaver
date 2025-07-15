@@ -1,22 +1,173 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.home.HomeFragment">
+    android:background="@color/white">
 
+    <!-- Welcome Header (no hamburger icon!) -->
     <TextView
-        android:id="@+id/text_home"
+        android:id="@+id/welcomeText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Welcome to AquaSaver!"
+        android:text="Welcome, User"
         android:textSize="20sp"
-        android:textStyle="bold"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        android:textColor="@color/black"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"/>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- Pie Chart -->
+    <com.github.mikephil.charting.charts.PieChart
+        android:id="@+id/pieChart"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:layout_below="@id/welcomeText"
+        android:layout_marginTop="16dp" />
+
+    <!-- Log Water Usage Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/logWaterUsageButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Log Water Usage"
+        android:layout_below="@id/pieChart"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp" />
+
+    <!-- Icons Section -->
+    <LinearLayout
+        android:id="@+id/iconsLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_below="@id/logWaterUsageButton"
+        android:gravity="center"
+        android:layout_marginTop="24dp">
+
+        <!-- Shower -->
+        <LinearLayout
+            android:id="@+id/showerButton"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_shower" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Shower"
+                android:textColor="@color/black"/>
+        </LinearLayout>
+
+        <!-- Washer -->
+        <LinearLayout
+            android:id="@+id/washerButton"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_washer" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Washer"
+                android:textColor="@color/black"/>
+        </LinearLayout>
+
+        <!-- Sprinkler -->
+        <LinearLayout
+            android:id="@+id/sprinklerButton"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_sprinkler" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sprinkler"
+                android:textColor="@color/black"/>
+        </LinearLayout>
+
+        <!-- Other (ID added for popup) -->
+        <LinearLayout
+            android:id="@+id/otherOption"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_other" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Other"
+                android:textColor="@color/black"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Timer Controls -->
+    <LinearLayout
+        android:id="@+id/timerLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_below="@id/iconsLayout"
+        android:layout_marginTop="24dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/decrementTimer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="-1 min"
+            android:layout_marginEnd="16dp" />
+
+        <TextView
+            android:id="@+id/timerLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Timer"
+            android:textSize="16sp"
+            android:textColor="@color/black"
+            android:layout_marginEnd="16dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/incrementTimer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="+1 min\" />
+    </LinearLayout>
+
+</RelativeLayout>
