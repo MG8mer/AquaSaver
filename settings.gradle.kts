@@ -9,8 +9,10 @@ pluginManagement {
         }
         mavenCentral()
         gradlePluginPortal()
-        // 🔥 Add JitPack here for plugins if needed (optional)
         maven { url = uri("https://jitpack.io") }
+    }
+    plugins {
+        id("com.android.application") version "8.10.1"
     }
 }
 
@@ -19,10 +21,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        // 🔥 Add JitPack here to resolve app dependencies
-        maven { url = uri("https://jitpack.io") }
+        maven(url = "https://jitpack.io")
     }
 }
 
-rootProject.name = "HomePageWaterUsage1"
+rootProject.name = "AquaSaver"
 include(":app")

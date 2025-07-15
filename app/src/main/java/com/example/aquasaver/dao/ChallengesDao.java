@@ -1,0 +1,62 @@
+package com.example.aquasaver.dao;
+
+// import important room db libraries
+
+import androidx.room.Dao;
+import androidx.room.Delete;
+import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
+import androidx.room.Query;
+import androidx.room.Update;
+
+// Import Challenges class
+import com.example.aquasaver.model.Challenges;
+
+// Import list
+import java.util.List;
+
+@Dao
+public interface ChallengesDao
+{
+    /*
+
+     Insert queries
+
+     */
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE) // insert one eco-challenge
+    long insertChallenge(Challenges challenge); // returns ID of newly added eco-challenge
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE) // insert many eco-challenges
+    void insertAllChallenges(List<Challenges> challenge);
+
+    // Update queries
+    @Update
+    void updateChallenge(Challenges challenge); // updates a specific eco-challenge
+
+    /*
+
+    Delete queries
+
+     */
+    @Delete
+    void deleteChallenge(Challenges challenge); // deletes a specific eco-challenge
+
+    @Query("DELETE FROM challenges WHERE user_email = :userEmail")
+    int deleteUserChallenges(String userEmail); // deletes all user eco-challenges and return # rows deleted
+
+    /*
+
+    Select queries
+
+     */
+
+    @Query("SELECT * FROM challenges WHERE id = :challengeId LIMIT 1")
+    Challenges getChallengeById(int challengeId); // Returns a specific eco-challenge by Id
+
+    @Query("SELECT * FROM challenges WHERE user_email = :userEmail")
+    List<Challenges> getUserChallenges(String userEmail); // Returns all the eco-challenges of a particular user
+
+    @Query("SELECT * FROM challenges WHERE user_email = :userEmail AND start_date <= :currentDate AND end_date >= :currentDate")
+    List<Challenges> getUserChallengesByTime(String userEmail, long currentDate); // Returns all eco-challenges of a particular user at a specific time
+}

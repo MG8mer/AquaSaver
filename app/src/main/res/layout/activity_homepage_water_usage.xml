@@ -40,8 +40,7 @@
         android:text="Log Water Usage"
         android:layout_below="@id/pieChart"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="16dp"
-        />
+        android:layout_marginTop="16dp" />
 
     <!-- Icons Section -->
     <LinearLayout
@@ -55,11 +54,14 @@
 
         <!-- Shower -->
         <LinearLayout
+            android:id="@+id/showerButton"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:gravity="center">
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true">
 
             <ImageView
                 android:layout_width="40dp"
@@ -75,11 +77,14 @@
 
         <!-- Washer -->
         <LinearLayout
+            android:id="@+id/washerButton"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:gravity="center">
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true">
 
             <ImageView
                 android:layout_width="40dp"
@@ -95,11 +100,14 @@
 
         <!-- Sprinkler -->
         <LinearLayout
+            android:id="@+id/sprinklerButton"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:gravity="center">
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true">
 
             <ImageView
                 android:layout_width="40dp"
@@ -149,7 +157,7 @@
             android:id="@+id/decrementTimer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="-10 min"
+            android:text="-1 min"
             android:layout_marginEnd="16dp" />
 
         <TextView
@@ -165,7 +173,7 @@
             android:id="@+id/incrementTimer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="+10 min" />
+            android:text="+1 min" />
     </LinearLayout>
 
     <!-- Bottom Navigation Bar -->

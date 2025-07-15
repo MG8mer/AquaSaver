@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.homepagewaterusage1">
-
-    <!-- Optional permissions -->
-    <uses-permission android:name="android.permission.INTERNET" />
-
+    xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
+        android:name="com.aquasaver.AquaSaverApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -13,20 +11,51 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.HomePageWaterUsage1">
+        android:theme="@style/Theme.AquaSaver"
+        tools:targetApi="31">
 
-        <!-- Launcher Activity -->
-        <activity
-            android:name=".HomepageWaterUsage"
-            android:exported="true">
+        <!--        THIS SECTION SETS THE LOGINACTIVITY AS ACTIVITY ON LAUNCH-->
+
+        <!--        <activity android:name="com.aquasaver.SignupActivity"/>-->
+        <!--        <activity android:name="com.example.aquasaver.ui.activities.MainActivity" />-->
+        <!--        <activity android:name="com.aquasaver.LoginActivity"-->
+        <!--            android:exported="true"-->
+        <!--            android:label="@string/app_name"-->
+        <!--            android:theme="@style/Theme.AquaSaver.NoActionBar">-->
+        <!--            <intent-filter>-->
+        <!--                <action android:name="android.intent.action.MAIN" />-->
+        <!--                <category android:name="android.intent.category.LAUNCHER" />-->
+        <!--            </intent-filter>-->
+        <!--        </activity>-->
+
+        <!--&lt;!&ndash;    THIS SECTION SETS THE MAINACTIVITY AS ACTIVITY ON LAUNCH&ndash;&gt;-->
+        <!--        <activity android:name="com.aquasaver.SignupActivity"/>-->
+        <!--        <activity android:name="com.example.aquasaver.ui.activities.MainActivity"-->
+        <!--            android:exported="true"-->
+        <!--            android:label="@string/app_name"-->
+        <!--            android:theme="@style/Theme.AquaSaver.NoActionBar">-->
+        <!--            <intent-filter>-->
+        <!--                <action android:name="android.intent.action.MAIN" />-->
+        <!--                <category android:name="android.intent.category.LAUNCHER" />-->
+        <!--            </intent-filter>-->
+        <!--        </activity>-->
+
+        <!--            THIS SECTION SETS THE HOME PAGE AS ACTIVITY ON LAUNCH-->
+        <activity android:name="com.aquasaver.HomePageWaterUsage"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.AquaSaver.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
+        <activity android:name="com.example.aquasaver.ui.activities.MainActivity" />
 
-
+        <meta-data
+            android:name="preloaded_fonts"
+            android:resource="@array/preloaded_fonts" />
     </application>
 
 </manifest>

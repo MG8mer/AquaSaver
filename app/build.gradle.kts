@@ -3,21 +3,29 @@ plugins {
 }
 
 android {
-    namespace = "com.example.homepagewaterusage1"
-    compileSdk = 35 // updated to 35 to fix dependency error
+    namespace = "com.example.aquasaver"
+    compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.homepagewaterusage1"
+        applicationId = "com.example.aquasaver"
         minSdk = 24
-        targetSdk = 35 // updated to 35 as recommended
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments += mapOf(
+                    "room.schemaLocation" to "$projectDir/schemas"
+                )
+            }
+        }
     }
 
     buildTypes {
-        release {
+        getByName("release") {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -27,24 +35,38 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    buildFeatures {
+        viewBinding = true
     }
 }
 
 dependencies {
+    implementation("androidx.viewpager2:viewpager2:1.0.0")
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+    implementation("com.jakewharton.threetenabp:threetenabp:1.4.5")
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
-
-    // MPAndroidChart dependency
-    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
-
-    // Material Components library (fixed quotes and comment)
-    implementation("com.google.android.material:material:1.11.0")
-
+    implementation(libs.lifecycle.livedata.ktx)
+    implementation(libs.lifecycle.viewmodel.ktx)
+    implementation(libs.navigation.fragment)
+    implementation(libs.navigation.ui)
+    implementation(libs.navigation.runtime.android)
+    implementation(libs.work.runtime)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+
+    val room_version = "2.6.1"
+    implementation("androidx.room:room-runtime:$room_version")
+    annotationProcessor("androidx.room:room-compiler:$room_version")
+
+    implementation("com.squareup.retrofit2:retrofit:2.0.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.0.0")
 }
