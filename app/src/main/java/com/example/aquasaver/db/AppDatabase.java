@@ -29,7 +29,7 @@ import java.util.concurrent.Executors;
                 Challenges.class,
                 ChallengeProgress.class
         },
-        version = 5,
+        version = 6,
         exportSchema = false
 )
 @TypeConverters({Converters.class})
@@ -75,6 +75,14 @@ public abstract class AppDatabase extends RoomDatabase {
             database.execSQL("ALTER TABLE user_profiles ADD COLUMN last_streak_update INTEGER");
         }
     };
+    static final Migration MIGRATION_5_6 = new Migration(5, 6) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            // Add the missing goal_amount column
+            database.execSQL("ALTER TABLE goal_progress ADD COLUMN goal_amount INTEGER NOT NULL DEFAULT 100");
+        }
+    };
+
 
     // Returns the singleton instance
     public static AppDatabase getInstance(Context context) {
@@ -82,13 +90,12 @@ public abstract class AppDatabase extends RoomDatabase {
         if (INSTANCE == null) {
             synchronized (AppDatabase.class) {
                 if (INSTANCE == null) {
-                    Log.d("AppDatabase", "Creating new AppDatabase instance for version 5 with fallback to destructive migration.");
                     INSTANCE = Room.databaseBuilder(
                                     context.getApplicationContext(),
                                     AppDatabase.class,
                                     "aqua_saver.db"
                             )
-                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                             .build();
                     Log.d("AppDatabase", "AppDatabase instance built.");
                 }
