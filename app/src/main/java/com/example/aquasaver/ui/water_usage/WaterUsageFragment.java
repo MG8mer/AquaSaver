@@ -11,6 +11,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.LegendEntry;
@@ -70,16 +71,18 @@ public class WaterUsageFragment extends Fragment {
     };
 
     public static String[] months = {
-            "Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     };
 
     private String[] label;
     private FragmentWaterUsageBinding binding;
     private BarChart barChart;
 
+    private String labelText;
+
     private final List<BarEntry> yeardata = new ArrayList<>();
 
-    private final List<BarEntry> dataShowing = new ArrayList<>();
+    private List<BarEntry> dataShowing = new ArrayList<>();
 
     private int[] indexBounds;
 
@@ -87,6 +90,8 @@ public class WaterUsageFragment extends Fragment {
     private float avg;
 
     String dataToShow;
+
+    LabelText lt = new LabelText("", 0, 0);
 
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -100,34 +105,42 @@ public class WaterUsageFragment extends Fragment {
         Log.d("DATE", currentDateString);
 
 
+
         addEmptyYear();
 
-        binding.graphToggle.graphToggle.check(R.id.week);
+        binding.graphToggle.check(R.id.week);
         dataToShow = "week";
+        setLabelText("This Week");
         label = days;
         setDataShowing();
         generateGraph();
 
-//        binding.addDay.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                addDay(10);
-//                setDataShowing(dataToShow);
-//                generateGraph();
-//                Log.d("YEARDATA", yeardata.toString());
-//            }
-//        });
+        binding.buttonBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                backPress();
+            }
+        });
 
-        binding.graphToggle.graphToggle.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
+        binding.buttonForward.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                forwardPress();
+            }
+        });
+
+        binding.graphToggle.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
             @Override
             public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
 
 
                 if (isChecked) {
+                    lt = new LabelText("", 0, 0);
                     label = new String[]{};
                     if (checkedId == R.id.week) {
                         Log.d("GRAPH TOGGLE", "WEEK");
                         dataToShow = "week";
+                        setLabelText("This Week");
                         setDataShowing();
                         label = days;
                     } else if (checkedId == R.id.month) {
@@ -135,15 +148,18 @@ public class WaterUsageFragment extends Fragment {
                         dataToShow = "month";
                         setDataShowing();
                         //String[] arr = new String[]{months[month]};
+                        setLabelText(months[month]);
                         String[] arr = new String[] {"1", "8", "15", "22", "29"};
                         label = arr;
                     } else if (checkedId == R.id.year) {
                         Log.d("GRAPH TOGGLE", "YEAR");
+                        setLabelText(""+year);
                         dataToShow = "year";
                         setDataShowing();
                         label = months;
                     } else if (checkedId == R.id.day) {
                         Log.d("GRAPH TOGGLE", "DAY");
+                        setLabelText("Today");
                         dataToShow = "day";
                         setDataShowing();
                         label = today;
@@ -160,8 +176,68 @@ public class WaterUsageFragment extends Fragment {
 
     }
 
+
+    public void backPress() {
+
+
+        if(dataToShow == "day"){
+            lt.decreaseDay();
+            setLabelText(lt.getText());
+            indexBounds[0] = lt.getLowestDate();
+            indexBounds[1] = lt.getHighestDate();
+            dataShowing = processIndexBounds();
+            label = new String[]{lt.getText()};
+            generateGraph();
+        } else if(dataToShow == "week"){
+            lt.decreaseWeek();
+            setLabelText(lt.getText());
+            indexBounds[0] = lt.getLowestDate();
+            indexBounds[1] = lt.getHighestDate();
+            dataShowing = processIndexBounds();
+            label = days;
+            generateGraph();
+        } else if(dataToShow == "month"){
+            lt.decreaseMonth();
+            setLabelText(lt.getText());
+            indexBounds[0] = lt.getLowestDate();
+            indexBounds[1] = lt.getHighestDate();
+            dataShowing = processIndexBounds();
+            label = new String[]{lt.getText()};
+            generateGraph();
+        }
+    }
+
+    public void forwardPress() {
+
+
+        if(dataToShow == "day"){
+            lt.increaseDay();
+            setLabelText(lt.getText());
+            indexBounds[0] = lt.getLowestDate();
+            indexBounds[1] = lt.getHighestDate();
+            dataShowing = processIndexBounds();
+            label = new String[]{lt.getText()};
+            generateGraph();
+        } else if(dataToShow == "week"){
+            lt.increaseWeek();
+            setLabelText(lt.getText());
+            indexBounds[0] = lt.getLowestDate();
+            indexBounds[1] = lt.getHighestDate();
+            dataShowing = processIndexBounds();
+            label = days;
+            generateGraph();
+        } else if(dataToShow == "month"){
+            lt.increaseMonth();
+            setLabelText(lt.getText());
+            indexBounds[0] = lt.getLowestDate();
+            indexBounds[1] = lt.getHighestDate();
+            dataShowing = processIndexBounds();
+            label = new String[]{lt.getText()};
+            generateGraph();
+        }
+    }
     private void addEmptyYear() {
-        for (int i = 0; i < 194; i++) {
+        for (int i = 0; i < 196; i++) {
             yeardata.add(new BarEntry(yeardata.size(), i));
         }
         if (year % 4 == 0) {
@@ -225,20 +301,37 @@ public class WaterUsageFragment extends Fragment {
         }
 
         if (dataToShow != "year") {
-            for (int i = indexBounds[0]; i < indexBounds[1]; i++) {
-                float y = yeardataCopy.get(i).getY();
-                dataShowing.add(new BarEntry(dataShowing.size(), y)); // new x = 0
+            dataShowing = processIndexBounds();
+        }
+    }
+
+    public List<BarEntry> processIndexBounds() {
+        List<BarEntry> dataShowing = new ArrayList<>();
+        for (int i = indexBounds[0]; i < indexBounds[1]; i++) {
+            if (i >= 0 && i < yeardata.size()) {
+                BarEntry barEntry = yeardata.get(i);
+                dataShowing.add(barEntry);
+            } else if(i > 0){
+                dataShowing.add(new BarEntry(i, 0));
+            } else if(i < 0) {
+                dataShowing.add(new BarEntry(i, 0));
             }
-
         }
-
-        for(int i = 0; i < dataShowing.size(); i++){
-            dataShowing.get(i).setX(i);
-        }
+        Log.d("YEARDATA", "dataShowing: " + dataShowing.toString());
+        return dataShowing;
     }
 
     public void addDay(int y) {
         yeardata.add(new BarEntry(yeardata.size(), y));
+    }
+
+    public void setStatistics(String avg, String low, String high) {
+        TextView avgText = binding.statistics.avg;
+        TextView lowText = binding.statistics.low;
+        TextView highText = binding.statistics.high;
+        avgText.setText("Average: " + avg);
+        lowText.setText("Low: " + low);
+        highText.setText("High: " + high);
     }
 
     @Override
@@ -264,6 +357,59 @@ public class WaterUsageFragment extends Fragment {
 
         //initialize and add data
         BarChart barChart = binding.waterGraph;
+
+        // <editor-fold desc="Calculate average"
+        float sum = 0;
+        float count = 0;
+        Log.d("YEARDATA", "dataShowing: " + dataShowing.toString());
+        for (BarEntry entry : dataShowing) {
+            if(dataToShow != "year") {
+                if (entry.getX() >= lt.getDayOfYear(day, month, year)) {
+                    Log.d("YEARDATA", "entry.getX(): " + entry.getX());
+                    entry.setY(0);
+                } else {
+                    sum += entry.getY();
+                    count += 1;
+                }
+            } else {
+                if(entry.getX() >= month){
+                    entry.setY(0);
+                } else {
+                    sum += entry.getY();
+                    count += 1;
+                }
+            }
+        }
+        float average = count > 0 ? sum / count : 0;
+
+        //</editor-fold>
+
+        if (dataShowing == null || dataShowing.isEmpty()) {
+            setStatistics("Unknown", "Unknown", "Unknown");
+
+        } else {
+
+            float min = Float.MAX_VALUE;
+            float max = Float.MIN_VALUE;
+
+            for (BarEntry entry : dataShowing) {
+                if(entry.getX() < lt.getDayOfYear(day, month, year)) {
+                    float y = entry.getY();
+                    if (y < min) min = y;
+                    if (y > max) max = y;
+                }
+            }
+
+            setStatistics(String.format("%.2f", average), String.format("%.2f", min), String.format("%.2f", max));
+        }
+
+        //Normalize x values
+        int entries = 0;
+        for(BarEntry entry : dataShowing) {
+            entry.setX(entries);
+            entries+=1;
+        }
+
         BarDataSet barDataSet = new BarDataSet(dataShowing, "Water Usage");
         ArrayList<IBarDataSet> dataSets = new ArrayList<>();
         dataSets.add(barDataSet);
@@ -271,12 +417,8 @@ public class WaterUsageFragment extends Fragment {
         BarData data = new BarData(dataSets);
         barChart.setData(data);
 
-        // Calculate average
-        float sum = 0;
-        for (BarEntry entry : dataShowing) {
-            sum += entry.getY();
-        }
-        float average = dataShowing.size() > 0 ? sum / dataShowing.size() : 0;
+
+
 
         // <editor-fold desc="create avg and target line">
         LimitLine avgLine = new LimitLine(average, "");
@@ -396,6 +538,10 @@ public class WaterUsageFragment extends Fragment {
         barChart.animateY(500);
         barChart.setExtraBottomOffset(16f);
 
+
+        //Set statistics
+
+
         barChart.invalidate();
     }
 
@@ -407,5 +553,227 @@ public class WaterUsageFragment extends Fragment {
         return null;
     }
 
+    public void setLabelText(String t) {
+        labelText = t;
+        TextView text = binding.labelText;
+        text.setText(t);
+    }
+
+    public class LabelText {
+        private String ltext;
+
+        private int ldayOfYear;
+        private int lday;
+
+        private int lmonth;
+        private int llowestDate;
+
+        private int lhighestDate;
+
+
+        public LabelText(String text, int lowestDate, int highestDate) {
+            this.ltext = text;
+            this.llowestDate = lowestDate;
+            this.lhighestDate = highestDate;
+            this.lmonth = month;
+            this.lday = day;
+            ldayOfYear = getDayOfYear(day, month, year);
+        }
+
+        public void decreaseDay() {
+            ldayOfYear--;
+            if(ldayOfYear < 1){
+                ldayOfYear = 1;
+            }
+            llowestDate = ldayOfYear-1;
+            lhighestDate = ldayOfYear;
+            Log.d("LABEL", ("ldayOfYear: " + ldayOfYear).toString());
+            lday = getDayOfMonthFromDayOfYear(ldayOfYear, year);
+            lmonth = getMonthFromDayOfYear(ldayOfYear, year);
+            if(ldayOfYear == getDayOfYear(day, month, year)){
+                ltext = "Today";
+            } else {
+                ltext = months[lmonth] + " " + lday;
+            }
+            Log.d("LABEL", ("label: " + ltext).toString());
+        }
+
+        public void increaseDay() {
+            ldayOfYear++;
+            int daysInYear = year%4==0 ? 366 : 365;
+            if(ldayOfYear > daysInYear){
+                ldayOfYear = daysInYear;
+            }
+            llowestDate = ldayOfYear-1;
+            lhighestDate = ldayOfYear;
+            Log.d("LABEL", ("ldayOfYear: " + ldayOfYear).toString());
+            lday = getDayOfMonthFromDayOfYear(ldayOfYear, year);
+            lmonth = getMonthFromDayOfYear(ldayOfYear, year);
+            if(ldayOfYear == getDayOfYear(day, month, year)){
+                ltext = "Today";
+            } else {
+                ltext = months[lmonth] + " " + lday;
+            }
+            Log.d("LABEL", ("label: " + ltext).toString());
+        }
+
+        public void decreaseWeek() {
+            int sunday = getSundayOfWeek(year, month, day);
+            llowestDate = sunday-8;
+            ldayOfYear -= 7;
+            lhighestDate = llowestDate + 7;
+
+            Log.d("LABEL", "ldayOfYear: " + ldayOfYear);
+
+            int lowestDay = getDayOfMonthFromDayOfYear(llowestDate, year)+1;
+            lmonth = getMonthFromDayOfYear(llowestDate, year);
+            int highestMonth = getMonthFromDayOfYear(lhighestDate, year);
+            int highestDay = getDayOfMonthFromDayOfYear(lhighestDate, year);
+
+            ltext = months[lmonth] + " " + lowestDay + " - " + months[highestMonth] + " " + highestDay;
+            Log.d("LABEL", "label: " + ltext);
+        }
+
+        public void increaseWeek() {
+            int sunday = getSundayOfWeek(year, month, day);
+            llowestDate = sunday+6;
+            ldayOfYear += 7;
+            lhighestDate = llowestDate + 7;
+
+            Log.d("LABEL", "ldayOfYear: " + ldayOfYear);
+
+            int lowestDay = getDayOfMonthFromDayOfYear(llowestDate, year);
+            lmonth = getMonthFromDayOfYear(llowestDate, year);
+            int highestMonth = getMonthFromDayOfYear(lhighestDate, year);
+            int highestDay = getDayOfMonthFromDayOfYear(lhighestDate, year);
+
+            ltext = months[lmonth] + " " + lowestDay + " - " + months[highestMonth] + " " + highestDay;
+            Log.d("LABEL", "label: " + ltext);
+        }
+
+        public void decreaseMonth() {
+            // Calculate the first day of the current month as dayOfYear
+
+            lmonth--;
+            if(lmonth < 0){
+                lmonth = 0;
+            }
+            llowestDate = getDayOfYear(1, lmonth, year);
+
+            lhighestDate = getDayOfYear(daysInMonth[lmonth], lmonth, year);
+            ltext = months[lmonth];
+
+        }
+
+        public void increaseMonth() {
+            lmonth++;
+            if (lmonth > 11) {  // assuming lmonth is zero-based (0 = Jan, 11 = Dec)
+                lmonth = 11;
+            }
+
+            llowestDate = getDayOfYear(1, lmonth, year);
+            lhighestDate = getDayOfYear(daysInMonth[lmonth], lmonth, year);
+            ltext = months[lmonth];
+        }
+
+
+        // Helper to get days in month with leap year check
+        public int getDaysInMonth(int month, int year) {
+            switch (month) {
+                case 2:
+                    return (isLeapYear(year)) ? 29 : 28;
+                case 4: case 6: case 9: case 11:
+                    return 30;
+                default:
+                    return 31;
+            }
+        }
+
+        public boolean isLeapYear(int year) {
+            return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
+        }
+
+        public int getSundayOfWeek(int year, int month, int day) {
+
+            int dayOfWeek = getDayOfWeek(year, month, day);  // Sunday=1 ... Saturday=7
+
+            // Calculate Sunday day of year by subtracting days since Sunday
+            int sundayDayOfYear = ldayOfYear - (dayOfWeek - 1);
+
+            // Make sure sundayDayOfYear is at least 1 (handle start of year case)
+            if (sundayDayOfYear < 1) {
+                // If before Jan 1, wrap to previous year's last days (optional, depending on your logic)
+                // For simplicity, clamp to 1 here:
+                sundayDayOfYear = 1;
+            }
+
+            return sundayDayOfYear;
+        }
+
+
+        public String getText() {
+            return ltext;
+        }
+
+        public int getLowestDate() {
+            return llowestDate;
+        }
+
+        public int getHighestDate() {
+            return lhighestDate;
+        }
+
+
+        public  int getDayOfYear(int day, int month, int year) {
+            // Month is 1-based (January = 1)
+            int[] daysInMonth = {
+                    31, (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) ? 29 : 28,
+                    31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+            };
+
+            int doy = 0;
+            for (int i = 0; i < month - 1; i++) {
+                doy += daysInMonth[i];
+            }
+            doy += day;
+
+            return doy;
+        }
+
+        public int getMonthFromDayOfYear(int dayOfYear, int year) {
+            int daysInFebruary = (year % 4 == 0) ? 29 : 28;
+            int[] daysInMonth = {31, daysInFebruary, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+            int cumulativeDays = 0;
+
+            for (int month = 0; month < 12; month++) {
+                cumulativeDays += daysInMonth[month];
+                if (dayOfYear <= cumulativeDays) {
+                    return month; // Return 1-based month (Jan = 1)
+                }
+            }
+
+            throw new IllegalArgumentException("Invalid day of year: " + dayOfYear);
+        }
+
+        public int getDayOfMonthFromDayOfYear(int dayOfYear, int year) {
+            int daysInFebruary = (year % 4 == 0) ? 29 : 28;
+            int[] daysInMonth = {31, daysInFebruary, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+            int dayCount = dayOfYear;
+
+            for (int month = 0; month < 12; month++) {
+                if (dayCount <= daysInMonth[month]) {
+                    return dayCount; // Correct day of the month
+                }
+                dayCount -= daysInMonth[month];
+            }
+
+            throw new IllegalArgumentException("Invalid day of year: " + dayOfYear);
+        }
+
+
+
+    }
 
 }
