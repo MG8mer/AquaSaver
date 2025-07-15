@@ -2,7 +2,10 @@
 
 package com.example.aquasaver.ui.main_pages.workers;
 
+import static androidx.core.content.ContentProviderCompat.requireContext;
+
 import android.content.Context;
+import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
 import androidx.room.Room;
@@ -39,7 +42,12 @@ public class GoalProgressWorker extends Worker
     @NonNull
     @Override
     public Result doWork() {
-        UserProfile user = userProfileDao.getUserByEmail("bro@gmail.com"); // REPLACE "example@gmail.com" WITH ACTUAL LOGIC TO GET USER EMAIL
+        Context ctx = getApplicationContext();
+        SharedPreferences prefs = ctx
+                .getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
+        String userEmail = prefs.getString("username", null);
+        if (userEmail == null) return Result.failure();
+        UserProfile user = userProfileDao.getUserByEmail(userEmail); // REPLACE "example@gmail.com" WITH ACTUAL LOGIC TO GET USER EMAIL
         if (user == null) {
             return Result.success();
         }
@@ -51,7 +59,7 @@ public class GoalProgressWorker extends Worker
 
         boolean onTarget = true;
         GoalProgress newProgress = new GoalProgress(
-                "bro@gmail.com",
+                userEmail,
                 amountLogged,
                 new Date(),
                 onTarget,

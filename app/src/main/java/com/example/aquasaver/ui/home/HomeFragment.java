@@ -229,13 +229,11 @@ public class HomeFragment extends Fragment {
                     Date currentDate = new Date();
 
 
-                    // REPLACE BELOW LINE WITH LOGIC TO OBTAIN ACTUAL USER CREDENTIALS
-                    WaterUsage waterUsage = new WaterUsage("bro@gmail.com", currentDate, litersUsed, selectedActivity);
+                    WaterUsage waterUsage = new WaterUsage(userEmail, currentDate, litersUsed, selectedActivity);
 
                     new Thread(() -> {
                         waterUsageDao.insertLog(waterUsage);
                         float totalUsage;
-                        // REPLACE bro@gmail.com PROPER LOGIC TO OBTAIN USER EMAIL
                         if ("DAILY".equals(goalType)) {
                             long[] todayWindow = computeTodayWindow();
                             Float usage = waterUsageDao.getLitersUsedBetween(userEmail, todayWindow[0], todayWindow[1]);
