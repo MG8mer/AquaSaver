@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "d5f452d5154d341df3989f9ea90cd4eb",
+    "identityHash": "bff9c5c9354d3320d08fcf93850868c8",
     "entities": [
       {
         "tableName": "user_profiles",
@@ -141,7 +141,7 @@
       },
       {
         "tableName": "goal_progress",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `user_email` TEXT NOT NULL, `amount_logged` REAL NOT NULL, `progress_date` INTEGER, `on_target` INTEGER NOT NULL, FOREIGN KEY(`user_email`) REFERENCES `user_profiles`(`email`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `user_email` TEXT NOT NULL, `goal_amount` INTEGER NOT NULL, `amount_logged` REAL NOT NULL, `progress_date` INTEGER, `on_target` INTEGER NOT NULL, FOREIGN KEY(`user_email`) REFERENCES `user_profiles`(`email`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -153,6 +153,12 @@
             "fieldPath": "userEmail",
             "columnName": "user_email",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "goalAmount",
+            "columnName": "goal_amount",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -263,7 +269,7 @@
       },
       {
         "tableName": "weather_suggestions",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `user_email` TEXT NOT NULL, `location` TEXT, `date` INTEGER, `weather_report` TEXT, `usage_suggestion_text` TEXT, `raw_weather_data_json` TEXT, FOREIGN KEY(`user_email`) REFERENCES `user_profiles`(`email`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `user_email` TEXT NOT NULL, `location` TEXT, `date` INTEGER, `usage_suggestion_text` TEXT, `raw_weather_data_json` TEXT, FOREIGN KEY(`user_email`) REFERENCES `user_profiles`(`email`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -287,12 +293,6 @@
             "fieldPath": "date",
             "columnName": "date",
             "affinity": "INTEGER",
-            "notNull": false
-          },
-          {
-            "fieldPath": "weatherReport",
-            "columnName": "weather_report",
-            "affinity": "TEXT",
             "notNull": false
           },
           {
@@ -577,7 +577,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd5f452d5154d341df3989f9ea90cd4eb')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'bff9c5c9354d3320d08fcf93850868c8')"
     ]
   }
 }

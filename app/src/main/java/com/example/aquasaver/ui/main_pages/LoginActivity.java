@@ -52,12 +52,11 @@ public class LoginActivity extends AppCompatActivity {
             } else {
                 Executors.newSingleThreadExecutor().execute(() -> {
                     UserProfile existingUser = userDao.getUserProfileByIds(user, pass);
-
                     runOnUiThread(() -> {
                         if (existingUser != null) {
                             Log.d("LoginActivity", "Login success: saving user data: " +
                                     existingUser.getEmail() + ", " + existingUser.getLocation());
-                            Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
 
                             SharedPreferences prefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
                             prefs.edit()
@@ -65,17 +64,19 @@ public class LoginActivity extends AppCompatActivity {
                                     .putString("location", existingUser.getLocation())
                                     .apply();
 
+                            // Navigate to MainActivity
                             Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                             startActivity(intent);
                         } else {
                             Log.d("LoginActivity", "Testing login failure");
-                            Toast.makeText(LoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show();
-                            Log.d("LoginActivity", "Login failure: user not found. Username: " + user + ", Password: " + pass);
+                            Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show();
+                            Log.d("LoginActivity", "Login failure: user not found" + "username: " + user + ", passowrd: " + pass);
                         }
                     });
                 });
             }
         });
+
         // Navigate to SignupActivity
         signupBtn.setOnClickListener(v -> {
             Intent intent = new Intent(LoginActivity.this, SignupActivity.class);

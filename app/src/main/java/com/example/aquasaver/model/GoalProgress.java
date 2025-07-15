@@ -25,6 +25,9 @@ public class GoalProgress {
     @ColumnInfo(name = "user_email") // Foreign key part 1
     public String userEmail;
 
+    @ColumnInfo(name = "goal_amount")
+    public int goalAmount;
+
     @ColumnInfo(name = "amount_logged")
     public double amountLogged; // THIS IS THE SUM from WaterUsage
 
@@ -35,11 +38,12 @@ public class GoalProgress {
     public boolean onTarget;
 
     // Constructor
-    public GoalProgress(@NonNull String userEmail, double amountLogged, Date progressDate, boolean onTarget) {
+    public GoalProgress(@NonNull String userEmail, double amountLogged, Date progressDate, boolean onTarget, int goalAmount) {
         this.userEmail = userEmail;
         this.amountLogged = amountLogged;
         this.progressDate = progressDate;
         this.onTarget = onTarget;
+        this.goalAmount = goalAmount;
     }
 
 
@@ -78,6 +82,16 @@ public class GoalProgress {
 
     public void setOnTarget(boolean onTarget) { // Setter for onTarget
         this.onTarget = onTarget;
+    }
+
+    public int getGoalAmount()
+    {
+        return goalAmount;
+    }
+
+    public void setGoalAmount(int gA)
+    {
+        goalAmount = gA;
     }
 
 }
