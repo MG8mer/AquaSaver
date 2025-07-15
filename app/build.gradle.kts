@@ -1,17 +1,33 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
+    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
+}
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { load(it) }
+    }
 }
 
 android {
-    namespace = "com.aquasaver"
+    namespace = "com.example.aquasaver"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.aquasaver"
+        applicationId = "com.example.aquasaver"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
+
+        val weatherApiKey: String = localProperties["WEATHER_API_KEY"] as? String ?: ""
+        buildConfigField("String", "WEATHER_API_KEY", "\"$weatherApiKey\"")
+
+        val openaiApiKey: String = localProperties["OPENAI_API_KEY"] as? String ?: ""
+        buildConfigField("String", "OPENAI_API_KEY", "\"$openaiApiKey\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -41,6 +57,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 
@@ -50,7 +67,6 @@ dependencies {
     implementation("com.jakewharton.threetenabp:threetenabp:1.4.5")
     implementation(libs.appcompat)
     implementation(libs.material)
-    implementation(libs.activity)
     implementation(libs.constraintlayout)
     implementation(libs.lifecycle.livedata.ktx)
     implementation(libs.lifecycle.viewmodel.ktx)
@@ -63,9 +79,9 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
     implementation("com.google.android.gms:play-services-location:21.0.1")
 
-    val room_version = "2.6.1"
-    implementation("androidx.room:room-runtime:$room_version")
-    annotationProcessor("androidx.room:room-compiler:$room_version")
+    val roomVersion = "2.6.1"
+    implementation("androidx.room:room-runtime:$roomVersion")
+    annotationProcessor("androidx.room:room-compiler:$roomVersion")
 
     implementation("com.squareup.retrofit2:retrofit:2.0.0")
     implementation("com.squareup.retrofit2:converter-gson:2.0.0")
