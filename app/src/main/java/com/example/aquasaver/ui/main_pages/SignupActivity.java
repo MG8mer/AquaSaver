@@ -3,11 +3,15 @@ package com.example.aquasaver.ui.main_pages;
 import android.Manifest;
 import android.annotation.SuppressLint;
 
+import com.example.aquasaver.challenges.ChallengeSeeder;
+import com.example.aquasaver.dao.ChallengesDao;
 import com.example.aquasaver.dao.GoalProgressDao;
+import com.example.aquasaver.model.Challenges;
 import com.example.aquasaver.model.GoalProgress;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import android.content.SharedPreferences;
+import android.util.Log;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.util.Patterns;
@@ -158,20 +162,33 @@ public class SignupActivity extends AppCompatActivity {
                         );
                         return;
                     } else {
-                            // Placeholders:
-                            // reminderTime: "12:00 AM"
-                            UserProfile newUser = new UserProfile(userEmail, pass, loc, useGps, finalGoalType, notify, "12:00 AM", weatherAlert, joinDate, lastStreakUpdate);
-                            GoalProgress userGp;
-                            if (finalGoalType == GoalType.DAILY) {
-                                userGp = new GoalProgress(userEmail, 0, joinDate, true, 300);
-                            } else if (finalGoalType == GoalType.WEEKLY) {
-                                userGp = new GoalProgress(userEmail, 0, joinDate, true, 2100);
-                            } else {
-                                userGp = new GoalProgress(userEmail, 0, joinDate, true, 14700);
-                            }
+                        // Placeholders:
+                        // reminderTime: "12:00 AM"
+                        UserProfile newUser = new UserProfile(userEmail, pass, loc, useGps, finalGoalType, notify, "12:00 AM", weatherAlert, joinDate, lastStreakUpdate);
+                        GoalProgress userGp;
+                        if (finalGoalType == GoalType.DAILY) {
+                            userGp = new GoalProgress(userEmail, 0, joinDate, true, 300);
+                        } else if (finalGoalType == GoalType.WEEKLY) {
+                            userGp = new GoalProgress(userEmail, 0, joinDate, true, 2100);
+                        } else {
+                            userGp = new GoalProgress(userEmail, 0, joinDate, true, 14700);
+                        }
 
-                            userDao.insertUserProfile(newUser);
-                            goalProgressDao.insertGoalProgress(userGp);
+                        userDao.insertUserProfile(newUser);
+                        goalProgressDao.insertGoalProgress(userGp);
+
+                        Log.d("SignupActivity", "Inserting default challenges for user: " + userEmail);
+                        ChallengesDao challengesDao = db.challengesDao();
+                        int count = challengesDao.countChallengesForUser(userEmail);
+                        if (count == 0) {
+                            List<Challenges> challenges = ChallengeSeeder.getRandomChallenges(userEmail, 3);
+                            for (Challenges challenge : challenges) {
+                                challengesDao.insertChallenge(challenge);
+                                Log.d("SignupActivity", "Inserted challenge: " + challenge.getTitle());
+                            }
+                        }
+
+                        Log.d("UserRegistration", "User created and challenges seeded for: " + userEmail);
                     }
                     runOnUiThread(() -> {
                         prefs.edit()

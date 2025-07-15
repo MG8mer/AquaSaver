@@ -7,9 +7,11 @@ import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import androidx.room.Transaction;
 import androidx.room.Update;
 
 // Import Challenges class
+import com.example.aquasaver.challenges.ChallengeWithProgress;
 import com.example.aquasaver.model.Challenges;
 
 // Import list
@@ -59,4 +61,15 @@ public interface ChallengesDao
 
     @Query("SELECT * FROM challenges WHERE user_email = :userEmail AND start_date <= :currentDate AND end_date >= :currentDate")
     List<Challenges> getUserChallengesByTime(String userEmail, long currentDate); // Returns all eco-challenges of a particular user at a specific time
+
+    @Transaction
+    @Query("SELECT * FROM Challenges WHERE user_email = :userEmail")
+    List<ChallengeWithProgress> getAllChallengesWithProgress(String userEmail);
+
+    @Query("SELECT COUNT(*) FROM Challenges WHERE user_email = :email")
+    int countChallengesForUser(String email);
+    @Query("SELECT * FROM challenges WHERE title = :title LIMIT 1")
+    Challenges getChallengeByTitle(String title);
+
+
 }
