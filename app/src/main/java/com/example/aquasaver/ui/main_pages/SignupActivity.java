@@ -3,12 +3,16 @@ package com.example.aquasaver.ui.main_pages;
 import android.Manifest;
 import android.annotation.SuppressLint;
 
+import com.example.aquasaver.challenges.ChallengeSeeder;
+import com.example.aquasaver.dao.ChallengesDao;
+import com.example.aquasaver.model.Challenges;
 import com.example.aquasaver.model.enums.GoalType;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Address;
+import android.util.Log;
 import android.util.Patterns;
 import android.location.Geocoder;
 import android.location.Location;
@@ -27,6 +31,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.Executors;
+
 import com.example.aquasaver.R;
 import com.example.aquasaver.dao.UserProfileDao;
 import com.example.aquasaver.model.UserProfile;
@@ -116,10 +122,8 @@ public class SignupActivity extends AppCompatActivity {
             Date joinDate = new Date();
             Date lastStreakUpdate = new Date();
 
-            String selected = goalSpinner.getSelectedItem().toString();
             GoalType goalType = null;
-
-            switch (selected.toLowerCase()) {
+            switch (goal.toLowerCase()) {
                 case "daily":
                     goalType = GoalType.DAILY;
                     break;
@@ -131,40 +135,60 @@ public class SignupActivity extends AppCompatActivity {
                     break;
             }
 
-
-
-
             if (userEmail.isEmpty() || pass.isEmpty() || loc.isEmpty()) {
-                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
-            } else if (!Patterns.EMAIL_ADDRESS.matcher(userEmail).matches()) {
-                Toast.makeText(this, "Please enter a valid email address", Toast.LENGTH_SHORT).show();
-            } else {
+                Toast.makeText(SignupActivity.this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (!Patterns.EMAIL_ADDRESS.matcher(userEmail).matches()) {
+                Toast.makeText(SignupActivity.this, "Please enter a valid email address", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            GoalType finalGoalType = goalType;
+            Executors.newSingleThreadExecutor().execute(() -> {
                 List<UserProfile> userProfiles = userDao.getUserProfilesByEmail(userEmail);
-                if (userProfiles.size() > 0)
-                {
-                    Toast.makeText(this, "This email address has already been used! Try again.", Toast.LENGTH_SHORT).show();
-                }
-                else {
-                    // Placeholders:
-                    // reminderTime: "12:00 AM"
-                    UserProfile newUser = new UserProfile(userEmail, pass, loc, useGps, goalType, notify, "12:00 AM", weatherAlert, joinDate, lastStreakUpdate);
+
+                if (!userProfiles.isEmpty()) {
+                    runOnUiThread(() ->
+                            Toast.makeText(SignupActivity.this, "This email address has already been used! Try again.", Toast.LENGTH_SHORT).show()
+                    );
+                } else {
+                    UserProfile newUser = new UserProfile(
+                            userEmail, pass, loc, useGps, finalGoalType, notify, "12:00 AM", weatherAlert, joinDate, lastStreakUpdate
+                    );
 
                     userDao.insertUserProfile(newUser);
-                    // Save profile data
-                    prefs.edit()
-                            .putString("username", userEmail)
-                            .putString("password", pass)
-                            .putString("location", loc)
-                            .putString("goal", goal)
-                            .putBoolean("notifications", notify)
-                            .putBoolean("weatherAlert", weatherAlert)
-                            .putBoolean("reminderTime", reminder)
-                            .apply();
+                    Log.d("SignupActivity", "Inserting default challenges for user: " + userEmail);
+                    ChallengesDao challengesDao = db.challengesDao();
+                    int count = challengesDao.countChallengesForUser(userEmail);
+                    if (count == 0) {
+                        List<Challenges> challenges = ChallengeSeeder.getRandomChallenges(userEmail, 3);
+                        for (Challenges challenge : challenges) {
+                            challengesDao.insertChallenge(challenge);
+                            Log.d("SignupActivity", "Inserted challenge: " + challenge.getTitle());
+                        }
+                    }
 
-                    Toast.makeText(this, "Signup Successful!", Toast.LENGTH_SHORT).show();
-                    finish();
+                    Log.d("UserRegistration", "User created and challenges seeded for: " + userEmail);
+
+                    runOnUiThread(() -> {
+                        // Save profile
+                        prefs.edit()
+                                .putString("username", userEmail)
+                                .putString("password", pass)
+                                .putString("location", loc)
+                                .putString("goal", goal)
+                                .putBoolean("notifications", notify)
+                                .putBoolean("weatherAlert", weatherAlert)
+                                .putBoolean("reminderTime", reminder)
+                                .apply();
+
+                        Toast.makeText(SignupActivity.this, "Signup Successful!", Toast.LENGTH_SHORT).show();
+                        finish();
+                    });
                 }
-            }
+            });
         });
     }
 

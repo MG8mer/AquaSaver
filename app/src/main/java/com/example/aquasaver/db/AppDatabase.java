@@ -11,8 +11,12 @@ import androidx.room.TypeConverters;
 import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
+import com.example.aquasaver.challenges.ChallengeSeeder;
 import com.example.aquasaver.model.*;
 import com.example.aquasaver.dao.*;
+
+import java.util.List;
+import java.util.concurrent.Executors;
 
 @Database(
         entities = {
@@ -71,7 +75,6 @@ public abstract class AppDatabase extends RoomDatabase {
             database.execSQL("ALTER TABLE user_profiles ADD COLUMN last_streak_update INTEGER");
         }
     };
-;
 
     // Returns the singleton instance
     public static AppDatabase getInstance(Context context) {

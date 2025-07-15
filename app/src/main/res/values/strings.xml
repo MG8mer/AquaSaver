@@ -11,7 +11,7 @@
     <string name="menu_water_usage">Water Report</string>
     <string name="menu_climate_alerts">Climate Alerts</string>
     <string name="menu_conservation_tips">Conservation Tips</string>
-    <string name="menu_goals">Eco Challenges</string>
+    <string name="menu_goals">Goals and Eco Challenges</string>
     <string name="statistics_title">Statistics</string>
     <string name="menu_settings">Settings</string>
 </resources>

@@ -20,6 +20,8 @@ import com.example.aquasaver.R;
 import com.example.aquasaver.ui.main_pages.MainActivity;
 import com.example.aquasaver.ui.main_pages.SignupActivity;
 
+import java.util.concurrent.Executors;
+
 
 public class LoginActivity extends AppCompatActivity {
     EditText username, password;
@@ -48,30 +50,32 @@ public class LoginActivity extends AppCompatActivity {
             if (user.isEmpty() || pass.isEmpty()) {
                 Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
             } else {
-                UserProfile existingUser = userDao.getUserProfileByIds(user, pass);
-                if (existingUser != null) {
-                    Log.d("LoginActivity", "Login success: saving user data: " +
-                            existingUser.getEmail() + ", " + existingUser.getLocation());
-                    Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
+                Executors.newSingleThreadExecutor().execute(() -> {
+                    UserProfile existingUser = userDao.getUserProfileByIds(user, pass);
 
-                    SharedPreferences prefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
-                    prefs.edit()
-                            .putString("username", existingUser.getEmail())
-                            .putString("location", existingUser.getLocation())
-                            .apply();
+                    runOnUiThread(() -> {
+                        if (existingUser != null) {
+                            Log.d("LoginActivity", "Login success: saving user data: " +
+                                    existingUser.getEmail() + ", " + existingUser.getLocation());
+                            Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
 
-                    // Navigate to MainActivity
-                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                    startActivity(intent);
-                }
-                else {
-                    Log.d("LoginActivity", "Testing login failure");
-                    Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show();
-                    Log.d("LoginActivity", "Login failure: user not found" + "username: " + user + ", passowrd: " + pass);
-                }
+                            SharedPreferences prefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
+                            prefs.edit()
+                                    .putString("username", existingUser.getEmail())
+                                    .putString("location", existingUser.getLocation())
+                                    .apply();
+
+                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                            startActivity(intent);
+                        } else {
+                            Log.d("LoginActivity", "Testing login failure");
+                            Toast.makeText(LoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show();
+                            Log.d("LoginActivity", "Login failure: user not found. Username: " + user + ", Password: " + pass);
+                        }
+                    });
+                });
             }
         });
-
         // Navigate to SignupActivity
         signupBtn.setOnClickListener(v -> {
             Intent intent = new Intent(LoginActivity.this, SignupActivity.class);
