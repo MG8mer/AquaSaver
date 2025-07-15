@@ -123,6 +123,7 @@ public class HomeFragment extends Fragment {
             goalProgressDao = db.goalProgressDao();
             SharedPreferences prefs = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
             String userEmail = prefs.getString("username", null);
+            Log.d("AquaSaver", "Retrieved user email: " + userEmail);
 
             if (userEmail == null) {
                 requireActivity().runOnUiThread(() ->
@@ -230,9 +231,16 @@ public class HomeFragment extends Fragment {
 
 
                     // REPLACE BELOW LINE WITH LOGIC TO OBTAIN ACTUAL USER CREDENTIALS
-                    WaterUsage waterUsage = new WaterUsage("bro@gmail.com", currentDate, litersUsed, selectedActivity);
+                    WaterUsage waterUsage = new WaterUsage(userEmail, currentDate, litersUsed, selectedActivity);
 
                     new Thread(() -> {
+                        UserProfile existingUser = userProfileDao.getUserByEmail(userEmail);
+                        if (existingUser == null) {
+                            requireActivity().runOnUiThread(() ->
+                                    Toast.makeText(requireContext(), "User does not exist: " + userEmail, Toast.LENGTH_LONG).show()
+                            );
+                            return;
+                        }
                         waterUsageDao.insertLog(waterUsage);
                         float totalUsage;
                         // REPLACE bro@gmail.com PROPER LOGIC TO OBTAIN USER EMAIL
