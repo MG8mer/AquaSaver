@@ -1,6 +1,6 @@
 // for auto creating GoalProgress entities
 
-package com.aquasaver.workers;
+package com.example.aquasaver.ui.main_pages.workers;
 
 import android.content.Context;
 
@@ -29,13 +29,8 @@ public class GoalProgressWorker extends Worker
             @NonNull WorkerParameters params
     ) {
         super(context, params);
-        db = Room.databaseBuilder(
-                        context.getApplicationContext(),
-                        AppDatabase.class,
-                        "aqua_db"
-                )
-                .fallbackToDestructiveMigration()
-                .build();
+        db = AppDatabase.getInstance(getApplicationContext());
+
 
         goalProgressDao = db.goalProgressDao();
         userProfileDao  = db.userProfileDao();

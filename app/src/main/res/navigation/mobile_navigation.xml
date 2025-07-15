@@ -30,4 +30,16 @@
         android:label="@string/menu_climate_alerts"
         tools:layout="@layout/fragment_climate_alerts" />
 
+    <fragment
+        android:id="@+id/nav_conservation_tips"
+        android:name="com.example.aquasaver.ui.conservation_tips.ConservationTipsFragment"
+        android:label="@string/menu_conservation_tips"
+        tools:layout="@layout/fragment_conservation_tips" />
+
+    <fragment
+        android:id="@+id/nav_settings"
+        android:name="com.example.aquasaver.ui.settings.SettingsFragment"
+        android:label="@string/menu_settings"
+        tools:layout="@layout/fragment_settings" />
+
 </navigation>

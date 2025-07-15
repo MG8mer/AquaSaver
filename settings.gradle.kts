@@ -12,7 +12,8 @@ pluginManagement {
         maven { url = uri("https://jitpack.io") }
     }
     plugins {
-        id("com.android.application") version "8.10.1"
+        id("com.android.application") version "8.1.1"
+        id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin") version "2.0.1" // ✅ ADD THIS LINE
     }
 }
 

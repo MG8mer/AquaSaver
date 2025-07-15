@@ -1,4 +1,4 @@
-package com.aquasaver;
+package com.example.aquasaver.ui.main_pages;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -10,6 +10,7 @@ import com.google.android.gms.location.LocationServices;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Address;
+import android.util.Patterns;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
@@ -32,15 +33,17 @@ import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.db.AppDatabase;
 import androidx.room.Room;
 import java.time.LocalDate;
+import java.util.concurrent.Executors;
+
 import com.example.aquasaver.model.enums.GoalType;
 import com.example.aquasaver.R;
 
 
 public class SignupActivity extends AppCompatActivity {
 
-    EditText username, password, locationField;
+    EditText email, password, locationField;
     Spinner goalSpinner;
-    Switch notifications, weatherAlertSwitch, reminderTimeSwitch;
+    Switch notifications, weatherAlertSwitch, reminderTimeSwitch, locationTrackingSwitch;
     LinearLayout extraNotificationOptions;
     Button signupSubmit;
 
@@ -60,7 +63,8 @@ public class SignupActivity extends AppCompatActivity {
         prefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
         prefs.edit().clear().apply();
 
-        username = findViewById(R.id.signupUsername);
+        // Link UI elements
+        email = findViewById(R.id.signupEmail);
         password = findViewById(R.id.signupPassword);
         locationField = findViewById(R.id.location);
         goalSpinner = findViewById(R.id.goalSpinner);
@@ -69,6 +73,7 @@ public class SignupActivity extends AppCompatActivity {
         reminderTimeSwitch = findViewById(R.id.reminderTimeSwitch);
         extraNotificationOptions = findViewById(R.id.extraNotificationOptions);
         signupSubmit = findViewById(R.id.signupSubmit);
+        locationTrackingSwitch = findViewById(R.id.locationTrackingSwitch);
 
         // Setup spinner
         String[] goals = {"Daily", "Weekly", "Monthly"};
@@ -77,25 +82,30 @@ public class SignupActivity extends AppCompatActivity {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(
-                    this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    LOCATION_PERMISSION_CODE
-            );
-        } else {
-            getUserLocation();
-        }
+        // Location tracking toggle logic
+        locationTrackingSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(
+                            this,
+                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                            LOCATION_PERMISSION_CODE
+                    );
+                } else {
+                    getUserLocation();
+                }
+                locationField.setEnabled(false);
+            } else {
+                locationField.setText("");
+                locationField.setEnabled(true);
+            }
+        });
 
         notifications.setOnCheckedChangeListener((buttonView, isChecked) -> {
             extraNotificationOptions.setVisibility(isChecked ? View.VISIBLE : View.GONE);
         });
-        db = Room.databaseBuilder(
-                getApplicationContext(),
-                AppDatabase.class,
-                "aqua_db"
-        ).allowMainThreadQueries().build();   // OK for demo, move to background thread later
+        db = AppDatabase.getInstance(this);
 
         userDao = db.userProfileDao();
         goalProgressDao = db.goalProgressDao();
@@ -103,68 +113,104 @@ public class SignupActivity extends AppCompatActivity {
         // Signup button click: validate and save profile
 
         signupSubmit.setOnClickListener(v -> {
-            String user = username.getText().toString();
-            String pass = password.getText().toString();
-            String loc = locationField.getText().toString();
+            String userEmail = email.getText().toString().trim();
+            String pass = password.getText().toString().trim();
+            String loc = locationField.getText().toString().trim();
+            String goal = goalSpinner.getSelectedItem().toString();
             boolean notify = notifications.isChecked();
+            boolean useGps = locationTrackingSwitch.isChecked();
             boolean weatherAlert = weatherAlertSwitch.isChecked();
             boolean reminder = reminderTimeSwitch.isChecked();
             Date joinDate = new Date();
+            Date lastStreakUpdate = new Date();
 
             String selected = goalSpinner.getSelectedItem().toString();
-            GoalType goal = null;
+            GoalType goalType = null;
 
             switch (selected.toLowerCase()) {
                 case "daily":
-                    goal = GoalType.DAILY;
+                    goalType = GoalType.DAILY;
                     break;
                 case "weekly":
-                    goal = GoalType.WEEKLY;
+                    goalType = GoalType.WEEKLY;
+                    break;
+                case "monthly":
+                    goalType = GoalType.MONTHLY;
                     break;
             }
 
-            if (user.isEmpty() || pass.isEmpty() || loc.isEmpty()) {
+            if (userEmail.isEmpty() || pass.isEmpty() || loc.isEmpty()) {
                 Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+            } else if (!Patterns.EMAIL_ADDRESS.matcher(userEmail).matches()) {
+                Toast.makeText(this, "Please enter a valid email address", Toast.LENGTH_SHORT).show();
             } else {
-                // Placeholders:
-                // useGPS: false
-                // reminderTime: "12:00 AM"
-                UserProfile newUser = new UserProfile(user, pass, loc, false, goal, notify, "12:00 AM", weatherAlert, joinDate);
-                GoalProgress userGp;
-                if (goal == GoalType.DAILY)
-                {
-                    userGp = new GoalProgress(user, 0, joinDate, true, 300);
-                }
-                else {
-                    userGp = new GoalProgress(user, 0, joinDate, true, 2100);
-                }
-                userDao.insertUserProfile(newUser);
-                goalProgressDao.insertGoalProgress(userGp);
-                // Save profile data
-                prefs.edit()
-                        .putString("username", user)
-                        .putString("password", pass)
-                        .putString("location", loc)
-                        .putString("goal", goal.toString())
-                        .putBoolean("notifications", notify)
-                        .putBoolean("weatherAlert", weatherAlert)
-                        .putBoolean("reminderTime", reminder)
-                        .apply();
+                GoalType finalGoalType = goalType;
+                Executors.newSingleThreadExecutor().execute(() -> {
+                    List<UserProfile> existing = userDao.getUserProfilesByEmail(userEmail);
 
-                Toast.makeText(this, "Signup Successful!", Toast.LENGTH_SHORT).show();
-                finish();
+                    if (existing.size() > 0) {
+                        runOnUiThread(() ->
+                                Toast.makeText(
+                                        SignupActivity.this,
+                                        "This email address has already been used!",
+                                        Toast.LENGTH_SHORT
+                                ).show()
+                        );
+                        return;
+                    } else {
+                            // Placeholders:
+                            // reminderTime: "12:00 AM"
+                            UserProfile newUser = new UserProfile(userEmail, pass, loc, useGps, finalGoalType, notify, "12:00 AM", weatherAlert, joinDate, lastStreakUpdate);
+                            GoalProgress userGp;
+                            if (finalGoalType == GoalType.DAILY) {
+                                userGp = new GoalProgress(userEmail, 0, joinDate, true, 300);
+                            } else if (finalGoalType == GoalType.WEEKLY) {
+                                userGp = new GoalProgress(userEmail, 0, joinDate, true, 2100);
+                            } else {
+                                userGp = new GoalProgress(userEmail, 0, joinDate, true, 14700);
+                            }
+
+                            userDao.insertUserProfile(newUser);
+                            goalProgressDao.insertGoalProgress(userGp);
+                    }
+                    runOnUiThread(() -> {
+                        prefs.edit()
+                                .putString("username", userEmail)
+                                .putString("password", pass)
+                                .putString("location", loc)
+                                .putString("goal", goal)
+                                .putBoolean("notifications", notify)
+                                .putBoolean("weatherAlert", weatherAlert)
+                                .putBoolean("reminderTime", reminder)
+                                .apply();
+
+                        Toast.makeText(this, "Signup Successful!", Toast.LENGTH_SHORT).show();
+                        finish();
+                    });
+                });
             }
         });
     }
 
-    private void loadSavedProfile() {
+
+    @SuppressLint("MissingPermission")
+    private void getUserLocation () {
+        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                .addOnSuccessListener(this, location -> {
+                    if (location != null) {
+                        getCityFromCoordinates(location);
+                    }
+                });
+    }
+
+    private void loadSavedProfile () {
         String savedUsername = prefs.getString("username", "");
         String savedPassword = prefs.getString("password", "");
         String savedLocation = prefs.getString("location", "");
         String savedGoal = prefs.getString("goal", "Daily");
         boolean savedNotifications = prefs.getBoolean("notifications", false);
 
-        username.setText(savedUsername);
+        email.setText(savedUsername);
         password.setText(savedPassword);
         locationField.setText(savedLocation);
         notifications.setChecked(savedNotifications);
@@ -178,17 +224,7 @@ public class SignupActivity extends AppCompatActivity {
         }
     }
 
-    @SuppressLint("MissingPermission")
-    private void getUserLocation() {
-        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
-                .addOnSuccessListener(this, location -> {
-                    if (location != null) {
-                        getCityFromCoordinates(location);
-                    }
-                });
-    }
-
-    private void getCityFromCoordinates(Location userLocation) {
+    private void getCityFromCoordinates (Location userLocation){
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
         try {
             List<Address> addresses = geocoder.getFromLocation(
@@ -208,7 +244,8 @@ public class SignupActivity extends AppCompatActivity {
                 StringBuilder fullLocation = new StringBuilder();
                 if (city != null && !city.isEmpty()) fullLocation.append(city);
                 if (state != null && !state.isEmpty()) fullLocation.append(", ").append(state);
-                if (country != null && !country.isEmpty()) fullLocation.append(", ").append(country);
+                if (country != null && !country.isEmpty())
+                    fullLocation.append(", ").append(country);
 
                 locationField.setText(!fullLocation.toString().isEmpty() ? fullLocation : "Unknown Location");
             }
@@ -217,10 +254,9 @@ public class SignupActivity extends AppCompatActivity {
             locationField.setText("Location error");
         }
     }
-
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult ( int requestCode, @NonNull String[] permissions,
+                                             @NonNull int[] grantResults){
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == LOCATION_PERMISSION_CODE) {
             if (grantResults.length > 0 &&
