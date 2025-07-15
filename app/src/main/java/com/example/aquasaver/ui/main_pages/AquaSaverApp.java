@@ -1,11 +1,14 @@
 package com.example.aquasaver.ui.main_pages;
 
 import android.app.Application;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import androidx.room.Room;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.ExistingWorkPolicy;
+import androidx.work.ListenableWorker;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
@@ -17,6 +20,7 @@ import com.example.aquasaver.model.UserProfile;
 
 import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
+import androidx.work.ListenableWorker.Result;
 import com.example.aquasaver.model.enums.GoalType;
 
 public class AquaSaverApp extends Application {
@@ -31,10 +35,17 @@ public class AquaSaverApp extends Application {
             AppDatabase db = AppDatabase.getInstance(getApplicationContext());
             UserProfileDao userProfileDao = db.userProfileDao();
 
-            String email = "bro@gmail.com";
-            UserProfile user = userProfileDao.getUserByEmail(email); // REPLACE bro@gmail.com PROPER LOGIC TO OBTAIN USER EMAIL
+            Context ctx = getApplicationContext();
+            SharedPreferences prefs = ctx
+                    .getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
+            String userEmail = prefs.getString("username", null);
+            if (userEmail == null) {
+                Log.w("AquaSaverApp", "No logged-in user, skipping goal scheduling.");
+                return;
+            }
+            UserProfile user = userProfileDao.getUserByEmail(userEmail);
             if (user == null) {
-                Log.w("AquaSaverApp", "No user found for email “" + email + "”, skipping goal scheduling.");
+                Log.w("AquaSaverApp", "No user found for email “" + userEmail + "”, skipping goal scheduling.");
                 return;
             }
             String goalType = user.getGoalType().toString();
