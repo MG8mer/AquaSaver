@@ -6,8 +6,11 @@ import android.annotation.SuppressLint;
 import com.example.aquasaver.challenges.ChallengeSeeder;
 import com.example.aquasaver.dao.ChallengesDao;
 import com.example.aquasaver.dao.GoalProgressDao;
+import com.example.aquasaver.dao.SuggestionsDao;
 import com.example.aquasaver.model.Challenges;
 import com.example.aquasaver.model.GoalProgress;
+import com.example.aquasaver.model.Suggestions;
+import com.example.aquasaver.ui.conservation_tips.ConservationTipsSeeder;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import android.content.SharedPreferences;
@@ -177,7 +180,6 @@ public class SignupActivity extends AppCompatActivity {
                         userDao.insertUserProfile(newUser);
                         goalProgressDao.insertGoalProgress(userGp);
 
-                        Log.d("SignupActivity", "Inserting default challenges for user: " + userEmail);
                         ChallengesDao challengesDao = db.challengesDao();
                         int count = challengesDao.countChallengesForUser(userEmail);
                         if (count == 0) {
@@ -189,6 +191,12 @@ public class SignupActivity extends AppCompatActivity {
                         }
 
                         Log.d("UserRegistration", "User created and challenges seeded for: " + userEmail);
+                        SuggestionsDao suggestionsDao = db.suggestionsDao();
+                        List<Suggestions> suggestions = ConservationTipsSeeder.getConservationTips(userEmail);
+                        for (Suggestions suggestion : suggestions) {
+                            suggestionsDao.insertSuggestion(suggestion);
+                            Log.d("SignupActivity", "Inserted suggestion: " + suggestion.getTitle());
+                        }
                     }
                     runOnUiThread(() -> {
                         prefs.edit()

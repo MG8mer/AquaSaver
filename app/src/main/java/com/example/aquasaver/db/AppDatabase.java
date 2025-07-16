@@ -27,9 +27,10 @@ import java.util.concurrent.Executors;
                 WeatherSuggestions.class,
                 Reports.class,
                 Challenges.class,
-                ChallengeProgress.class
+                ChallengeProgress.class,
+                Suggestions.class
         },
-        version = 6,
+        version = 7,
         exportSchema = false
 )
 @TypeConverters({Converters.class})
@@ -44,6 +45,7 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract ReportsDao reportsDao();
     public abstract ChallengesDao challengesDao();
     public abstract ChallengeProgressDao challengeProgressDao();
+    public abstract SuggestionsDao suggestionsDao();
 
     private static volatile AppDatabase INSTANCE;
 
@@ -83,6 +85,21 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     };
 
+    static final Migration MIGRATION_6_7 = new Migration(6, 7) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL("CREATE TABLE IF NOT EXISTS `suggestions` (" +
+                    "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`user_email` TEXT NOT NULL, " +
+                    "`title` TEXT, " +
+                    "`description` TEXT, " +
+                    "FOREIGN KEY(`user_email`) REFERENCES `UserProfile`(`email`) ON UPDATE NO ACTION ON DELETE CASCADE)");
+
+            database.execSQL("CREATE INDEX IF NOT EXISTS `index_suggestions_user_email` ON `suggestions` (`user_email`)");
+        }
+    };
+
+
 
     // Returns the singleton instance
     public static AppDatabase getInstance(Context context) {
@@ -95,7 +112,7 @@ public abstract class AppDatabase extends RoomDatabase {
                                     AppDatabase.class,
                                     "aqua_saver.db"
                             )
-                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                             .build();
                     Log.d("AppDatabase", "AppDatabase instance built.");
                 }
