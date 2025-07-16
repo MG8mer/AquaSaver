@@ -1,6 +1,5 @@
 package com.example.aquasaver.ui.home;
 
-
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -32,20 +31,17 @@ import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import android.app.AlertDialog;
-
 public class HomeFragment extends Fragment {
 
-    // to store selected activity on the home page
     String selectedActivity = null;
     LinearLayout selectedLayout = null;
-
 
     int timerValue = 0;
     TextView timerLabel;
@@ -53,21 +49,15 @@ public class HomeFragment extends Fragment {
     AppDatabase db;
     WaterUsageDao waterUsageDao;
     UserProfileDao userProfileDao;
-
     GoalProgressDao goalProgressDao;
     UserProfile user;
-
     String goalType;
 
-    public HomeFragment() {
-        // Required empty public constructor
-    }
+    public HomeFragment() {}
 
-    @Nullable @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-        // Inflate your fragment layout (rename your XML accordingly)
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_home, container, false);
     }
 
@@ -79,8 +69,8 @@ public class HomeFragment extends Fragment {
         timerLabel = view.findViewById(R.id.timerLabel);
         Button incrementButton = view.findViewById(R.id.incrementTimer);
         Button decrementButton = view.findViewById(R.id.decrementTimer);
-        Button logWaterUsage = view.findViewById(R.id.logWaterUsageButton); // Button for logging water usage to db
-        // Making the action buttons actually clickable
+        Button logWaterUsage = view.findViewById(R.id.logWaterUsageButton);
+
         LinearLayout showerButton = view.findViewById(R.id.showerButton);
         LinearLayout washerButton = view.findViewById(R.id.washerButton);
         LinearLayout sprinklerButton = view.findViewById(R.id.sprinklerButton);
@@ -89,6 +79,18 @@ public class HomeFragment extends Fragment {
         showerButton.setOnClickListener(v -> setSelectedActivity(showerButton, "Shower"));
         washerButton.setOnClickListener(v -> setSelectedActivity(washerButton, "Washer"));
         sprinklerButton.setOnClickListener(v -> setSelectedActivity(sprinklerButton, "Sprinkler"));
+
+        otherOption.setOnClickListener(v -> {
+            String[] otherActivities = {"Washing Car", "Watering Garden", "Cleaning", "Filling Pool"};
+            AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+            builder.setTitle("Select Activity");
+            builder.setItems(otherActivities, (dialog, which) -> {
+                setSelectedActivity(otherOption, otherActivities[which]);
+                Toast.makeText(requireContext(), "Selected: " + otherActivities[which], Toast.LENGTH_SHORT).show();
+            });
+            builder.setNegativeButton("Cancel", null);
+            builder.show();
+        });
 
         incrementButton.setOnClickListener(v -> {
             timerValue++;
@@ -102,28 +104,14 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        otherOption.setOnClickListener(v -> {
-            String[] otherActivities = {"Washing Car", "Watering Garden", "Cleaning", "Filling Pool"};
-            AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-            builder.setTitle("Select Activity");
-            builder.setItems(otherActivities, (dialog, which) -> {
-                String selected = otherActivities[which];
-                setSelectedActivity(otherOption, selected);
-                Toast.makeText(requireContext(), "Selected: " + selected, Toast.LENGTH_SHORT).show();
-            });
-            builder.setNegativeButton("Cancel", null);
-            builder.show();
-        });
-
-
         new Thread(() -> {
-            db  = AppDatabase.getInstance(requireContext());
+            db = AppDatabase.getInstance(requireContext());
             waterUsageDao = db.waterUsageDao();
             userProfileDao = db.userProfileDao();
             goalProgressDao = db.goalProgressDao();
+
             SharedPreferences prefs = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
             String userEmail = prefs.getString("username", null);
-            Log.d("AquaSaver", "Retrieved user email: " + userEmail);
 
             if (userEmail == null) {
                 requireActivity().runOnUiThread(() ->
@@ -138,138 +126,99 @@ public class HomeFragment extends Fragment {
                 return;
             }
 
-            goalType = user.getGoalType() != null ? user.getGoalType().toString() : "DAILY"; // default fallback
+            goalType = user.getGoalType() != null ? user.getGoalType().toString() : "DAILY";
 
-            float totalUsagePre;
+            float totalUsage;
             if ("DAILY".equals(goalType)) {
-                long[] todayWindow = computeTodayWindow();
-                Float usage = waterUsageDao.getLitersUsedBetween(userEmail, todayWindow[0], todayWindow[1]);
-                totalUsagePre = usage != null ? usage : 0f;
+                long[] window = computeTodayWindow();
+                totalUsage = waterUsageDao.getLitersUsedBetween(userEmail, window[0], window[1]);
             } else if ("WEEKLY".equals(goalType)) {
-                long[] weekWindow = computeCurrentWeekWindow();
-                Float usage = waterUsageDao.getLitersUsedBetween(userEmail, weekWindow[0], weekWindow[1]);
-                totalUsagePre = usage != null ? usage : 0f;
+                long[] window = computeCurrentWeekWindow();
+                totalUsage = waterUsageDao.getLitersUsedBetween(userEmail, window[0], window[1]);
             } else {
-                long[] monthWindow = computeCurrentMonthWindow();
-                Float usage = waterUsageDao.getLitersUsedBetween(userEmail, monthWindow[0], monthWindow[1]);
-                totalUsagePre = usage != null ? usage : 0f;
+                long[] window = computeCurrentMonthWindow();
+                totalUsage = waterUsageDao.getLitersUsedBetween(userEmail, window[0], window[1]);
             }
 
             List<GoalProgress> goalProgressList = goalProgressDao.getAllProgressForUser(userEmail);
-            Log.d("HomeFragment", "Goal progress list size: " + goalProgressList.size());
-            for (GoalProgress gp : goalProgressList) {
-                Log.d("HomeFragment", "GoalProgress: " + gp.toString());
-            }
-
             if (goalProgressList.isEmpty()) {
-                requireActivity().runOnUiThread(() ->
-                        Toast.makeText(requireContext(), "No goal progress found.", Toast.LENGTH_LONG).show());
-                GoalProgress defaultGoal = new GoalProgress(userEmail,0f, new Date(), true, 100);
+                GoalProgress defaultGoal = new GoalProgress(userEmail, 0f, new Date(), true, 100);
                 goalProgressDao.insertGoalProgress(defaultGoal);
                 goalProgressList = goalProgressDao.getAllProgressForUser(userEmail);
-                return;
             }
 
             float goal = goalProgressList.get(0).getGoalAmount();
 
             List<GoalProgress> finalGoalProgressList = goalProgressList;
+            float finalTotalUsage = totalUsage;
+
             requireActivity().runOnUiThread(() -> {
-                // safe to use db here
-                updatePieChart(totalUsagePre, goal);
+                updatePieChart(finalTotalUsage, goal);
 
                 logWaterUsage.setOnClickListener(v -> {
-                    if (db == null) {
-                        Toast.makeText(requireContext(), "Database is not ready yet. Please wait.", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-
                     if (selectedActivity == null || timerValue == 0) {
                         Toast.makeText(requireContext(), "Please select an activity and set the time.", Toast.LENGTH_SHORT).show();
                         return;
                     }
 
-                    double multiplier = 1;
-
-                    /* Conditional series below define a variable called multiplier
-                     * Multiplier value depends on average liters of water used per minute
-                     * for a respective activity (determined via google search)
-
-                     */
-
-                    if (selectedActivity.equals("Shower"))
-                    {
-                        multiplier = 15;
+                    double multiplier;
+                    switch (selectedActivity) {
+                        case "Shower":
+                            multiplier = 9;  // liters per minute (mid-range shower flow)
+                            break;
+                        case "Sprinkler":
+                            multiplier = 9;  // liters per minute (estimate)
+                            break;
+                        case "Washer":
+                            multiplier = 2;  // liters per minute (modern efficient washer)
+                            break;
+                        case "Washing Car":
+                        case "Cleaning":
+                        case "Filling Pool":
+                            multiplier = 10; // liters per minute (estimate)
+                            break;
+                        case "Watering Garden":
+                            multiplier = 5;  // liters per minute
+                            break;
+                        default:
+                            multiplier = 1;  // fallback liters per unit time
                     }
-                    else if (selectedActivity.equals("Sprinkler"))
-                    {
-                        multiplier = 17;
-                    }
-                    else if (selectedActivity.equals("Washer"))
-                    {
-                        multiplier = 0.13;
-                    }
-                    else if (selectedActivity.equals("Washing Car"))
-                    {
-                        multiplier = 10;
-                    }
-                    else if (selectedActivity.equals("Watering Garden"))
-                    {
-                        multiplier = 5;
-                    }
-                    else if (selectedActivity.equals("Cleaning"))
-                    {
-                        multiplier = 10;
-                    }
-                    else if (selectedActivity.equals("Filling Pool"))
-                    {
-                        multiplier = 10;
-                    }
-
 
                     double litersUsed = timerValue * multiplier;
                     Date currentDate = new Date();
-
-
-                    // REPLACE BELOW LINE WITH LOGIC TO OBTAIN ACTUAL USER CREDENTIALS
-                    WaterUsage waterUsage = new WaterUsage(userEmail, currentDate, litersUsed, selectedActivity);
+                    WaterUsage usage = new WaterUsage(userEmail, currentDate, litersUsed, selectedActivity);
 
                     new Thread(() -> {
-                        UserProfile existingUser = userProfileDao.getUserByEmail(userEmail);
-                        if (existingUser == null) {
+                        if (userProfileDao.getUserByEmail(userEmail) == null) {
                             requireActivity().runOnUiThread(() ->
-                                    Toast.makeText(requireContext(), "User does not exist: " + userEmail, Toast.LENGTH_LONG).show()
-                            );
+                                    Toast.makeText(requireContext(), "User does not exist: " + userEmail, Toast.LENGTH_LONG).show());
                             return;
                         }
-                        waterUsageDao.insertLog(waterUsage);
-                        float totalUsage;
-                        // REPLACE bro@gmail.com PROPER LOGIC TO OBTAIN USER EMAIL
+
+                        waterUsageDao.insertLog(usage);
+
+                        float updatedUsage;
                         if ("DAILY".equals(goalType)) {
-                            long[] todayWindow = computeTodayWindow();
-                            Float usage = waterUsageDao.getLitersUsedBetween(userEmail, todayWindow[0], todayWindow[1]);
-                            totalUsage = usage != null ? usage : 0f;
+                            long[] window = computeTodayWindow();
+                            updatedUsage = waterUsageDao.getLitersUsedBetween(userEmail, window[0], window[1]);
                         } else if ("WEEKLY".equals(goalType)) {
-                            long[] weekWindow = computeCurrentWeekWindow();
-                            Float usage = waterUsageDao.getLitersUsedBetween(userEmail, weekWindow[0], weekWindow[1]);
-                            totalUsage = usage != null ? usage : 0f;
+                            long[] window = computeCurrentWeekWindow();
+                            updatedUsage = waterUsageDao.getLitersUsedBetween(userEmail, window[0], window[1]);
                         } else {
-                            long[] monthWindow = computeCurrentMonthWindow();
-                            Float usage = waterUsageDao.getLitersUsedBetween(userEmail, monthWindow[0], monthWindow[1]);
-                            totalUsage = usage != null ? usage : 0f;
+                            long[] window = computeCurrentMonthWindow();
+                            updatedUsage = waterUsageDao.getLitersUsedBetween(userEmail, window[0], window[1]);
                         }
 
                         GoalProgress mostRecentGoal = finalGoalProgressList.get(0);
-                        mostRecentGoal.setAmountLogged(totalUsage);
+                        mostRecentGoal.setAmountLogged(updatedUsage);
                         mostRecentGoal.setProgressDate(new Date());
-                        mostRecentGoal.setOnTarget(totalUsage <= goal);
-
+                        mostRecentGoal.setOnTarget(updatedUsage <= goal);
                         goalProgressDao.updateGoalProgress(mostRecentGoal);
 
                         requireActivity().runOnUiThread(() -> {
-                            // Reset and update UI
                             timerValue = 0;
                             updateTimerLabel();
-                            updatePieChart(totalUsage, goal);
+                            updatePieChart(updatedUsage, goal);
                             Toast.makeText(requireContext(), "Water usage logged", Toast.LENGTH_SHORT).show();
 
                             if (selectedLayout != null) {
@@ -291,15 +240,12 @@ public class HomeFragment extends Fragment {
     private void updatePieChart(float usage, float goal) {
         ArrayList<PieEntry> entries = new ArrayList<>();
 
-        // Convert gallons to liters
-        float usageLiters = usage * 3.78541f;
-
-        // Define total in liters
-        float totalLiters = goal*3.78541f;
-
+        // usage and goal already in liters
+        float usageLiters = usage;
+        float totalLiters = goal;
         float remaining = Math.max(totalLiters - usageLiters, 0);
 
-        entries.add(new PieEntry(usage, "Used"));
+        entries.add(new PieEntry(usageLiters, "Used"));
         entries.add(new PieEntry(remaining, "Remaining"));
 
         PieDataSet dataSet = new PieDataSet(entries, "");
@@ -309,30 +255,38 @@ public class HomeFragment extends Fragment {
         );
         dataSet.setValueTextColor(Color.BLACK);
         dataSet.setValueTextSize(12f);
+        dataSet.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                return String.format("%.1f L", value);
+            }
+        });
 
         PieData data = new PieData(dataSet);
         pieChart.setData(data);
-        String centerText;
-        float percentUsed = goal != 0 ? (usageLiters / totalLiters) * 100f : 0f;
 
-        if (goalType.equals("DAILY"))
-        {
-            pieChart.setCenterText(usage + " liters\n" + ((usage / goal) * goal) + "% used today");
+        float percentUsed = totalLiters != 0 ? (usageLiters / totalLiters) * 100f : 0f;
 
+        String label;
+        switch (goalType) {
+            case "DAILY":
+                label = "used today";
+                break;
+            case "WEEKLY":
+                label = "used this week";
+                break;
+            default:
+                label = "used this month";
+                break;
         }
-        else if (goalType.equals("WEEKLY")) {
-            pieChart.setCenterText(usage + " liters\n" + ((usage / goal) * goal) + "% used this week");
-        }
-        else {
-            pieChart.setCenterText(usage + " liters\n" + ((usage / goal) * goal) + "% used this month");
-        }
-        if ("DAILY".equals(goalType)) {
-            centerText = String.format("%.1f liters\n%.1f%% used today", usageLiters, percentUsed);
-        } else if ("WEEKLY".equals(goalType)) {
-            centerText = String.format("%.1f liters\n%.1f%% used this week", usageLiters, percentUsed);
-        } else {
-            centerText = String.format("%.1f liters\n%.1f%% used this month", usageLiters, percentUsed);
-        }
+
+        String centerText = String.format(
+                "%.1f / %.1f liters\n%.1f%% %s",
+                usageLiters,
+                totalLiters,
+                percentUsed,
+                label
+        );
 
         pieChart.setCenterText(centerText);
         pieChart.setCenterTextSize(16f);
@@ -342,81 +296,56 @@ public class HomeFragment extends Fragment {
     }
 
     private void setSelectedActivity(LinearLayout layout, String activity) {
-        if (selectedLayout!= null) {
+        if (selectedLayout != null) {
             selectedLayout.setBackgroundResource(R.drawable.default_background);
         }
-
         layout.setBackgroundResource(R.drawable.selected_background);
         selectedLayout = layout;
         selectedActivity = activity;
     }
 
-    // This method returns a two item array, where
-    // the first item is the start of the day at 12 am and
-    // the second item is the end of the day right before the next
-    // 12 am.
     public static long[] computeTodayWindow() {
         Calendar cal = Calendar.getInstance();
-        // start of today
         cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MINUTE,      0);
-        cal.set(Calendar.SECOND,      0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
         long start = cal.getTimeInMillis();
 
-        // start of tomorrow
         cal.add(Calendar.DAY_OF_YEAR, 1);
         long end = cal.getTimeInMillis();
 
-        return new long[]{ start, end };
+        return new long[]{start, end};
     }
 
-
-    // This method returns a two item array, where the first
-    // item is the start of the current week and the second
-    // is the end of that current week.
-
-    // This method is fixed so the start of the week is the most
-    // recent Monday and the end is the Sunday right before the next
-    // Monday.
     public static long[] computeCurrentWeekWindow() {
         Calendar now = Calendar.getInstance();
-        int todayDow = now.get(Calendar.DAY_OF_WEEK);
-        int daysSinceMonday = (todayDow + 5) % 7;
-        Calendar weekStart = (Calendar) now.clone();
-        weekStart.add(Calendar.DAY_OF_YEAR, -daysSinceMonday);
-        weekStart.set(Calendar.HOUR_OF_DAY, 0);
-        weekStart.set(Calendar.MINUTE,      0);
-        weekStart.set(Calendar.SECOND,      0);
-        weekStart.set(Calendar.MILLISECOND, 0);
-        long start = weekStart.getTimeInMillis();
-        weekStart.add(Calendar.DAY_OF_YEAR, 7);
-        long end = weekStart.getTimeInMillis();
+        int daysSinceMonday = (now.get(Calendar.DAY_OF_WEEK) + 5) % 7;
+        now.add(Calendar.DAY_OF_YEAR, -daysSinceMonday);
+        now.set(Calendar.HOUR_OF_DAY, 0);
+        now.set(Calendar.MINUTE, 0);
+        now.set(Calendar.SECOND, 0);
+        now.set(Calendar.MILLISECOND, 0);
+        long start = now.getTimeInMillis();
 
-        return new long[]{ start, end };
+        now.add(Calendar.DAY_OF_YEAR, 7);
+        long end = now.getTimeInMillis();
+
+        return new long[]{start, end};
     }
 
-    // This method returns a two item array, where the first
-    // item is the start of the current month and the second
-    // is the start of the next month
     public static long[] computeCurrentMonthWindow() {
         Calendar cal = Calendar.getInstance();
-
         cal.set(Calendar.DAY_OF_MONTH, 1);
-        cal.set(Calendar.HOUR_OF_DAY,    0);
-        cal.set(Calendar.MINUTE,         0);
-        cal.set(Calendar.SECOND,         0);
-        cal.set(Calendar.MILLISECOND,    0);
-        long startOfMonth = cal.getTimeInMillis();
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        long start = cal.getTimeInMillis();
 
-        // Advance to first day of next month at midnight
         cal.add(Calendar.MONTH, 1);
-        long startOfNextMonth = cal.getTimeInMillis();
+        long end = cal.getTimeInMillis();
 
-        return new long[]{ startOfMonth, startOfNextMonth };
+        return new long[]{start, end};
     }
-
 }
-
-
-

@@ -31,9 +31,17 @@ import com.example.aquasaver.dao.GoalProgressDao;
 import com.example.aquasaver.dao.UserProfileDao;
 import com.example.aquasaver.dao.ChallengeProgressDao;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -120,15 +128,28 @@ public class GoalsFragment extends Fragment {
                     if (child instanceof CheckBox) {
                         CheckBox cb = (CheckBox) child;
                         if (cb.isChecked()) {
-                            String challengeTitle = (String) cb.getTag();  // Use getTag() for proper matching
+                            String challengeTitle = (String) cb.getTag();
+
                             ChallengeProgress progress = progressDao.getChallengeProgressById(challengeTitle, email);
-                            anyUpdated = true;
+                            if (progress == null) {
+                                // Create new ChallengeProgress if none exists yet
+                                progress = new ChallengeProgress(email, challengeTitle, 1f, true);
+                                // Optionally set currentProgress to goal or zero here if you want
+                                progressDao.insertChallengeProgress(progress);
+                                anyUpdated = true;
+                            } else if (!progress.completion) {
+                                // Update existing progress if not completed
+                                progress.setCompletion(true);
+                                progressDao.updateChallengeProgress(progress);
+                                anyUpdated = true;
+                            }
                         }
                     }
                 }
 
                 if (anyUpdated) {
                     List<ChallengeWithProgress> updatedList = challengesDao.getAllChallengesWithProgress(email);
+
                     requireActivity().runOnUiThread(() -> {
                         populateChallenges(updatedList);
                         updateCheckboxesWithChallenges(updatedList);
@@ -219,7 +240,20 @@ public class GoalsFragment extends Fragment {
         ChallengesDao dao = AppDatabase.getInstance(requireContext()).challengesDao();
 
         executor.execute(() -> {
-            List<ChallengeWithProgress> challengeList = dao.getAllChallengesWithProgress(email); // must use @Transaction in DAO
+            List<Challenges> allChallenges = dao.getUserChallenges(email); // just the raw challenge data
+            List<Challenges> dailyChallenges = getDailyChallenges(allChallenges);
+
+            // Optional: if you need progress too, map titles to get ChallengeWithProgress
+            ChallengeProgressDao progressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
+            List<ChallengeWithProgress> challengeList = new ArrayList<>();
+
+            for (Challenges challenge : dailyChallenges) {
+                ChallengeProgress progress = progressDao.getChallengeProgressById(challenge.getTitle(), email);
+                ChallengeWithProgress cwp = new ChallengeWithProgress();
+                cwp.challenge = challenge;
+                cwp.progress = progress;
+                challengeList.add(cwp);
+            }
 
             requireActivity().runOnUiThread(() -> populateChallenges(challengeList));
         });
@@ -297,33 +331,57 @@ public class GoalsFragment extends Fragment {
         else if (percent < 0.75f) return 0xFFFFD700; // Yellow
         else return 0xFFFF4500;   // Red-orange
     }
+    private static Date getTodayDateTruncated() {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
+    }
+    private List<Challenges> getDailyChallenges(List<Challenges> allChallenges) {
+        SharedPreferences prefs = requireContext().getSharedPreferences("DailyChallengePrefs", Context.MODE_PRIVATE);
 
-    public void updateChallengeCompletion(String userEmail, Map<String, Boolean> completionMap) {
-        ChallengeProgressDao challengeProgressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
-        ChallengesDao challengesDao = AppDatabase.getInstance(requireContext()).challengesDao();
+        long lastShuffleMillis = prefs.getLong("lastShuffleMillis", 0);
+        Date today = getTodayDateTruncated();
 
-        executor.execute(() -> {
-            for (Map.Entry<String, Boolean> entry : completionMap.entrySet()) {
-                String title = entry.getKey();
-                boolean completed = entry.getValue();
+        // Check if the last shuffle was earlier than today
+        if (lastShuffleMillis < today.getTime()) {
+            // New day: shuffle and pick 3
+            Collections.shuffle(allChallenges);
+            List<Challenges> dailyChallenges = allChallenges.subList(0, Math.min(3, allChallenges.size()));
 
-                ChallengeProgress progress = challengeProgressDao.getChallengeProgressById(title);
-                if (progress != null && progress.getUserEmail().equals(userEmail)) {
-                    progress.setCompletion(completed);
+            // Save challenge titles
+            StringBuilder sb = new StringBuilder();
+            for (Challenges c : dailyChallenges) {
+                sb.append(c.getTitle()).append(";");
+            }
 
-                    if (completed) {
-                        // Fetch the challenge goal amount from Challenges table
-                        Challenges challenge = challengesDao.getChallengeByTitle(title);
-                        if (challenge != null) {
-                            float goalAmount = challenge.getGoalAmount(); // Assuming Challenges has getGoalAmount()
-                            progress.setCurrentProgress(goalAmount);
-                        }
-                    }
+            prefs.edit()
+                    .putLong("lastShuffleMillis", today.getTime())
+                    .putString("selectedChallengeTitles", sb.toString())
+                    .apply();
 
-                    challengeProgressDao.updateChallengeProgress(progress);
+            return dailyChallenges;
+        } else {
+            // Same day: load saved challenge titles
+            String savedTitles = prefs.getString("selectedChallengeTitles", "");
+            if (savedTitles.isEmpty()) {
+                // fallback shuffle if something goes wrong
+                Collections.shuffle(allChallenges);
+                return allChallenges.subList(0, Math.min(3, allChallenges.size()));
+            }
+
+            Set<String> titleSet = new HashSet<>(Arrays.asList(savedTitles.split(";")));
+            List<Challenges> savedChallenges = new ArrayList<>();
+            for (Challenges c : allChallenges) {
+                if (titleSet.contains(c.getTitle())) {
+                    savedChallenges.add(c);
                 }
             }
-        });
+
+            return savedChallenges;
+        }
     }
 
     private void updateCheckboxesWithChallenges(List<ChallengeWithProgress> challengeWithProgressList) {
@@ -339,7 +397,7 @@ public class GoalsFragment extends Fragment {
             // Show only challenges not yet completed
             if (progress == null || !progress.completion) {
                 CheckBox checkBox = new CheckBox(getContext());
-                checkBox.setText(challenge.getDescription());
+                checkBox.setText(challenge.getTitle());
                 checkBox.setTag(challenge.getTitle()); // Tag it with a unique ID/title for later reference
                 checkboxContainer.addView(checkBox);
                 hasAvailableChallenges = true;
