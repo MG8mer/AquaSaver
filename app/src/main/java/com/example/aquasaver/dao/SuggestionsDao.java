@@ -9,6 +9,7 @@ import androidx.room.Update;
 
 import com.example.aquasaver.challenges.ChallengeWithProgress;
 import com.example.aquasaver.model.Challenges;
+import com.example.aquasaver.model.GoalProgress;
 import com.example.aquasaver.model.Suggestions;
 
 // Import list
