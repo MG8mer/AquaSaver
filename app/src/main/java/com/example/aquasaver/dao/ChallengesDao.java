@@ -70,4 +70,13 @@ public interface ChallengesDao
     int countChallengesForUser(String email);
     @Query("SELECT * FROM challenges WHERE title = :title LIMIT 1")
     Challenges getChallengeByTitle(String title);
+
+    @Query("SELECT * FROM Challenges WHERE user_email = :userEmail AND goal_amount == 1 AND end_date <= :currentDate")
+    List<Challenges> getOneDayChallengesBeforeDate(String userEmail, Long currentDate); // Returns all eco-challenges that ended before a certain date and are one day long
+
+    @Query("SELECT * FROM Challenges WHERE user_email = :userEmail AND goal_amount > 1 AND goal_amount <= 7 AND end_date <= :currentDate")
+    List<Challenges> getWeeklyChallengesBeforeDate(String userEmail, Long currentDate); // Returns all eco-challenges that ended before a certain date and are at most a week long and at least two days long
+
+    @Query("SELECT * FROM Challenges WHERE user_email = :userEmail AND goal_amount > 7 AND goal_amount <= 28 AND end_date <= :currentDate")
+    List<Challenges> getMonthlyChallengesBeforeDate(String userEmail, Long currentDate); // Returns all eco-challenges that ended before a certain date and are at most a month long (28 days) and at least 8 days long
 }

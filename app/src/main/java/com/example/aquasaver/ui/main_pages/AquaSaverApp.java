@@ -22,80 +22,30 @@ import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 import androidx.work.ListenableWorker.Result;
 import com.example.aquasaver.model.enums.GoalType;
+import com.example.aquasaver.ui.main_pages.workers.ReportsWorker;
 
 public class AquaSaverApp extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        scheduleGoalProgress();
+        scheduleReportsWorker();
     }
 
-    private void scheduleGoalProgress() {
-        new Thread(() -> {
-            AppDatabase db = AppDatabase.getInstance(getApplicationContext());
-            UserProfileDao userProfileDao = db.userProfileDao();
+    private void scheduleReportsWorker() {
+        long initialDelay = calculateDelayToMidnight();
+        PeriodicWorkRequest dailyReports = new PeriodicWorkRequest.Builder(
+                ReportsWorker.class,
+                1, TimeUnit.DAYS
+        )
+                .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
+                .build();
 
-            Context ctx = getApplicationContext();
-            SharedPreferences prefs = ctx
-                    .getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
-            String userEmail = prefs.getString("username", null);
-            if (userEmail == null) {
-                Log.w("AquaSaverApp", "No logged-in user, skipping goal scheduling.");
-                return;
-            }
-            UserProfile user = userProfileDao.getUserByEmail(userEmail);
-            if (user == null) {
-                Log.w("AquaSaverApp", "No user found for email “" + userEmail + "”, skipping goal scheduling.");
-                return;
-            }
-            String goalType = user.getGoalType().toString();
-
-            if (goalType.equals("DAILY")) {
-                long initialDelay = calculateDelayToMidnight();
-                PeriodicWorkRequest dailyWork = new PeriodicWorkRequest.Builder(
-                        GoalProgressWorker.class,
-                        1, TimeUnit.DAYS
-                )
-                        .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
-                        .build();
-
-                WorkManager.getInstance(this)
-                        .enqueueUniquePeriodicWork(
-                                "goal_progress_daily",
-                                ExistingPeriodicWorkPolicy.KEEP,
-                                dailyWork
-                        );
-            } else if (goalType.equals("WEEKLY")) {
-                long weeklyDelay = calculateDelayToNextMonday();
-                PeriodicWorkRequest weeklyWork = new PeriodicWorkRequest.Builder(
-                        GoalProgressWorker.class,
-                        7, TimeUnit.DAYS
-                )
-                        .setInitialDelay(weeklyDelay, TimeUnit.MILLISECONDS)
-                        .build();
-
-                WorkManager.getInstance(this)
-                        .enqueueUniquePeriodicWork(
-                                "goal_progress_weekly",
-                                ExistingPeriodicWorkPolicy.KEEP,
-                                weeklyWork
-                        );
-            }
-            else {
-                long monthlyDelay = calculateDelayToFirstOfNextMonth();
-                OneTimeWorkRequest monthlyWork = new OneTimeWorkRequest.Builder(GoalProgressWorker.class)
-                        .setInitialDelay(monthlyDelay, TimeUnit.MILLISECONDS)
-                        .addTag("goal_progress_monthly")
-                        .build();
-
-                WorkManager.getInstance(this)
-                        .enqueueUniqueWork(
-                                "goal_progress_monthly",
-                                ExistingWorkPolicy.REPLACE,
-                                monthlyWork
-                        );
-            }
-        }).start();
+        WorkManager.getInstance(this)
+                .enqueueUniquePeriodicWork(
+                        "reports_worker",
+                        ExistingPeriodicWorkPolicy.KEEP,
+                        dailyReports
+                );
     }
 
     private long calculateDelayToMidnight() {
@@ -107,33 +57,5 @@ public class AquaSaverApp extends Application {
         nextMidnight.set(Calendar.SECOND, 0);
         nextMidnight.set(Calendar.MILLISECOND, 0);
         return nextMidnight.getTimeInMillis() - now.getTimeInMillis();
-    }
-
-    private long calculateDelayToNextMonday() {
-        Calendar now = Calendar.getInstance();
-        Calendar nextMonday = (Calendar) now.clone();
-        int dayOfWeek = now.get(Calendar.DAY_OF_WEEK);
-        int daysUntilMonday = ((Calendar.MONDAY - dayOfWeek) + 7) % 7;
-        if (daysUntilMonday == 0) {
-            daysUntilMonday = 7;
-        }
-        nextMonday.add(Calendar.DAY_OF_YEAR, daysUntilMonday);
-        nextMonday.set(Calendar.HOUR_OF_DAY, 0);
-        nextMonday.set(Calendar.MINUTE, 0);
-        nextMonday.set(Calendar.SECOND, 0);
-        nextMonday.set(Calendar.MILLISECOND, 0);
-        return nextMonday.getTimeInMillis() - now.getTimeInMillis();
-    }
-    private long calculateDelayToFirstOfNextMonth() {
-        Calendar now = Calendar.getInstance();
-        Calendar firstOfMonth = (Calendar) now.clone();
-        firstOfMonth.set(Calendar.DAY_OF_MONTH, 1);
-        firstOfMonth.set(Calendar.HOUR_OF_DAY, 0);
-        firstOfMonth.set(Calendar.MINUTE, 0);
-        firstOfMonth.set(Calendar.SECOND, 0);
-        firstOfMonth.set(Calendar.MILLISECOND, 0);
-        // advance to next month
-        firstOfMonth.add(Calendar.MONTH, 1);
-        return firstOfMonth.getTimeInMillis() - now.getTimeInMillis();
     }
 }

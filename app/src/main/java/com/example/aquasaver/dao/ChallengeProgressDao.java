@@ -11,6 +11,7 @@ import androidx.room.Update;
 
 // Import Challenges class
 import com.example.aquasaver.model.ChallengeProgress;
+import com.example.aquasaver.model.Challenges;
 
 // Import list
 import java.util.List;
@@ -64,4 +65,7 @@ public interface ChallengeProgressDao
 
     @Query("SELECT * FROM challenge_progress WHERE user_email = :userEmail AND completion = :completion")
     List<ChallengeProgress> getUserChallengeProgressByCompletion(String userEmail, boolean completion); // Returns the progress of all eco-challenges of a particular user by whether they are or not completed
+
+    @Query("SELECT * FROM challenge_progress WHERE title = :title LIMIT 1")
+    ChallengeProgress getChallengeByTitle(String title);
 }
