@@ -167,11 +167,11 @@ public class SignupActivity extends AppCompatActivity {
                         UserProfile newUser = new UserProfile(userEmail, pass, loc, useGps, finalGoalType, notify, "12:00 AM", weatherAlert, joinDate, lastStreakUpdate);
                         GoalProgress userGp;
                         if (finalGoalType == GoalType.DAILY) {
-                            userGp = new GoalProgress(userEmail, 0, joinDate, true, 100);
+                            userGp = new GoalProgress(userEmail, 0, joinDate, true, 400);
                         } else if (finalGoalType == GoalType.WEEKLY) {
-                            userGp = new GoalProgress(userEmail, 0, joinDate, true, 700);
+                            userGp = new GoalProgress(userEmail, 0, joinDate, true, 2800);
                         } else {
-                            userGp = new GoalProgress(userEmail, 0, joinDate, true, 3100);
+                            userGp = new GoalProgress(userEmail, 0, joinDate, true, 11200);
                         }
 
                         userDao.insertUserProfile(newUser);

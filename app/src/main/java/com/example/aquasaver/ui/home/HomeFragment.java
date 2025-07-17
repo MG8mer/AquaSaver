@@ -27,6 +27,7 @@ import com.example.aquasaver.db.AppDatabase;
 import com.example.aquasaver.model.GoalProgress;
 import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.model.WaterUsage;
+import com.example.aquasaver.model.enums.GoalType;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
@@ -50,8 +51,12 @@ public class HomeFragment extends Fragment {
     WaterUsageDao waterUsageDao;
     UserProfileDao userProfileDao;
     GoalProgressDao goalProgressDao;
+    TextView waterUsagePreview;
     UserProfile user;
     String goalType;
+    float goal;
+
+    boolean unDoAble = false;
 
     public HomeFragment() {}
 
@@ -67,9 +72,11 @@ public class HomeFragment extends Fragment {
 
         pieChart = view.findViewById(R.id.pieChart);
         timerLabel = view.findViewById(R.id.timerLabel);
+        waterUsagePreview = view.findViewById(R.id.waterUsagePreview);
         Button incrementButton = view.findViewById(R.id.incrementTimer);
         Button decrementButton = view.findViewById(R.id.decrementTimer);
         Button logWaterUsage = view.findViewById(R.id.logWaterUsageButton);
+        Button undoButton = view.findViewById(R.id.undoButton);
 
         LinearLayout showerButton = view.findViewById(R.id.showerButton);
         LinearLayout washerButton = view.findViewById(R.id.washerButton);
@@ -95,14 +102,17 @@ public class HomeFragment extends Fragment {
         incrementButton.setOnClickListener(v -> {
             timerValue++;
             updateTimerLabel();
+            setWaterUsagePreview();
         });
 
         decrementButton.setOnClickListener(v -> {
             if (timerValue > 0) {
                 timerValue--;
                 updateTimerLabel();
+                setWaterUsagePreview();
             }
         });
+
 
         new Thread(() -> {
             db = AppDatabase.getInstance(requireContext());
@@ -141,13 +151,20 @@ public class HomeFragment extends Fragment {
             }
 
             List<GoalProgress> goalProgressList = goalProgressDao.getAllProgressForUser(userEmail);
+            GoalProgress defaultGoal;
             if (goalProgressList.isEmpty()) {
-                GoalProgress defaultGoal = new GoalProgress(userEmail, 0f, new Date(), true, 100);
+                if ("DAILY".equals(goalType)) {
+                    defaultGoal = new GoalProgress(userEmail, 0f, new Date(), true, 400);
+                } else if ("WEEKLY".equals(goalType)) {
+                    defaultGoal = new GoalProgress(userEmail, 0f, new Date(), true, 2800);
+                } else {
+                   defaultGoal = new GoalProgress(userEmail, 0f, new Date(), true, 11200);
+                }
                 goalProgressDao.insertGoalProgress(defaultGoal);
                 goalProgressList = goalProgressDao.getAllProgressForUser(userEmail);
             }
 
-            float goal = goalProgressList.get(0).getGoalAmount();
+            goal = goalProgressList.get(0).getGoalAmount();
 
             List<GoalProgress> finalGoalProgressList = goalProgressList;
             float finalTotalUsage = totalUsage;
@@ -196,6 +213,7 @@ public class HomeFragment extends Fragment {
                         }
 
                         waterUsageDao.insertLog(usage);
+                        unDoAble = true;
 
                         float updatedUsage;
                         if ("DAILY".equals(goalType)) {
@@ -231,6 +249,42 @@ public class HomeFragment extends Fragment {
                 });
             });
         }).start();
+
+        undoButton.setOnClickListener(v -> {
+            new Thread(() -> {
+                WaterUsage latestLog = waterUsageDao.getLatestLogForUser(user.getEmail());
+
+                if (latestLog != null && unDoAble) {
+                    waterUsageDao.deleteLog(latestLog);
+                    unDoAble = false;
+
+                    float updatedUsage;
+                    if ("DAILY".equals(goalType)) {
+                        long[] window = computeTodayWindow();
+                        updatedUsage = waterUsageDao.getLitersUsedBetween(user.getEmail(), window[0], window[1]);
+                    } else if ("WEEKLY".equals(goalType)) {
+                        long[] window = computeCurrentWeekWindow();
+                        updatedUsage = waterUsageDao.getLitersUsedBetween(user.getEmail(), window[0], window[1]);
+                    } else {
+                        long[] window = computeCurrentMonthWindow();
+                        updatedUsage = waterUsageDao.getLitersUsedBetween(user.getEmail(), window[0], window[1]);
+                    }
+
+                    requireActivity().runOnUiThread(() -> {
+                        updatePieChart(updatedUsage, goal);
+                        Toast.makeText(requireContext(),
+                                "Undid log: " + latestLog.getActivityType() +
+                                        " (" + latestLog.getAmountLiters() + " L)", Toast.LENGTH_SHORT).show();
+                    });
+
+                } else {
+                    // No log to undo
+                    requireActivity().runOnUiThread(() ->
+                            Toast.makeText(requireContext(),
+                                    "Please log your water usage to undo", Toast.LENGTH_SHORT).show());
+                }
+            }).start();
+        });
     }
 
     private void updateTimerLabel() {
@@ -302,6 +356,44 @@ public class HomeFragment extends Fragment {
         layout.setBackgroundResource(R.drawable.selected_background);
         selectedLayout = layout;
         selectedActivity = activity;
+        setWaterUsagePreview();
+    }
+
+    private void setWaterUsagePreview() {
+        if (selectedActivity != null && timerValue > 0)
+        {
+            double multiplier;
+            switch (selectedActivity) {
+                case "Shower":
+                    multiplier = 9;  // liters per minute (mid-range shower flow)
+                    break;
+                case "Sprinkler":
+                    multiplier = 9;  // liters per minute (estimate)
+                    break;
+                case "Washer":
+                    multiplier = 2;  // liters per minute (modern efficient washer)
+                    break;
+                case "Washing Car":
+                case "Cleaning":
+                case "Filling Pool":
+                    multiplier = 10; // liters per minute (estimate)
+                    break;
+                case "Watering Garden":
+                    multiplier = 5;  // liters per minute
+                    break;
+                default:
+                    multiplier = 1;  // fallback liters per unit time
+            }
+
+            double litersUsed = timerValue * multiplier;
+            waterUsagePreview.setText(
+                    String.format("Estimated Usage: %.1f liters for %d min (%s)",
+                            litersUsed, timerValue, selectedActivity)
+            );
+        }
+        else {
+            waterUsagePreview.setText("Select an activity and set a timer");
+        }
     }
 
     public static long[] computeTodayWindow() {
