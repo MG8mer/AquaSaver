@@ -1,20 +1,28 @@
 package com.example.aquasaver.ui.settings;
 
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
+import android.app.Application;
 
-public class SettingsViewModel extends ViewModel {
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
 
+import com.example.aquasaver.db.AppDatabase;
+import com.example.aquasaver.model.UserProfile;
 
-    private final MutableLiveData<String> mText;
+public class SettingsViewModel extends AndroidViewModel {
 
-    public SettingsViewModel() {
-        mText = new MutableLiveData<>();
-        mText.setValue("This is settings fragment");
+    private final AppDatabase db;
+
+    public SettingsViewModel(@NonNull Application application) {
+        super(application);
+        db = AppDatabase.getInstance(application);
     }
 
-    public LiveData<String> getText() {
-        return mText;
+    public UserProfile getUserProfileByEmail(String email) {
+        return db.userProfileDao().getUserByEmail(email);
+    }
+
+    // Updated to return int so caller knows rows updated
+    public int updateUserProfile(UserProfile userProfile) {
+        return db.userProfileDao().updateUserProfile(userProfile);
     }
 }
