@@ -316,14 +316,17 @@ public class GoalsFragment extends Fragment {
         ChallengesDao dao = AppDatabase.getInstance(requireContext()).challengesDao();
 
         executor.execute(() -> {
-            List<Challenges> allChallenges = dao.getUserChallenges(email); // just the raw challenge data
-            List<Challenges> dailyChallenges = getDailyChallenges(allChallenges);
+            List<Challenges> allChallenges = dao.getUserChallenges(email); // full list of 10
+            Log.d("GoalsFragment", "Loaded challenges count: " + allChallenges.size());
 
-            // Optional: if you need progress too, map titles to get ChallengeWithProgress
+            // Shuffle and limit to 3
+            Collections.shuffle(allChallenges);
+            List<Challenges> selectedChallenges = allChallenges.subList(0, Math.min(3, allChallenges.size()));
+
             ChallengeProgressDao progressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
             List<ChallengeWithProgress> challengeList = new ArrayList<>();
 
-            for (Challenges challenge : dailyChallenges) {
+            for (Challenges challenge : selectedChallenges) {
                 ChallengeProgress progress = progressDao.getChallengeProgressById(challenge.getTitle(), email);
                 ChallengeWithProgress cwp = new ChallengeWithProgress();
                 cwp.challenge = challenge;
