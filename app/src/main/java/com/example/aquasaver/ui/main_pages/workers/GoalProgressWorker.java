@@ -47,9 +47,9 @@ public class GoalProgressWorker extends Worker
                 .getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
         String userEmail = prefs.getString("username", null);
         if (userEmail == null) return Result.failure();
-        UserProfile user = userProfileDao.getUserByEmail(userEmail); // REPLACE "example@gmail.com" WITH ACTUAL LOGIC TO GET USER EMAIL
+        UserProfile user = userProfileDao.getUserByEmail(userEmail);
         if (user == null) {
-            return Result.success();
+            return Result.failure();
         }
 
         List<GoalProgress> history = goalProgressDao.getAllProgressForUser("example@gmail.com");

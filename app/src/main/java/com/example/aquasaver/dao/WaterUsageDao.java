@@ -64,4 +64,8 @@ public interface WaterUsageDao {
     @Query("SELECT SUM(amount_liters) FROM water_usage_log WHERE user_email = :email AND date BETWEEN :start AND :end")
     float getLitersUsedBetween(String email, long start, long end);
 
+    @Query("SELECT * FROM water_usage_log WHERE user_email = :userEmail ORDER BY date DESC LIMIT 1")
+    WaterUsage getLatestLogForUser(String userEmail);
+
+
 }
