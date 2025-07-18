@@ -8,6 +8,8 @@ import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
+import java.util.Date;
+
 @Entity(tableName = "challenge_progress",
         foreignKeys = @ForeignKey(entity = UserProfile.class,
                 parentColumns = "email",
@@ -34,12 +36,16 @@ public class ChallengeProgress {
     @ColumnInfo(name = "completion")
     public boolean completion;
 
+    @ColumnInfo(name = "timestamp")
+    public Date timestamp;
+
     // Constructor
-    public ChallengeProgress(@NonNull String userEmail, String title, float currentProgress, boolean completion) {
+    public ChallengeProgress(@NonNull String userEmail, String title, float currentProgress, boolean completion, Date timestamp) {
         this.userEmail = userEmail;
         this.title = title;
         this.currentProgress = currentProgress;
         this.completion = completion;
+        this.timestamp = timestamp;
     }
 
     // Getters and setters for instance variables
@@ -54,4 +60,7 @@ public class ChallengeProgress {
 
     public boolean isCompletion() { return completion; }
     public void setCompletion(boolean completion) { this.completion = completion; }
+
+    public Date getTimestamp() { return timestamp; }
+    public void setTimestamp(Date timestamp) { this.timestamp = timestamp; }
 }
