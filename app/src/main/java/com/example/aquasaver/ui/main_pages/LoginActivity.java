@@ -1,8 +1,5 @@
 package com.example.aquasaver.ui.main_pages;
 
-import static com.example.aquasaver.db.AppDatabase.MIGRATION_1_2;
-import static com.example.aquasaver.db.AppDatabase.MIGRATION_2_3;
-
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -12,16 +9,13 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.example.aquasaver.db.AppDatabase;
 import com.example.aquasaver.dao.UserProfileDao;
 import com.example.aquasaver.model.UserProfile;
-import androidx.room.Room;
 import com.example.aquasaver.R;
-import com.example.aquasaver.ui.main_pages.MainActivity;
-import com.example.aquasaver.ui.main_pages.SignupActivity;
 
 import java.util.concurrent.Executors;
-
 
 public class LoginActivity extends AppCompatActivity {
     EditText username, password;
@@ -38,52 +32,54 @@ public class LoginActivity extends AppCompatActivity {
         loginBtn = findViewById(R.id.loginBtn);
         signupBtn = findViewById(R.id.signupBtn);
 
-        AppDatabase db = AppDatabase.getInstance(this);//.allowMainThreadQueries(); // for development only
-
+        AppDatabase db = AppDatabase.getInstance(this);
         UserProfileDao userDao = db.userProfileDao();
 
-        // Handle Login
+        // Handle Login button click
         loginBtn.setOnClickListener(v -> {
             String user = username.getText().toString().trim();
             String pass = password.getText().toString().trim();
 
             if (user.isEmpty() || pass.isEmpty()) {
                 Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
-            } else {
-                Executors.newSingleThreadExecutor().execute(() -> {
-                    UserProfile existingUser = userDao.getUserProfileByIds(user, pass);
-                    runOnUiThread(() -> {
-                        if (existingUser != null) {
-                            Log.d("LoginActivity", "Login success: saving user data: " +
-                                    existingUser.getEmail() + ", " + existingUser.getLocation());
-                            Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
-
-                            SharedPreferences prefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
-                            prefs.edit()
-                                    .putString("username", existingUser.getEmail())
-                                    .putString("location", existingUser.getLocation())
-                                    .apply();
-
-                            // Navigate to MainActivity
-                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                            startActivity(intent);
-                        } else {
-                            Log.d("LoginActivity", "Testing login failure");
-                            Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show();
-                            Log.d("LoginActivity", "Login failure: user not found" + "username: " + user + ", passowrd: " + pass);
-                        }
-                    });
-                });
+                return;
             }
+
+            Executors.newSingleThreadExecutor().execute(() -> {
+                // Query DB for user with email and password
+                UserProfile existingUser = userDao.getUserProfileByIds(user, pass);
+
+                runOnUiThread(() -> {
+                    if (existingUser != null) {
+                        Log.d("LoginActivity", "Login success: user=" + existingUser.getEmail());
+
+                        // Save user info in SharedPreferences for later use
+                        SharedPreferences prefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
+                        prefs.edit()
+                                .putString("username", existingUser.getEmail())
+                                .putString("location", existingUser.getLocation())
+                                .apply();
+
+                        Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
+
+                        // Navigate to MainActivity and finish LoginActivity
+                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                        startActivity(intent);
+                        finish();
+                    } else {
+                        Log.d("LoginActivity", "Login failure: user not found for username=" + user);
+                        Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            });
         });
 
-        // Navigate to SignupActivity
+        // Handle Signup button click
         signupBtn.setOnClickListener(v -> {
-            Intent intent = new Intent(LoginActivity.this, SignupActivity.class);
-
-            // Optional: Clear old signup data
+            // Clear previous user data if any
             getSharedPreferences("UserProfile", MODE_PRIVATE).edit().clear().apply();
 
+            Intent intent = new Intent(LoginActivity.this, SignupActivity.class);
             startActivity(intent);
         });
     }
