@@ -181,11 +181,19 @@ public class SignupActivity extends AppCompatActivity {
                         ChallengesDao challengesDao = db.challengesDao();
                         int count = challengesDao.countChallengesForUser(userEmail);
                         if (count == 0) {
-                            List<Challenges> challenges = ChallengeSeeder.getRandomChallenges(userEmail, 3);
-                            for (Challenges challenge : challenges) {
-                                challengesDao.insertChallenge(challenge);
-                                Log.d("SignupActivity", "Inserted challenge: " + challenge.getTitle());
+                            List<Challenges> challenges = ChallengeSeeder.getDefaultChallenges(userEmail);
+                            try {
+                                db.runInTransaction(() -> {
+                                    for (Challenges challenge : challenges) {
+                                        challengesDao.insertChallenge(challenge);
+                                        Log.d("SignupActivity", "Inserted challenge: " + challenge.getTitle());
+                                    }
+                                });
+                            } catch (Exception e) {
+                                Log.e("SignupActivity", "Error inserting challenges for user: " + userEmail, e);
                             }
+                            int countAfter = challengesDao.countChallengesForUser(userEmail);
+                            Log.d("SignupActivity", "Challenges count after insert: " + countAfter);
                         }
 
                         Log.d("UserRegistration", "User created and challenges seeded for: " + userEmail);

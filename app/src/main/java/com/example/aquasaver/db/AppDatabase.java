@@ -29,7 +29,7 @@ import java.util.concurrent.Executors;
                 Challenges.class,
                 ChallengeProgress.class
         },
-        version = 6,
+        version = 8,
         exportSchema = false
 )
 @TypeConverters({Converters.class})
@@ -83,6 +83,27 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     };
 
+    static final Migration MIGRATION_6_7 = new Migration(6, 7) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            // Create ChallengeProgress table including the timestamp column
+            database.execSQL("CREATE TABLE IF NOT EXISTS ChallengeProgress (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "challengeId INTEGER NOT NULL, " +
+                    "userId INTEGER NOT NULL, " +
+                    "progress INTEGER NOT NULL, " +
+                    "timestamp INTEGER NOT NULL DEFAULT 0)");
+        }
+    };
+    static final Migration MIGRATION_7_8 = new Migration(7, 8) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            // Make sure table name matches your Room table name: "challenge_progress"
+            database.execSQL("ALTER TABLE challenge_progress ADD COLUMN timestamp INTEGER");
+        }
+    };
+
+
 
     // Returns the singleton instance
     public static AppDatabase getInstance(Context context) {
@@ -95,7 +116,7 @@ public abstract class AppDatabase extends RoomDatabase {
                                     AppDatabase.class,
                                     "aqua_saver.db"
                             )
-                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
                             .build();
                     Log.d("AppDatabase", "AppDatabase instance built.");
                 }

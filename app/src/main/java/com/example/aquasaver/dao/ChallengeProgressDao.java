@@ -68,4 +68,10 @@ public interface ChallengeProgressDao
 
     @Query("SELECT * FROM challenge_progress WHERE title = :title LIMIT 1")
     ChallengeProgress getChallengeByTitle(String title);
+
+    @Query("SELECT * FROM challenge_progress WHERE user_email = :email AND date(timestamp / 1000, 'unixepoch') = date('now')")
+    ChallengeProgress getTodayChallengeProgress(String email);
+
+    @Query("SELECT * FROM challenge_progress WHERE user_email = :email AND completion = 1")
+    List<ChallengeProgress> getCompletedChallengesByUser(String email);
 }
