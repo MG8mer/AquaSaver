@@ -532,7 +532,7 @@ public class WaterUsageFragment extends Fragment {
                 if(sum > max) {
                     max = sum;
                 }
-                if(sum < min) {
+                if(sum < min && sum != 0) {
                     min = sum;
                 }
                 subset.add(new BarEntry(i, sum));
