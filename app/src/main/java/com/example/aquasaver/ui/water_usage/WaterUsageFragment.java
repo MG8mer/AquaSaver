@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 import com.example.aquasaver.R;
 
@@ -579,6 +580,8 @@ public class WaterUsageFragment extends Fragment {
         YAxis rightAxis = barChart.getAxisRight();
         leftAxis.setAxisMinimum(0f);
         rightAxis.setAxisMinimum(0f);
+        leftAxis.setAxisMaximum(Math.max(timeWindow != "year" ? target : (float) (target * (lowDate[2] % 4 == 0 ? 366.0 : 365.0) / 12.0), getStatisticsMax())+5);
+        rightAxis.setAxisMaximum(Math.max(timeWindow != "year" ? target : (float) (target * (lowDate[2] % 4 == 0 ? 366.0 : 365.0) / 12.0), getStatisticsMax())+5);
 
         leftAxis.removeAllLimitLines();
         rightAxis.removeAllLimitLines();
@@ -675,7 +678,10 @@ public class WaterUsageFragment extends Fragment {
     public void addEmptyYear() {
         Log.d("YEARDATA", "calendar.get(Calendar.DAY_OF_YEAR): " + calendar.get(Calendar.DAY_OF_YEAR));
         for(int i=0; i<calendar.get(Calendar.DAY_OF_YEAR); i++) {
-            addDay(i, i);
+            float maxRandom = (float) (target*1.25);
+            float minRandom = (float) (target*0.60);
+            float randomValue = (float) ThreadLocalRandom.current().nextDouble(minRandom, maxRandom);
+            addDay(i, randomValue);
         }
         Log.d("YEARDATA", "thisYearsData: " + thisYearsData.toString());
     }
@@ -696,7 +702,12 @@ public class WaterUsageFragment extends Fragment {
         a.setText("Average: " + (int)(avg*10.0)/10.0);
         l.setText("Low: " + (int)(low*10.0)/10.0);
         h.setText("High: " + (int)(high*10.0)/10.0);
+    }
 
+    public float getStatisticsMax() {
+        TextView t = binding.statistics.high;
+        String returnText = ((String) t.getText()).replace("High: ", "");
+        return Float.parseFloat(returnText);
     }
 
 
