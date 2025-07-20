@@ -69,6 +69,8 @@ public class WaterUsageFragment extends Fragment {
     private String[] days = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
     private String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
+    private int[] daysInMonth = {31, calendar.get(Calendar.YEAR) % 4 == 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
     private String[] dataRange;
 
     private String viewRange;
@@ -80,6 +82,10 @@ public class WaterUsageFragment extends Fragment {
     float avg;
 
     float target;
+
+    float goalValue;
+
+    GoalType goalType;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -116,17 +122,9 @@ public class WaterUsageFragment extends Fragment {
 
             GoalProgress goalProgress = goalProgressDao.getTodayProgress(userEmail);
             float targetValue = goalProgress != null ? goalProgress.getGoalAmount() : 100f;
-            GoalType goalType = user.getGoalType();
-            switch (goalType) {
-                case DAILY:
-                    break;
-                case WEEKLY:
-                    targetValue /= 7.0;
-                case MONTHLY:
-                    targetValue /= 30.0;
-                    break;
-            }
-            target = targetValue;
+            goalValue = targetValue;
+            goalType = user.getGoalType();
+            adjustTarget();
 
             //addRandomLogsForDateRange(dao);
             float litersUsed = dao.getLitersUsedToday(user.getEmail());
@@ -231,6 +229,7 @@ public class WaterUsageFragment extends Fragment {
             case "month":
                 startCal.add(Calendar.MONTH, -1);
                 endCal.add(Calendar.MONTH, -1);
+                adjustTarget();
                 break;
             case "year":
                 startCal.add(Calendar.YEAR, -1);
@@ -267,6 +266,20 @@ public class WaterUsageFragment extends Fragment {
         }
     }
 
+    public void adjustTarget() {
+        float targetValue = goalValue;
+        switch (goalType) {
+            case DAILY:
+                break;
+            case WEEKLY:
+                targetValue /= 7.0;
+            case MONTHLY:
+                targetValue /= daysInMonth[calendar.get(Calendar.MONTH)];
+                break;
+        }
+        target = targetValue;
+    }
+
     public void forwardPress() {
         if (dataRange == null || dataRange.length < 2) return;
 
@@ -300,6 +313,7 @@ public class WaterUsageFragment extends Fragment {
             case "month":
                 startCal.add(Calendar.MONTH, 1);
                 endCal.add(Calendar.MONTH, 1);
+                adjustTarget();
                 break;
 
             case "year":
