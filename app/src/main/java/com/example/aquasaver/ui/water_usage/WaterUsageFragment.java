@@ -17,6 +17,7 @@ import com.example.aquasaver.db.AppDatabase;
 import com.example.aquasaver.model.GoalProgress;
 import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.model.WaterUsage;
+import com.example.aquasaver.model.enums.GoalType;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.LegendEntry;
@@ -115,6 +116,16 @@ public class WaterUsageFragment extends Fragment {
 
             GoalProgress goalProgress = goalProgressDao.getTodayProgress(userEmail);
             float targetValue = goalProgress != null ? goalProgress.getGoalAmount() : 100f;
+            GoalType goalType = user.getGoalType();
+            switch (goalType) {
+                case DAILY:
+                    break;
+                case WEEKLY:
+                    targetValue /= 7.0;
+                case MONTHLY:
+                    targetValue;
+                    break;
+            }
             target = targetValue;
 
             //addRandomLogsForDateRange(dao);
