@@ -8,6 +8,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.aquasaver.dao.GoalProgressDao;
@@ -389,7 +390,7 @@ public class WaterUsageFragment extends Fragment {
         rightAxis.setAxisMinimum(0f);
 
         float maxY = getMaxY(dataToUse);  // Custom helper to find max usage
-        float upperLimit = Math.max(Math.max(avg, targetValue), maxY) + 10;
+        float upperLimit = Math.max(Math.max(avg, targetValue), maxY) + 20;
         leftAxis.setAxisMaximum(upperLimit);
         rightAxis.setAxisMaximum(upperLimit);
 
@@ -461,14 +462,14 @@ public class WaterUsageFragment extends Fragment {
 
         int avgColor = Color.argb(128, 0, 0, 0);
         // 5. Add average and target limit lines
-        LimitLine avgLine = new LimitLine(avg, "avg");
+        LimitLine avgLine = new LimitLine(avg, "");
         avgLine.setLineColor(avgColor);
         avgLine.setLineWidth(2f);
         avgLine.setTextColor(avgColor);
         avgLine.setTextSize(12f);
         avgLine.enableDashedLine(10f, 10f, 0f);
 
-        LimitLine targetLine = new LimitLine(targetValue, "target");
+        LimitLine targetLine = new LimitLine(target, "");
         targetLine.setLineColor(targetColor);
         targetLine.setLineWidth(2f);
         targetLine.setTextSize(12f);
@@ -482,9 +483,11 @@ public class WaterUsageFragment extends Fragment {
         leftAxis.setEnabled(true);
         rightAxis.setEnabled(true);
 
+        setLegend("Water Usage", "Average", "Target", colorPrimary, avgColor, targetColor);
+        barChart.setExtraBottomOffset(16f);
+        barChart.getLegend().setEnabled(false);
         barChart.getBarData().setDrawValues(false);
         barChart.getDescription().setEnabled(false);
-        barChart.setExtraBottomOffset(16f);
         barChart.invalidate();
     }
 
@@ -495,6 +498,21 @@ public class WaterUsageFragment extends Fragment {
             if (entry.getY() > max) max = entry.getY();
         }
         return max;
+    }
+
+    public void setLegend(String dataLabel, String avgLabel, String targetLabel, int dataColor, int avgColor, int targetColor) {
+        TextView legendWaterUsageText = binding.legend.legendWaterUsageText;
+        TextView legendAverageText = binding.legend.legendAverageText;
+        TextView legendTargetText = binding.legend.legendTargetText;
+        legendWaterUsageText.setText(dataLabel);
+        legendAverageText.setText(avgLabel);
+        legendTargetText.setText(targetLabel);
+        View legendWaterUsageIcon = binding.legend.legendWaterUsageIcon;
+        View legendAverageIcon = binding.legend.legendAverageIcon;
+        View legendTargetIcon = binding.legend.legendTargetIcon;
+        legendWaterUsageIcon.setBackgroundColor(dataColor);
+        legendAverageIcon.setBackgroundColor(avgColor);
+        legendTargetIcon.setBackgroundColor(targetColor);
     }
 
 
