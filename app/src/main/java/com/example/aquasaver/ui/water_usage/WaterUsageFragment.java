@@ -458,7 +458,7 @@ public class WaterUsageFragment extends Fragment {
         xAxis.setLabelCount(100, false);
         xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
 
-        int targetColor = Color.argb(225, 0, 255, 0);
+        int targetColor = Color.argb(255, 229, 57, 53);
 
         int avgColor = Color.argb(128, 0, 0, 0);
         // 5. Add average and target limit lines
@@ -467,9 +467,9 @@ public class WaterUsageFragment extends Fragment {
         avgLine.setLineWidth(2f);
         avgLine.setTextColor(avgColor);
         avgLine.setTextSize(12f);
-        avgLine.enableDashedLine(10f, 10f, 0f);
+        avgLine.enableDashedLine(15f, 10f, 0f);
 
-        LimitLine targetLine = new LimitLine(target, "");
+        LimitLine targetLine = new LimitLine(targetValue, "");
         targetLine.setLineColor(targetColor);
         targetLine.setLineWidth(2f);
         targetLine.setTextSize(12f);
