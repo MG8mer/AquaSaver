@@ -123,7 +123,7 @@ public class WaterUsageFragment extends Fragment {
                 case WEEKLY:
                     targetValue /= 7.0;
                 case MONTHLY:
-                    targetValue;
+                    targetValue /= 30.0;
                     break;
             }
             target = targetValue;
