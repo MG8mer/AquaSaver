@@ -105,6 +105,8 @@ public abstract class AppDatabase extends RoomDatabase {
 
 
 
+
+
     // Returns the singleton instance
     public static AppDatabase getInstance(Context context) {
         Log.d("AppDatabase", "getInstance called. Current INSTANCE: " + (INSTANCE == null ? "null" : "exists"));

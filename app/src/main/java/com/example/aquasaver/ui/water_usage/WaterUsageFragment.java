@@ -1,6 +1,6 @@
 package com.example.aquasaver.ui.water_usage;
-import java.util.Arrays;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -8,12 +8,26 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
+import android.widget.Toast;
 
+import com.example.aquasaver.dao.GoalProgressDao;
+import com.example.aquasaver.dao.UserProfileDao;
+import com.example.aquasaver.dao.WaterUsageDao;
+import com.example.aquasaver.db.AppDatabase;
+import com.example.aquasaver.model.GoalProgress;
+import com.example.aquasaver.model.UserProfile;
+import com.example.aquasaver.model.WaterUsage;
+import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.LegendEntry;
 import com.github.mikephil.charting.components.LimitLine;
+import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.github.mikephil.charting.interfaces.datasets.IDataSet;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 
 import androidx.annotation.NonNull;
@@ -21,78 +35,50 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.aquasaver.databinding.FragmentWaterUsageBinding;
-import com.github.mikephil.charting.charts.BarChart;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.data.BarData;
-import com.github.mikephil.charting.data.BarDataSet;
-import com.github.mikephil.charting.data.BarEntry;
-import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Random;
 
 import com.example.aquasaver.R;
 
 public class WaterUsageFragment extends Fragment {
-    //<editor-fold desc="vairables">
-//
-//    private String[] label;
-//
-//    private BarChart barChart;
-//
-//    private String labelText;
-//
-//    private final List<BarEntry> yeardata = new ArrayList<>();
-//
-//    private List<BarEntry> dataShowing = new ArrayList<>();
-//
-//    private int[] indexBounds;
-//
-//    private float dailyTarget = 30f;
-//    private float avg;
-//
-//    String dataToShow;
 
-    //    LabelText lt = new LabelText("", 0, 0);
-//</editor-fold>
-
-    private Calendar calendar = Calendar.getInstance();
-    public int daysInFebruary = calendar.get(Calendar.YEAR) % 4 == 0 ? 29 : 28;
-    public int[] daysInMonth = {31, daysInFebruary, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
-    public static String[] daysInWeek = {
-            "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
-    };
+    Calendar curCalendar = Calendar.getInstance();
+    Calendar calendar = Calendar.getInstance();
 
     private FragmentWaterUsageBinding binding;
 
-    public static String[] months = {
-            "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    private WaterUsageDao dao;
 
-    };
+    private UserProfile user;
 
-    private final Map<Integer, List<BarEntry>> data = new LinkedHashMap<>();
-    private final List<BarEntry> thisYearsData = new ArrayList<>();
+    private String[] days = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+    private String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+    private String[] dataRange;
+
+    private String viewRange;
+
+    private List<DailyUsage> data = new ArrayList<>();
 
     private BarChart barChart;
 
-    private String[] labels;
+    float avg;
 
-    private float target = 100f;
-
-    private float avg;
-    private String timeWindow;
-
-    private int startDay;
-
-    private int[] lowDate;
-
-    private int[] highDate;
+    float target;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -102,506 +88,340 @@ public class WaterUsageFragment extends Fragment {
         binding = FragmentWaterUsageBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
+        Context context = requireContext(); // or getContext(), if you know it's non-null
+        AppDatabase db = AppDatabase.getInstance(context);
 
-        // <editor-fold desc="initialize graph">
+        dao = db.waterUsageDao();
+        UserProfileDao userProfileDao = db.userProfileDao();
+        GoalProgressDao goalProgressDao = db.goalProgressDao();
 
-//        addEmptyYear();
-//
-//        binding.graphToggle.check(R.id.week);
-//        dataToShow = "week";
-//        setLabelText("This Week");
-//        label = days;
-//        setDataShowing();
-//        generateGraph();
-//
-//        ImageButton forwardButton = binding.buttonForward;
-//        ImageButton backButton = binding.buttonBack;
-//
-//        binding.buttonBack.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                backPress();
-//                forwardButton.setEnabled(true);
-//            }
-//        });
-//
-//        binding.buttonForward.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                forwardPress();
-//
-//                if(indexBounds[0] >= lt.getDayOfYear(day, month, year) || indexBounds[1] >= lt.getDayOfYear(day, month, year)){
-//                    forwardButton.setEnabled(false);;
-//                }
-//            }
-//
-//        });
-//
-//        binding.graphToggle.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
-//            @Override
-//            public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
-//
-//
-//                if (isChecked) {
-//                    lt = new LabelText("", 0, 0);
-//                    label = new String[]{};
-//                    if (checkedId == R.id.week) {
-//                        Log.d("GRAPH TOGGLE", "WEEK");
-//                        dataToShow = "week";
-//                        setLabelText("This Week");
-//                        setDataShowing();
-//                        label = days;
-//                    } else if (checkedId == R.id.month) {
-//                        Log.d("GRAPH TOGGLE", "MONTH");
-//                        dataToShow = "month";
-//                        setDataShowing();
-//                        //String[] arr = new String[]{months[month]};
-//                        setLabelText(months[month]);
-//                        String[] arr = new String[] {"1", "8", "15", "22", "29"};
-//                        label = arr;
-//                    } else if (checkedId == R.id.year) {
-//                        Log.d("GRAPH TOGGLE", "YEAR");
-//                        setLabelText(""+year);
-//                        dataToShow = "year";
-//                        setDataShowing();
-//                        label = months;
-//                    } else if (checkedId == R.id.day) {
-//                        Log.d("GRAPH TOGGLE", "DAY");
-//                        setLabelText("Today");
-//                        dataToShow = "day";
-//                        setDataShowing();
-//                        label = today;
-//                    }
-//                    Log.d("YEARDATA", dataToShow.toString());
-//                    generateGraph();
-//                }
-//            }
-//        });
-        //</editor-fold>
-        lowDate = new int[]{calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.MONTH)+1, calendar.get(Calendar.YEAR)};
-        highDate = new int[]{calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.MONTH)+1, calendar.get(Calendar.YEAR)};
+        new Thread(() -> {
+            SharedPreferences prefs = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
+            String userEmail = prefs.getString("username", null);
 
+            if (userEmail == null) {
+                requireActivity().runOnUiThread(() ->
+                        Toast.makeText(requireContext(), "User not logged in", Toast.LENGTH_LONG).show());
+                return;
+            }
 
-        barChart = binding.waterGraph;
+            user = userProfileDao.getUserByEmail(userEmail);
 
-        binding.graphToggle.check(R.id.week);
-        timeWindow = "week";
-        labels = daysInWeek;
-        addEmptyYear();
-        setDateBounds();
+            if (user == null) {
+                requireActivity().runOnUiThread(() ->
+                        Toast.makeText(requireContext(), "User not found. Please log in.", Toast.LENGTH_LONG).show());
+                return;
+            }
 
-        generateGraph();
+            GoalProgress goalProgress = goalProgressDao.getTodayProgress(userEmail);
+            float targetValue = goalProgress != null ? goalProgress.getGoalAmount() : 100f;
+            target = targetValue;
+
+            //addRandomLogsForDateRange(dao);
+            float litersUsed = dao.getLitersUsedToday(user.getEmail());
+            Log.d("TEST", "litersUsed: " + litersUsed);
+            List<DailyUsage> usageData = dao.getAllDailyUsageForUser(user.getEmail());
+
+            requireActivity().runOnUiThread(() -> {
+                barChart = binding.waterGraph;;
+                binding.graphToggle.check(R.id.week);
+                viewRange = "week";
+                data = usageData;
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                dataRange = setDateRange(sdf.format(curCalendar.getTime()), viewRange);
+                List<DailyUsage> sublist = getSublistByViewRange(data, dataRange);
+                List<BarEntry> entries = convertDailyUsageToBarEntries(sublist);
+                Log.d("TEST", "dataRange: " + Arrays.toString(dataRange));
+                createBarGraphWithDailyUsage(entries, viewRange, dataRange);
+            });
+        }).start();
+
 
         binding.buttonBack.setOnClickListener(new View.OnClickListener() {
-              @Override
-              public void onClick(View v) {
-                    backPress();
-              }
+            @Override
+            public void onClick(View v) {
+                backPress();
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                List<DailyUsage> sublist = getSublistByViewRange(data, dataRange);
+                List<BarEntry> entries = convertDailyUsageToBarEntries(sublist);
+                Log.d("TEST", "dataRange: " + Arrays.toString(dataRange));
+                createBarGraphWithDailyUsage(entries, viewRange, dataRange);
+            }
         });
 
         binding.buttonForward.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 forwardPress();
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                List<DailyUsage> sublist = getSublistByViewRange(data, dataRange);
+                List<BarEntry> entries = convertDailyUsageToBarEntries(sublist);
+                Log.d("TEST", "dataRange: " + Arrays.toString(dataRange));
+                createBarGraphWithDailyUsage(entries, viewRange, dataRange);
             }
         });
+
+
 
         binding.graphToggle.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
             @Override
             public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
-
                 if (isChecked) {
-                    if (checkedId == R.id.week) {
-                        Log.d("GRAPH TOGGLE", "WEEK");
-                        timeWindow = "week";
-                        labels = daysInWeek;
+                    if (checkedId == R.id.day) {
+                        viewRange = "day";
+                    } else if (checkedId == R.id.week) {
+                        viewRange = "week";
                     } else if (checkedId == R.id.month) {
-                        Log.d("GRAPH TOGGLE", "MONTH");
-                        timeWindow = "month";
-                        labels = new String[] {
-                                "1", "", "", "", "", "", "",
-                                "8", "", "", "", "", "", "",
-                                "15", "", "", "", "", "", "",
-                                "22", "", "", "", "", "", "",
-                                "29", "", ""
-
-                        };
+                        viewRange = "month";
                     } else if (checkedId == R.id.year) {
-                        Log.d("GRAPH TOGGLE", "YEAR");
-                        labels = months;
-                        timeWindow = "year";
-                    } else if (checkedId == R.id.day) {
-                        Log.d("GRAPH TOGGLE", "DAY");
-                        timeWindow = "day";
-                        setDateBounds();
-                        labels = new String[] {months[lowDate[1]-1] + " " + lowDate[0]};
+                        viewRange = "year";
                     }
-                    setDateBounds();
-
-                    Log.d("Date", "lowDate: " + Arrays.toString(lowDate));
-                    Log.d("Date", "highDate: " + Arrays.toString(highDate));
-                    generateGraph();
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                    dataRange = setDateRange(sdf.format(curCalendar.getTime()), viewRange);
+                    List<DailyUsage> sublist = getSublistByViewRange(data, dataRange);
+                    List<BarEntry> entries = convertDailyUsageToBarEntries(sublist);
+                    Log.d("TEST", "dataRange: " + Arrays.toString(dataRange));
+                    createBarGraphWithDailyUsage(entries, viewRange, dataRange);
                 }
             }
         });
 
         return root;
-
-
     }
 
     public void backPress() {
-        if(timeWindow == "week") {
-            changeLowDate(-7);
-            if(changeHighDate(-7)) {
-                changeLowDate(7);
-            }
-            String lowLabel = months[lowDate[1]-1] + " " + lowDate[0];
-            String highLabel = months[highDate[1]-1] + " " + highDate[0];
+        if (dataRange == null || dataRange.length < 2) return;
 
-            Log.d("dATE2", "lowDayOfYear: " + getDayOfYear(lowDate[0], lowDate[1]-1, lowDate[2]));
-            Log.d("dATE2", "highDayOfYear: " + getDayOfYear(highDate[0], highDate[1]-1, highDate[2]));
-            Log.d("dATE2", "calendarDayOfYear: " + calendar.get(Calendar.DAY_OF_YEAR));
-            if(getDayOfYear(lowDate[0], lowDate[1]-1, lowDate[2]) <= calendar.get(Calendar.DAY_OF_YEAR) && getDayOfYear(highDate[0], highDate[1]-1, highDate[2]) >= calendar.get(Calendar.DAY_OF_YEAR)) {
-                setLabelText("This Week");
+        // Save old dates to revert if needed
+        String oldStart = dataRange[0];
+        String oldEnd = dataRange[1];
 
-            } else {
-                setLabelText(lowLabel + " - " + highLabel);
-            }
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+        Calendar startCal = Calendar.getInstance();
+        Calendar endCal = Calendar.getInstance();
 
-        } else if(timeWindow == "month") {
-            changeLowDate(-daysInMonth[(lowDate[1]+10) % 12]);
-            if(changeHighDate(-daysInMonth[(highDate[1]-1) % 12])) {
-                changeLowDate(daysInMonth[(lowDate[1]-1) % 12]);
-            }
-
-            setLabelText(months[lowDate[1]-1]);
-        } else if(timeWindow == "day") {
-            changeLowDate(-1);
-            if(changeHighDate(-1)) {
-                changeLowDate(1);
-            }
-
-            if(calendar.get(Calendar.DAY_OF_MONTH) ==  lowDate[0]){
-                setLabelText("Today");
-            } else {
-                setLabelText(months[lowDate[1] - 1] + " " + lowDate[0]);
-            }
-            labels = new String[] {months[lowDate[1] - 1] + " " + lowDate[0]};
-        } else if(timeWindow == "year") {
-            boolean previousYearLeap = (lowDate[2]-1) % 4 == 0;
-            boolean currentYearLeap = lowDate[2] % 4 == 0;
-            changeLowDate(previousYearLeap ? -366 : -365);
-            if(changeHighDate(currentYearLeap ? -366 : -365)) {
-                changeLowDate(previousYearLeap ? 366 : 365);
-            }
-            setLabelText(String.valueOf(lowDate[2]));
+        try {
+            startCal.setTime(sdf.parse(dataRange[0]));
+            endCal.setTime(sdf.parse(dataRange[1]));
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return;  // Parsing failed, exit
         }
-        generateGraph();
+
+        switch (viewRange) {
+            case "day":
+                startCal.add(Calendar.DAY_OF_MONTH, -1);
+                endCal.setTime(startCal.getTime());
+                break;
+            case "week":
+                startCal.add(Calendar.WEEK_OF_YEAR, -1);
+                endCal.add(Calendar.WEEK_OF_YEAR, -1);
+                break;
+            case "month":
+                startCal.add(Calendar.MONTH, -1);
+                endCal.add(Calendar.MONTH, -1);
+                break;
+            case "year":
+                startCal.add(Calendar.YEAR, -1);
+                endCal.add(Calendar.YEAR, -1);
+                break;
+            default:
+                return;
+        }
+
+        dataRange[0] = sdf.format(startCal.getTime());
+        dataRange[1] = sdf.format(endCal.getTime());
+
+        // Check if both dates are valid indexes
+        int startIndex = findDailyUsageIndex(data, dataRange[0]);
+        int endIndex = findDailyUsageIndex(data, dataRange[1]);
+
+        if (startIndex == -1 && endIndex == -1) {
+            // Revert changes because both dates not found
+            dataRange[0] = oldStart;
+            dataRange[1] = oldEnd;
+        }
+    }
+
+    public boolean isLeapYear(String dateString) {
+        try {
+            // Extract the year from the date string (e.g., "2024-02-29")
+            int year = Integer.parseInt(dateString.substring(0, 4));
+
+            // Leap year logic
+            return (year % 4 == 0) && ((year % 100 != 0) || (year % 400 == 0));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false; // Invalid date format
+        }
     }
 
     public void forwardPress() {
-        if(timeWindow == "week") {
-            changeLowDate(7);
-            if(changeHighDate(7)) {
-                changeLowDate(-7);
-            }
-            String lowLabel = months[lowDate[1]-1] + " " + lowDate[0];
-            String highLabel = months[highDate[1]-1] + " " + highDate[0];
-            if(getDayOfYear(lowDate[0], lowDate[1]-1, lowDate[2]) <= calendar.get(Calendar.DAY_OF_YEAR) && getDayOfYear(highDate[0], highDate[1]-1, highDate[2]) >= calendar.get(Calendar.DAY_OF_YEAR)) {
-                setLabelText("This Week");
+        if (dataRange == null || dataRange.length < 2) return;
 
-            } else {
-                setLabelText(lowLabel + " - " + highLabel);
-            }
-        } else if(timeWindow == "month") {
-            changeLowDate(daysInMonth[(lowDate[1]-1) % 12]);
-            if (changeHighDate(daysInMonth[(highDate[1]) % 12]) ) {
-                changeLowDate(-daysInMonth[(lowDate[1]+10) % 12]);
-            }
-            setLabelText(months[lowDate[1]-1]);
-        } else if(timeWindow == "day") {
-            changeLowDate(1);
-            if(changeHighDate(1)) {
-                changeLowDate(-1);
-            }
+        // Save old dates to revert if needed
+        String oldStart = dataRange[0];
+        String oldEnd = dataRange[1];
 
-            if(calendar.get(Calendar.DAY_OF_MONTH) ==  lowDate[0]){
-                setLabelText("Today");
-                Log.d("Date", "today:");
-            } else {
-                setLabelText(months[lowDate[1] - 1] + " " + lowDate[0]);
-            }
-            labels = new String[] {months[lowDate[1] - 1] + " " + lowDate[0]};
-        } else if(timeWindow == "year") {
-            boolean nextYearLeap = (lowDate[2]+1) % 4 == 0;
-            boolean currentYearLeap = lowDate[2] % 4 == 0;
-            changeLowDate(currentYearLeap ? 366 : 365);
-            if(changeHighDate(nextYearLeap ? 366 : 365)) {
-                changeLowDate(currentYearLeap ? -366 : -365);
-            }
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+        Calendar startCal = Calendar.getInstance();
+        Calendar endCal = Calendar.getInstance();
 
-            setLabelText(String.valueOf(lowDate[2]));
+        try {
+            startCal.setTime(sdf.parse(dataRange[0]));
+            endCal.setTime(sdf.parse(dataRange[1]));
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return;  // Parsing failed, exit
         }
-        generateGraph();
-    }
 
+        switch (viewRange) {
+            case "day":
+                startCal.add(Calendar.DAY_OF_MONTH, 1);
+                endCal.setTime(startCal.getTime());
+                break;
 
-    public void changeLowDate(int change) {
-        lowDate[0] += change;
-        int[] newDaysInMonth = {31, lowDate[2] % 4 == 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-        if(lowDate[0] < 1) {
-            while(lowDate[0] < 1) {
-                newDaysInMonth = new int[] {31, lowDate[2] % 4 == 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-                int overflow = lowDate[0];
-                Log.d("Date", "overflow: " + overflow);
-                lowDate[1]--;
-                if (lowDate[1] < 1) {
-                    lowDate[2]--;
-                    lowDate[1] = 12;
-                }
-                lowDate[0] = newDaysInMonth[lowDate[1]-1] + overflow;
-            }
-            Log.d("Date", "lowDate: " + Arrays.toString(lowDate));
-        }
-        if(lowDate[0] > newDaysInMonth[lowDate[1]-1]) {
-            while(lowDate[0] > newDaysInMonth[lowDate[1]-1]) {
-                newDaysInMonth = new int[] {31, lowDate[2] % 4 == 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-                int overflow = lowDate[0] - newDaysInMonth[lowDate[1]-1];
-                lowDate[1]++;
-                if (lowDate[1] > 12) {
-                    lowDate[2]++;
-                    lowDate[1] = 1;
-                }
-                lowDate[0] = overflow + (overflow == 0 ? 1 : 0);
-            }
-        }
-        Log.d("DEBUG2", "lowDate: " + Arrays.toString(lowDate));
-    }
+            case "week":
+                startCal.add(Calendar.WEEK_OF_YEAR, 1);
+                endCal.add(Calendar.WEEK_OF_YEAR, 1);
+                break;
 
-    public boolean changeHighDate(int change) {
-        int[] highDateCopy = new int[]{0, 0, 0};
-        for(int i=0; i<highDate.length; i++) {
-            highDateCopy[i] = highDate[i];
-        }
-        highDate[0] += change;
-        int[] newDaysInMonth = {31, highDate[2] % 4 == 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-        if(highDate[0] < 1) {
-            while(highDate[0] < 1) {
-                newDaysInMonth = new int[] {31, highDate[2] % 4 == 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-                int overflow = highDate[0];
-                Log.d("Date", "Overflow: " + overflow);
-                highDate[1]--;
-                if (highDate[1] < 1) {
-                    highDate[2]--;
-                    highDate[1] = 12;
-                }
-                highDate[0] = newDaysInMonth[highDate[1]-1] + overflow;
-            }
-            Log.d("Date", "highDate: " + Arrays.toString(highDate));
-        }
-        if(highDate[0] > newDaysInMonth[highDate[1]-1]) {
-            while(highDate[0] > newDaysInMonth[highDate[1]-1]) {
-                newDaysInMonth = new int[] {31, highDate[2] % 4 == 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-                int overflow = highDate[0] - newDaysInMonth[highDate[1]-1];
-                highDate[1]++;
-                if (highDate[1] > 12) {
-                    highDate[2]++;
-                    highDate[1] = 1;
-                }
-                highDate[0] = overflow + (overflow == 0 ? 1 : 0);
-            }
-        }
-        Log.d("DEBUG2", "highDate: " + Arrays.toString(highDate));
-        List<BarEntry> shownYear = data.get(lowDate[2]);
-        if(shownYear != null) {
-            boolean highInShownYear = false;
-            for (BarEntry entry : shownYear) {
-                if (entry.getX() == getDayOfYear(highDate[0], highDate[1] - 1, highDate[2])) {
-                    highInShownYear = true;
-                }
-            }
-            boolean lowInShownYear = false;
-            for (BarEntry entry : shownYear) {
-                if (entry.getX() == getDayOfYear(lowDate[0], lowDate[1] - 1, lowDate[2])-1) {
-                    lowInShownYear = true;
-                }
-            }
-            if (!lowInShownYear && !highInShownYear) {
-                highDate = highDateCopy;
-                Log.d("DEBUG2", "UNDO");
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            highDate = highDateCopy;
-            return true;
+            case "month":
+                startCal.add(Calendar.MONTH, 1);
+                endCal.add(Calendar.MONTH, 1);
+                break;
 
+            case "year":
+                startCal.add(Calendar.YEAR, 1);
+                endCal.add(Calendar.YEAR, 1);
+                break;
+
+            default:
+                return;
+        }
+
+        dataRange[0] = sdf.format(startCal.getTime());
+        dataRange[1] = sdf.format(endCal.getTime());
+
+        // Check if both dates are valid indexes
+        int startIndex = findDailyUsageIndex(data, dataRange[0]);
+        int endIndex = findDailyUsageIndex(data, dataRange[1]);
+
+        if (startIndex == -1 && endIndex == -1) {
+            // Revert changes because both dates not found
+            dataRange[0] = oldStart;
+            dataRange[1] = oldEnd;
         }
     }
 
+    public boolean isDateWithinRange(String currentDate) {
+        if (currentDate == null || dataRange == null || dataRange.length < 2) return false;
 
-    public void setDateBounds() {
-        lowDate = new int[]{calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.MONTH)+1, calendar.get(Calendar.YEAR)};
-        highDate = new int[]{calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.MONTH)+1, calendar.get(Calendar.YEAR)};
-        if(timeWindow == "week") {
-            changeLowDate(Calendar.SUNDAY - calendar.get(Calendar.DAY_OF_WEEK));
-            changeHighDate(Calendar.SATURDAY - calendar.get(Calendar.DAY_OF_WEEK));
-            setLabelText("This Week");
-        } else if(timeWindow == "month") {
-            changeLowDate(1-calendar.get(Calendar.DAY_OF_MONTH));
-            changeHighDate(daysInMonth[calendar.get(Calendar.MONTH)]-calendar.get(Calendar.DAY_OF_MONTH));
-            setLabelText(months[lowDate[1]-1]);
-        } else if(timeWindow == "day") {
-            setLabelText("Today");
-        } else if(timeWindow == "year") {
-            setLabelText(String.valueOf(lowDate[2]));
-            int currentYear = lowDate[2];
-            lowDate = new int[] {1, 1, currentYear};
-            int daysInYear = currentYear % 4 == 0 ? 366 : 365;
-            highDate = new int[] {daysInYear, 12, currentYear};
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+
+        try {
+            Date current = sdf.parse(currentDate);
+            Date start = sdf.parse(dataRange[0]);
+            Date end = sdf.parse(dataRange[1]);
+
+            // Check if current >= start && current <= end
+            return !current.before(start) && !current.after(end);
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return false;  // Parsing failed means no match
         }
-
-        Log.d("DEBUG", "SetDateBounds Success");
-    }
-    public List<BarEntry> getSubsetData() {
-        List<BarEntry> originalData = data.get(lowDate[2]);
-        List<BarEntry> dataCopy = new ArrayList<>();
-        List<BarEntry> subset = new ArrayList<>();
-        if (originalData != null) {
-            for (BarEntry entry : originalData) {
-                // Create a new BarEntry with the same x and y values
-                dataCopy.add(new BarEntry(entry.getX(), entry.getY()));
-            }
-        }
-
-        int lowIndex = getDayOfYear(lowDate[0], lowDate[1]-1, lowDate[2])-1;
-        int highIndex = getDayOfYear(highDate[0], highDate[1]-1, highDate[2]);
-        Log.d("DEBUG", "lowIndex: " + lowIndex);
-        Log.d("DEBUG", "highIndex: " + highIndex);
-        if(timeWindow != "year") {
-            // Pad with 0s if lowIndex is less than 0
-            for (int i = lowIndex; i < 0; i++) {
-                subset.add(new BarEntry(i, 0));
-            }
-
-            float max = 0;
-            float min = 1000000000;
-            float sum = 0;
-            int count = 0;
-            // Add valid entries from dataCopy (only within bounds)
-            int from = Math.max(lowIndex, 0);
-            int to = Math.min(highIndex, dataCopy.size()); // exclusive
-            for (int i = from; i < to; i++) {
-                BarEntry original = dataCopy.get(i);
-                subset.add(new BarEntry(original.getX(), original.getY()));
-                float y = original.getY();
-                sum += y;
-                count++;
-                if(y > max) {
-                    max = y;
-                }
-                if(y < min) {
-                    min = y;
-                }
-
-            }
-            avg = sum/count;
-            setStatistics(min, max);
-            // Pad with 0s if highIndex exceeds bounds
-            for (int i = dataCopy.size(); i < highIndex; i++) {
-                subset.add(new BarEntry(i, 0));
-            }
-        } else {
-            int[] newDaysInMonth = {31, lowDate[2] % 4 == 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-            float total = 0;
-            float max = 0;
-            float min = 1000000000;
-            Map<Integer, Integer> count = new HashMap<>();
-            for(int i=0; i<12; i++) {
-                float sum = 0;
-                for(int j=0; j<newDaysInMonth[i]; j++) {
-                    if(!dataCopy.isEmpty() && dataCopy.get(0) != null) {
-                        sum += dataCopy.get(0).getY();
-                        total+=dataCopy.get(0).getY();
-                        dataCopy.remove(0);
-                        count.put(i, i);
-                    }
-                }
-                if(sum > max) {
-                    max = sum;
-                }
-                if(sum < min && sum != 0) {
-                    min = sum;
-                }
-                subset.add(new BarEntry(i, sum));
-                Log.d("DEBUG", "subset: " + subset.toString());
-            }
-            avg = total/count.size();
-            setStatistics(min, max);
-        }
-
-        Log.d("DEBUG", "subset: " + subset.toString());
-
-
-        for (int i = 0; i < subset.size(); i++) {
-            subset.get(i).setX(i);
-        }
-
-        return subset;
     }
 
-    private void generateGraph() {
+    private void createBarGraphWithDailyUsage(List<BarEntry> dataToUse, String timeWindow, String[] dataRange) {
+        if (barChart == null || dataToUse == null || dataToUse.isEmpty()) return;
+
         barChart.clear();
-        barChart.getAxisLeft().removeAllLimitLines();
-        barChart.getAxisRight().removeAllLimitLines();
+        float targetValue = (float) (viewRange == "year" ? (isLeapYear(dataRange[0]) ? target*366.0/12.0 : target*365/12.0) : target);
 
-        List<BarEntry> dataToUse = getSubsetData();
-
-        // 1. Resolve colorPrimary from current theme
-        TypedValue typedValue = new TypedValue();
-        Context context = requireContext();
-        context.getTheme().resolveAttribute(com.google.android.material.R.attr.colorPrimary, typedValue, true);
-        int colorPrimary = typedValue.data;
-
-        // 2. Create dataset
-        BarDataSet dataSet = new BarDataSet(dataToUse, "Water Usage");
-        dataSet.setColor(colorPrimary); // Apply theme color
-        dataSet.setValueTextColor(Color.BLACK);
-        dataSet.setValueTextSize(12f);
-
-        // 3. Set data to chart
-        BarData barData = new BarData(dataSet);
-        barChart.setData(barData);
-
-        // 4. Configure axes
-        YAxis leftAxis = barChart.getAxisLeft();
         YAxis rightAxis = barChart.getAxisRight();
-        leftAxis.setAxisMinimum(0f);
-        rightAxis.setAxisMinimum(0f);
-        leftAxis.setAxisMaximum(Math.max(timeWindow != "year" ? target : (float) (target * (lowDate[2] % 4 == 0 ? 366.0 : 365.0) / 12.0), getStatisticsMax())+5);
-        rightAxis.setAxisMaximum(Math.max(timeWindow != "year" ? target : (float) (target * (lowDate[2] % 4 == 0 ? 366.0 : 365.0) / 12.0), getStatisticsMax())+5);
-
+        YAxis leftAxis = barChart.getAxisLeft();
         leftAxis.removeAllLimitLines();
         rightAxis.removeAllLimitLines();
 
-        int targetColor = Color.argb(225, 0, 255, 0);
 
-        int avgColor = Color.argb(128, 0, 0, 0);
-        // 5. Add average and target limit lines
-        LimitLine avgLine = new LimitLine(avg, "");
-        avgLine.setLineColor(avgColor);
-        avgLine.setLineWidth(2f);
-        avgLine.enableDashedLine(10f, 10f, 0f);
+        TypedValue typedValue = new TypedValue();
+        requireContext().getTheme().resolveAttribute(R.attr.colorPrimary, typedValue, true);
+        int colorPrimary = typedValue.data;
 
-        LimitLine targetLine = new LimitLine(timeWindow == "year" ? (float) (target * (lowDate[2] % 4 == 0 ? 366 : 365) / 12.0) : target, "");
-        targetLine.setLineColor(targetColor);
-        targetLine.setLineWidth(2f);
-        targetLine.enableDashedLine(15f, 10f, 0f);
+        // Set up bar dataset
+        BarDataSet dataSet = new BarDataSet(dataToUse, "Water Usage");
+        dataSet.setColor(colorPrimary);
+        dataSet.setValueTextColor(Color.BLACK);
+        dataSet.setValueTextSize(12f);
 
-        leftAxis.addLimitLine(avgLine);
-        leftAxis.addLimitLine(targetLine);
+        BarData barData = new BarData(dataSet);
+        barChart.setData(barData);
+
+        // Configure axes
+
+        leftAxis.setAxisMinimum(0f);
+        rightAxis.setAxisMinimum(0f);
+
+        float maxY = getMaxY(dataToUse);  // Custom helper to find max usage
+        float upperLimit = Math.max(Math.max(avg, targetValue), maxY) + 10;
+        leftAxis.setAxisMaximum(upperLimit);
+        rightAxis.setAxisMaximum(upperLimit);
+
+
+        final String[] labels;
+        String labelText;
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+        Date now = new Date();
+        String today = sdf.format(now);
+
+        switch (timeWindow) {
+            case "day":
+                labels = new String[] {formatDateLabel(dataRange[0])};
+
+                if(isDateWithinRange(today)) {
+                    labelText = "Today";
+                } else {
+                    labelText = formatDateLabel(dataRange[0]);
+                }
+                break;
+
+            case "week":
+                labels = days;
+                if(isDateWithinRange(today)) {
+                    labelText = "This Week";
+                } else {
+                    labelText = formatDateLabel(dataRange[0]) + " - " + formatDateLabel(dataRange[1]);
+
+                }
+                break;
+
+            case "month":
+                labels = new String[] {
+                        "1", "", "", "", "", "", "",
+                        "8", "", "", "", "", "", "",
+                        "15", "", "", "", "", "", "",
+                        "22", "", "", "", "", "", "",
+                        "29", "", "", "", "", "", "",
+                        "", ""
+                };
+                labelText = formatMonthLabel(dataRange[0]);
+                break;
+
+            case "year":
+                labels = months;
+                labelText = formatYearLabel(dataRange[0]);
+                break;
+
+            default:
+                labels = new String[dataToUse.size()];
+                Arrays.fill(labels, "");
+                labelText = "";
+                break;
+        }
+
+        setLabelText(labelText);
 
         Log.d("DEBUG", "MADE IT");
         // 6. Configure X-axis
@@ -612,703 +432,341 @@ public class WaterUsageFragment extends Fragment {
         xAxis.setLabelCount(100, false);
         xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
 
+        int targetColor = Color.argb(225, 0, 255, 0);
+
+        int avgColor = Color.argb(128, 0, 0, 0);
+        // 5. Add average and target limit lines
+        LimitLine avgLine = new LimitLine(avg, "avg");
+        avgLine.setLineColor(avgColor);
+        avgLine.setLineWidth(2f);
+        avgLine.setTextColor(avgColor);
+        avgLine.setTextSize(12f);
+        avgLine.enableDashedLine(10f, 10f, 0f);
+
+        LimitLine targetLine = new LimitLine(targetValue, "target");
+        targetLine.setLineColor(targetColor);
+        targetLine.setLineWidth(2f);
+        targetLine.setTextSize(12f);
+        targetLine.setTextColor(Color.BLACK);
+        targetLine.enableDashedLine(15f, 10f, 0f);
+
+        leftAxis.addLimitLine(avgLine);
+        leftAxis.addLimitLine(targetLine);
+
         // 7. Enable both Y axes
         leftAxis.setEnabled(true);
         rightAxis.setEnabled(true);
 
-        //legend
-
-        Legend legend = barChart.getLegend();
-        legend.setEnabled(true);
-        legend.resetCustom();
-
-        LegendEntry dataSetEntry = new LegendEntry();
-        dataSetEntry.label = "Water Usage"; // same as your BarDataSet label
-        dataSetEntry.formColor = colorPrimary; // same as your bar color
-        dataSetEntry.form = Legend.LegendForm.SQUARE;
-
-        LegendEntry avgEntry = new LegendEntry();
-        avgEntry.label = "Avg";
-        avgEntry.formColor = avgColor;
-        avgEntry.form = Legend.LegendForm.LINE;
-
-        LegendEntry targetEntry = new LegendEntry();
-        targetEntry.label = "Target";
-        targetEntry.formColor = targetColor;
-        targetEntry.form = Legend.LegendForm.LINE;
-
-        legend.setCustom(Arrays.asList(dataSetEntry, avgEntry, targetEntry));
-        legend.setXEntrySpace(15f);
-
-
-        //hide graph description and add padding
+        barChart.getBarData().setDrawValues(false);
         barChart.getDescription().setEnabled(false);
         barChart.setExtraBottomOffset(16f);
-        barData.setDrawValues(false);
-
-
-
-        // 8. Redraw chart
         barChart.invalidate();
     }
 
-
-    public int getDayOfYear(int day, int month, int year) {
-        Calendar newCalendar = Calendar.getInstance();
-        newCalendar.set(Calendar.YEAR, year);
-        newCalendar.set(Calendar.MONTH, month); // 0-based (Jan = 0)
-        newCalendar.set(Calendar.DAY_OF_MONTH, day);
-        return newCalendar.get(Calendar.DAY_OF_YEAR);
-    }
-
-
-    public int getMostRecentSunday(int dayOfYear, int year) {
-        Calendar newCalendar = Calendar.getInstance();
-        newCalendar.set(Calendar.YEAR, year);
-        newCalendar.set(Calendar.DAY_OF_YEAR, dayOfYear);
-
-        int currentDayOfWeek = newCalendar.get(Calendar.DAY_OF_WEEK); // Sunday = 1, Monday = 2, ..., Saturday = 7
-        int daysSinceSunday = currentDayOfWeek - Calendar.SUNDAY;  // days to subtract
-        newCalendar.add(Calendar.DAY_OF_YEAR, -daysSinceSunday);      // move back to Sunday
-
-        return newCalendar.get(Calendar.DAY_OF_YEAR)-1;
-    }
-
-
-    public void addEmptyYear() {
-        Log.d("YEARDATA", "calendar.get(Calendar.DAY_OF_YEAR): " + calendar.get(Calendar.DAY_OF_YEAR));
-        for(int i=0; i<calendar.get(Calendar.DAY_OF_YEAR); i++) {
-            float maxRandom = (float) (target*1.25);
-            float minRandom = (float) (target*0.60);
-            float randomValue = (float) ThreadLocalRandom.current().nextDouble(minRandom, maxRandom);
-            addDay(i, randomValue);
+    // Helper function to get max y from BarEntry list
+    private float getMaxY(List<BarEntry> entries) {
+        float max = 0f;
+        for (BarEntry entry : entries) {
+            if (entry.getY() > max) max = entry.getY();
         }
-        Log.d("YEARDATA", "thisYearsData: " + thisYearsData.toString());
-    }
-    public void addDay(int day, float value) {
-        thisYearsData.add(new BarEntry(day, value));
-        data.put(calendar.get(Calendar.YEAR), thisYearsData);
-    }
-
-    public void setLabelText(String txt) {
-        binding.labelText.setText(txt);
+        return max;
     }
 
 
-    public void setStatistics(float low, float high) {
-        TextView l = binding.statistics.low;
-        TextView h = binding.statistics.high;
-        TextView a = binding.statistics.avg;
-        a.setText("Average: " + (int)(avg*10.0)/10.0);
-        l.setText("Low: " + (int)(low*10.0)/10.0);
-        h.setText("High: " + (int)(high*10.0)/10.0);
+    public List<BarEntry> convertDailyUsageToBarEntries(List<DailyUsage> dailyUsageList) {
+        if (dailyUsageList == null || dailyUsageList.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // First, sort the list by date ascending (assuming format YYYY-MM-DD lex order works)
+        Collections.sort(dailyUsageList, new Comparator<DailyUsage>() {
+            @Override
+            public int compare(DailyUsage d1, DailyUsage d2) {
+                return d1.getDay().compareTo(d2.getDay());
+            }
+        });
+
+        List<BarEntry> barEntries = new ArrayList<>();
+
+        for (int i = 0; i < dailyUsageList.size(); i++) {
+            DailyUsage dailyUsage = dailyUsageList.get(i);
+            float liters = dailyUsage.getUsage();
+            barEntries.add(new BarEntry(i, liters));
+        }
+
+        return barEntries;
     }
 
-    public float getStatisticsMax() {
-        TextView t = binding.statistics.high;
-        String returnText = ((String) t.getText()).replace("High: ", "");
-        return Float.parseFloat(returnText);
+    // Converts "YYYY-MM-DD" to "Jul 19"
+    private String formatDateLabel(String date) {
+        // date format YYYY-MM-DD
+        String[] parts = date.split("-");
+        if (parts.length != 3) return date; // fallback
+
+        int month = Integer.parseInt(parts[1]);
+        int day = Integer.parseInt(parts[2]);
+
+        String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+        return months[month - 1] + " " + day;
+    }
+
+    // Converts "YYYY-MM-DD" to "Jul"
+    private String formatMonthLabel(String date) {
+        String[] parts = date.split("-");
+        if (parts.length != 3) return date;
+
+        int month = Integer.parseInt(parts[1]);
+        String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+        return months[month - 1];
+    }
+
+    // Converts "YYYY-MM-DD" to "YYYY"
+    private String formatYearLabel(String date) {
+        String[] parts = date.split("-");
+        if (parts.length != 3) return date;
+
+        return parts[0];
+    }
+    public List<DailyUsage> getSublistByViewRange(List<DailyUsage> dailyUsageList, String[] dataRange) {
+        String startDate = dataRange[0];
+        String endDate = dataRange[1];
+
+        List<DailyUsage> result = new ArrayList<>();
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+        Calendar startCal = Calendar.getInstance();
+        Calendar endCal = Calendar.getInstance();
+
+        try {
+            startCal.setTime(sdf.parse(startDate));
+            endCal.setTime(sdf.parse(endDate));
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return result;
+        }
+
+        if (dailyUsageList == null || dailyUsageList.isEmpty()) {
+            return result;
+        }
+
+        if ("year".equals(viewRange)) {
+            // Initialize array for 12 months (0 = Jan, ..., 11 = Dec)
+            float[] monthSums = new float[12];
+            boolean[] monthSeen = new boolean[12];
+
+            float low = Float.MAX_VALUE;
+            float high = Float.MIN_VALUE;
+            float sum = 0f;
+            int count = 0;
+
+            for (DailyUsage du : dailyUsageList) {
+                try {
+                    Date duDate = sdf.parse(du.getDay());
+                    if (!duDate.before(startCal.getTime()) && !duDate.after(endCal.getTime())) {
+                        Calendar cal = Calendar.getInstance();
+                        cal.setTime(duDate);
+                        int month = cal.get(Calendar.MONTH);
+                        monthSums[month] += du.getUsage();
+                        monthSeen[month] = true;
+                    }
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            for (int i = 0; i < 12; i++) {
+                String labelDate = String.format(Locale.US, "%04d-%02d-01", startCal.get(Calendar.YEAR), i + 1);
+                float monthlyTotal = monthSums[i];
+
+                result.add(new DailyUsage(labelDate, monthlyTotal));
+
+                if (monthSeen[i]) {
+                    low = Math.min(low, monthlyTotal);
+                    high = Math.max(high, monthlyTotal);
+                    sum += monthlyTotal;
+                    count++;
+                }
+            }
+
+            Float newAvg = (count > 0) ? (sum / count) : null;
+            avg = newAvg == null ? 0 : newAvg;
+            setStatistics(low, high, newAvg);
+
+            Log.d("UsageStats", "Low (monthly): " + low + ", High (monthly): " + high + ", Avg (monthly): " + avg);
+            return result;
+        }
+
+        // Otherwise, default (daily) behavior
+        Map<String, DailyUsage> usageMap = new HashMap<>();
+        float low = Float.MAX_VALUE;
+        float high = Float.MIN_VALUE;
+        float sum = 0f;
+        int count = 0;
+
+        for (DailyUsage du : dailyUsageList) {
+            usageMap.put(du.getDay(), du);
+            try {
+                Date duDate = sdf.parse(du.getDay());
+                if (!duDate.before(startCal.getTime()) && !duDate.after(endCal.getTime())) {
+                    float usage = du.getUsage();
+                    low = Math.min(low, usage);
+                    high = Math.max(high, usage);
+                    sum += usage;
+                    count++;
+                }
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }
+
+        Float newAvg = (count > 0) ? (sum / count) : null;
+        avg = newAvg == null ? 0 : newAvg;
+        setStatistics(low, high, newAvg);
+
+        Log.d("UsageStats", "Low: " + low + ", High: " + high + ", Avg: " + avg);
+
+        Calendar iterCal = (Calendar) startCal.clone();
+        while (!iterCal.after(endCal)) {
+            String dateStr = sdf.format(iterCal.getTime());
+            DailyUsage du = usageMap.get(dateStr);
+            if (du != null) {
+                result.add(new DailyUsage(du));
+            } else {
+                result.add(new DailyUsage(dateStr, 0f));
+            }
+            iterCal.add(Calendar.DAY_OF_MONTH, 1);
+        }
+
+        return result;
     }
 
 
-//<editor-fold desc="previous method">
-//
-//    public void backPress() {
-//
-//
-//        if(dataToShow == "day"){
-//            lt.decreaseDay();
-//            setLabelText(lt.getText());
-//            indexBounds[0] = lt.getLowestDate();
-//            indexBounds[1] = lt.getHighestDate();
-//            dataShowing = processIndexBounds();
-//            label = new String[]{lt.getText()};
-//            generateGraph();
-//        } else if(dataToShow == "week"){
-//            lt.decreaseWeek();
-//            setLabelText(lt.getText());
-//            indexBounds[0] = lt.getLowestDate();
-//            indexBounds[1] = lt.getHighestDate();
-//            dataShowing = processIndexBounds();
-//            label = days;
-//            generateGraph();
-//        } else if(dataToShow == "month"){
-//            lt.decreaseMonth();
-//            setLabelText(lt.getText());
-//            indexBounds[0] = lt.getLowestDate();
-//            indexBounds[1] = lt.getHighestDate();
-//            dataShowing = processIndexBounds();
-//            label = new String[]{lt.getText()};
-//            generateGraph();
-//        }
-//    }
-//
-//    public void forwardPress() {
-//
-//        if(dataToShow == "day"){
-//            lt.increaseDay();
-//            setLabelText(lt.getText());
-//            indexBounds[0] = lt.getLowestDate();
-//            indexBounds[1] = lt.getHighestDate();
-//            dataShowing = processIndexBounds();
-//            label = new String[]{lt.getText()};
-//            generateGraph();
-//        } else if(dataToShow == "week"){
-//            lt.increaseWeek();
-//            setLabelText(lt.getText());
-//            indexBounds[0] = lt.getLowestDate();
-//            indexBounds[1] = lt.getHighestDate();
-//            dataShowing = processIndexBounds();
-//            label = days;
-//            generateGraph();
-//        } else if(dataToShow == "month"){
-//            lt.increaseMonth();
-//            setLabelText(lt.getText());
-//            indexBounds[0] = lt.getLowestDate();
-//            indexBounds[1] = lt.getHighestDate();
-//            dataShowing = processIndexBounds();
-//            label = new String[]{lt.getText()};
-//            generateGraph();
-//        }
-//    }
-//    private void addEmptyYear() {
-//        for (int i = 0; i < 198; i++) {
-//            yeardata.add(new BarEntry(yeardata.size(), i));
-//        }
-//        if (year % 4 == 0) {
-//            yeardata.add(new BarEntry(yeardata.size(), 0));
-//        }
-//        Log.d("YEARDATA", "yeardata: " + yeardata.toString());
-//    }
-//    public void setDataShowing() {
-//        //find current day (1-365/366)
-//        int curDay = 0;
-//        for (int i = 0; i < month - 1; i++) {
-//            curDay += daysInMonth[i];
-//        }
-//        curDay += day;
-//
-//        //find start of week (sunday)
-//        int dayOfWeek = getDayOfWeek(year, month, day);
-//        Log.d("YEARDATA", "dayOfWeek: " + dayOfWeek);
-//        int sunday = curDay - (dayOfWeek - 1);
-//
-//        //find start of month
-//        int theFirst = curDay - day + 1;
-//
-//        dataShowing.clear();
-//        int yeardataSize = year % 4 == 0 ? 366 : 365;
-//        List<BarEntry> yeardataCopy = new ArrayList<>(yeardata);
-//        for (int i = 0; i < yeardataSize; i++) {
-//            if (i < yeardata.size()) {
-//                if (yeardata.get(i) == null) {
-//                    yeardataCopy.set(i, new BarEntry(i, 0));
-//                }
-//            } else {
-//                yeardataCopy.add(new BarEntry(i, 0));
-//            }
-//        }
-//
-//        if (dataToShow == "day") {
-//            indexBounds = new int[]{curDay - 1, curDay};
-//
-//        } else if (dataToShow == "week") {
-//            indexBounds = new int[]{sunday - 1, sunday + 6};
-//
-//        } else if (dataToShow == "month") {
-//            indexBounds = new int[]{theFirst - 1, theFirst + daysInMonth[month - 1]};
-//
-//        } else if (dataToShow == "year") {
-//            //convert bar entries from days to months
-//            for (int m : daysInMonth) {
-//                int sum = 0;
-//                for (int i = 0; i < m; i++) {
-//                    sum += (int) yeardataCopy.get(i).getY();
-//                }
-//                for (int i = 0; i < m; i++) {
-//                    yeardataCopy.remove(0);
-//                }
-//                dataShowing.add(new BarEntry(dataShowing.size(), sum));
-//            }
-//
-//        }
-//
-//        if (dataToShow != "year") {
-//            dataShowing = processIndexBounds();
-//        }
-//    }
-//
-//    public List<BarEntry> processIndexBounds() {
-//        List<BarEntry> dataShowing = new ArrayList<>();
-//        for (int i = indexBounds[0]; i < indexBounds[1]; i++) {
-//            if (i >= 0 && i < yeardata.size()) {
-//                BarEntry barEntry = yeardata.get(i);
-//                dataShowing.add(barEntry);
-//            } else if(i > 0){
-//                dataShowing.add(new BarEntry(i, 0));
-//            } else if(i < 0) {
-//                dataShowing.add(new BarEntry(i, 0));
-//            }
-//        }
-//        Log.d("YEARDATA", "dataShowing: " + dataShowing.toString());
-//        return dataShowing;
-//    }
-//
-//    public void addDay(int y) {
-//        yeardata.add(new BarEntry(yeardata.size(), y));
-//    }
-//
-//    public void setStatistics(String avg, String low, String high) {
-//        TextView avgText = binding.statistics.avg;
-//        TextView lowText = binding.statistics.low;
-//        TextView highText = binding.statistics.high;
-//        avgText.setText("Average: " + avg);
-//        lowText.setText("Low: " + low);
-//        highText.setText("High: " + high);
-//    }
-//
-//    @Override
-//    public void onDestroyView() {
-//        super.onDestroyView();
-//        binding = null;
-//    }
-//
-//    public static int getDayOfWeek(int year, int month, int day) {
-//        Calendar calendar = Calendar.getInstance();
-//        calendar.set(year, month - 1, day); // Month is 0-based (January = 0)
-//
-//        int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK); // Sunday = 1, Saturday = 7
-//
-//        return dayOfWeek;
-//    }
-//
-//    public void generateGraph() {
-//
-//        int barColor = getThemeAttribute(getContext(), R.attr.colorPrimary).data;
-//        int targetColor = Color.GREEN;
-//        int avgColor = Color.argb(128, 0, 0, 0);
-//
-//        //initialize and add data
-//        BarChart barChart = binding.waterGraph;
-//
-//        // <editor-fold desc="Calculate average"
-//        float sum = 0;
-//        float count = 0;
-//        Log.d("YEARDATA", "dataShowing: " + dataShowing.toString());
-//        for (BarEntry entry : dataShowing) {
-//            if(dataToShow != "year") {
-//                if (entry.getX() >= lt.getDayOfYear(day, month, year)) {
-//                    Log.d("YEARDATA", "entry.getX(): " + entry.getX());
-//                    entry.setY(0);
-//                } else {
-//                    sum += entry.getY();
-//                    count += 1;
-//                }
-//            } else {
-//                if(entry.getX() >= month){
-//                    entry.setY(0);
-//                } else {
-//                    sum += entry.getY();
-//                    count += 1;
-//                }
-//            }
-//        }
-//        float average = count > 0 ? sum / count : 0;
-//
-//        //</editor-fold>
-//
-//        if (dataShowing == null || dataShowing.isEmpty()) {
-//            setStatistics("Unknown", "Unknown", "Unknown");
-//
-//        } else {
-//
-//            float min = Float.MAX_VALUE;
-//            float max = Float.MIN_VALUE;
-//
-//            for (BarEntry entry : dataShowing) {
-//                if(entry.getX() < lt.getDayOfYear(day, month, year)) {
-//                    float y = entry.getY();
-//                    if (y < min) min = y;
-//                    if (y > max) max = y;
-//                }
-//            }
-//
-//            setStatistics(String.format("%.2f", average), String.format("%.2f", min), String.format("%.2f", max));
-//        }
-//
-//        //Normalize x values
-//        int entries = 0;
-//        for(BarEntry entry : dataShowing) {
-//            entry.setX(entries);
-//            entries+=1;
-//        }
-//
-//        BarDataSet barDataSet = new BarDataSet(dataShowing, "Water Usage");
-//        ArrayList<IBarDataSet> dataSets = new ArrayList<>();
-//        dataSets.add(barDataSet);
-//
-//        BarData data = new BarData(dataSets);
-//        barChart.setData(data);
-//
-//
-//
-//
-//        // <editor-fold desc="create avg and target line">
-//        LimitLine avgLine = new LimitLine(average, "");
-//        avgLine.setLineColor(avgColor);
-//        avgLine.setLineWidth(2f);
-//        avgLine.enableDashedLine(15f, 10f, 0f);
-//        //create target line
-//        LimitLine targetLine = new LimitLine((dataToShow == "year") ? dailyTarget*daysInMonth[month] : dailyTarget, "");
-//        targetLine.setLineColor(targetColor);
-//        targetLine.setLineWidth(2);
-//        targetLine.enableDashedLine(15f, 10f, 0f);
-//        // </editor-fold>
-//
-//        // Set bar color
-//        barDataSet.setColor(barColor);
-//
-//        // Add both lines to the left axis
-//        YAxis leftAxis = barChart.getAxisLeft();
-//        leftAxis.removeAllLimitLines(); // clear old lines
-//        leftAxis.addLimitLine(avgLine);
-//        leftAxis.addLimitLine(targetLine);
-//
-//
-//        // <editor-fold desc="Create legend">
-//
-//        Legend legend = barChart.getLegend();
-//
-//        // Get current legend entries from data sets
-//        List<LegendEntry> originalEntries = new ArrayList<>();
-//        if (barChart.getData() != null && barChart.getData().getDataSets() != null) {
-//            for (IBarDataSet set : barChart.getData().getDataSets()) {
-//                LegendEntry entry = new LegendEntry();
-//                entry.label = set.getLabel();
-//                entry.formColor = set.getColor();
-//                entry.form = Legend.LegendForm.SQUARE;  // or LINE if you prefer
-//                originalEntries.add(entry);
-//            }
-//        }
-//
-//        LegendEntry avgEntry = new LegendEntry();
-//
-//        avgEntry.label = "Avg";
-//        avgEntry.formColor = avgColor;
-//        avgEntry.form = Legend.LegendForm.LINE;
-//
-//        LegendEntry targetEntry = new LegendEntry();
-//        targetEntry.label = "Target";
-//        targetEntry.formColor = targetColor;
-//        targetEntry.form = Legend.LegendForm.LINE;
-//
-//        // Combine original and custom entries
-//        List<LegendEntry> combinedEntries = new ArrayList<>(originalEntries);
-//        combinedEntries.add(avgEntry);
-//        combinedEntries.add(targetEntry);
-//
-//        // Set combined legend entries
-//        legend.setCustom(combinedEntries.toArray(new LegendEntry[0]));
-//        legend.setWordWrapEnabled(true);
-//        legend.setEnabled(true);
-//        legend.setXEntrySpace(20f);
-//       // </editor-fold>
-//
-//        //no need for negative y values
-//        barChart.getAxisLeft().setAxisMinimum(0f);
-//        barChart.getAxisRight().setAxisMinimum(0f);
-//
-//
-//        XAxis xAxis = barChart.getXAxis();
-//
-//        //<editor-fold desc="setting x axis labels">
-//        barDataSet.setDrawValues(false);
-//        if(dataToShow == "month") {
-//            xAxis.setLabelCount(daysInMonth[month - 1], true); // total days in this month
-//
-//            int[] daysToLabel = new int[] {1, 8, 15, 22, 29};
-//
-//            xAxis.setValueFormatter(new ValueFormatter() {
-//                @Override
-//                public String getFormattedValue(float value) {
-//                    int day = (int) value + 1; // zero-based x to 1-based day
-//
-//                    for (int d : daysToLabel) {
-//                        if (day == d) {
-//                            return String.valueOf(d);
-//                        }
-//                    }
-//                    return ""; // blank for other days
-//                }
-//            });
-//        } else {
-//            Log.d("YEARDATA", "week reached");
-//            xAxis.setLabelCount(100, false); // total days in this month
-//            Log.d("YEARDATA", "label: " + label.toString());
-//            xAxis.setValueFormatter(new IndexAxisValueFormatter(label));
-//        }
-//
-//
-//        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-//        xAxis.setGranularity(1f);
-//        xAxis.setGranularityEnabled(true);
-//        xAxis.setLabelRotationAngle(-45f);// one label per value
-//// </editor-fold>
-//
-//        float maxValue = 0f;
-//        for (BarEntry entry : dataShowing) {
-//            if (entry.getY() > maxValue) {
-//                maxValue = entry.getY();
-//            }
-//        }
-//        leftAxis.setAxisMaximum(maxValue + 10); //
-//        barChart.getAxisRight().setAxisMaximum(maxValue + 10);
-//        //grid and axis settings
-//        barChart.getAxisRight().setDrawLabels(true);
-//        xAxis.setDrawGridLines(false);
-//        xAxis.setDrawAxisLine(false);
-//        barChart.getDescription().setEnabled(false);
-//        barChart.animateY(500);
-//        barChart.setExtraBottomOffset(16f);
-//
-//
-//        //Set statistics
-//
-//
-//        barChart.invalidate();
-//    }
-//
-//    public static TypedValue getThemeAttribute(Context context, @AttrRes int attr) {
-//        TypedValue typedValue = new TypedValue();
-//        if (context.getTheme().resolveAttribute(attr, typedValue, true)) {
-//            return typedValue;
-//        }
-//        return null;
-//    }
-//
-//    public void setLabelText(String t) {
-//        labelText = t;
-//        TextView text = binding.labelText;
-//        text.setText(t);
-//    }
-//
-//    public class LabelText {
-//        private String ltext;
-//
-//        private int ldayOfYear;
-//        private int lday;
-//
-//        private int lmonth;
-//        private int llowestDate;
-//
-//        private int lhighestDate;
-//
-//
-//        public LabelText(String text, int lowestDate, int highestDate) {
-//            this.ltext = text;
-//            this.llowestDate = lowestDate;
-//            this.lhighestDate = highestDate;
-//            this.lmonth = month;
-//            this.lday = day;
-//            ldayOfYear = getDayOfYear(day, month, year);
-//        }
-//
-//        public void decreaseDay() {
-//            ldayOfYear--;
-//            if(ldayOfYear < 1){
-//                ldayOfYear = 1;
-//            }
-//            llowestDate = ldayOfYear-1;
-//            lhighestDate = ldayOfYear;
-//            Log.d("LABEL", ("ldayOfYear: " + ldayOfYear).toString());
-//            lday = getDayOfMonthFromDayOfYear(ldayOfYear, year);
-//            lmonth = getMonthFromDayOfYear(ldayOfYear, year);
-//            if(ldayOfYear == getDayOfYear(day, month, year)){
-//                ltext = "Today";
-//            } else {
-//                ltext = months[lmonth] + " " + lday;
-//            }
-//            Log.d("LABEL", ("label: " + ltext).toString());
-//        }
-//
-//        public void increaseDay() {
-//            ldayOfYear++;
-//            int daysInYear = year%4==0 ? 366 : 365;
-//            if(ldayOfYear > daysInYear){
-//                ldayOfYear = daysInYear;
-//            }
-//            llowestDate = ldayOfYear-1;
-//            lhighestDate = ldayOfYear;
-//            Log.d("LABEL", ("ldayOfYear: " + ldayOfYear).toString());
-//            lday = getDayOfMonthFromDayOfYear(ldayOfYear, year);
-//            lmonth = getMonthFromDayOfYear(ldayOfYear, year);
-//            if(ldayOfYear == getDayOfYear(day, month, year)){
-//                ltext = "Today";
-//            } else {
-//                ltext = months[lmonth] + " " + lday;
-//            }
-//            Log.d("LABEL", ("label: " + ltext).toString());
-//        }
-//
-//        public void decreaseWeek() {
-//            int sunday = getSundayOfWeek(year, month, day);
-//            llowestDate = sunday-8;
-//            ldayOfYear -= 7;
-//            lhighestDate = llowestDate + 7;
-//
-//            Log.d("LABEL", "ldayOfYear: " + ldayOfYear);
-//
-//            int lowestDay = getDayOfMonthFromDayOfYear(llowestDate, year)+1;
-//            lmonth = getMonthFromDayOfYear(llowestDate, year);
-//            int highestMonth = getMonthFromDayOfYear(lhighestDate, year);
-//            int highestDay = getDayOfMonthFromDayOfYear(lhighestDate, year);
-//
-//            ltext = months[lmonth] + " " + lowestDay + " - " + months[highestMonth] + " " + highestDay;
-//            Log.d("LABEL", "label: " + ltext);
-//        }
-//
-//        public void increaseWeek() {
-//            int sunday = getSundayOfWeek(year, month, day);
-//            llowestDate = sunday+6;
-//            ldayOfYear += 7;
-//            lhighestDate = llowestDate + 7;
-//
-//            Log.d("LABEL", "ldayOfYear: " + ldayOfYear);
-//
-//            int lowestDay = getDayOfMonthFromDayOfYear(llowestDate, year);
-//            lmonth = getMonthFromDayOfYear(llowestDate, year);
-//            int highestMonth = getMonthFromDayOfYear(lhighestDate, year);
-//            int highestDay = getDayOfMonthFromDayOfYear(lhighestDate, year);
-//
-//            ltext = months[lmonth] + " " + lowestDay + " - " + months[highestMonth] + " " + highestDay;
-//            Log.d("LABEL", "label: " + ltext);
-//        }
-//
-//        public void decreaseMonth() {
-//            // Calculate the first day of the current month as dayOfYear
-//
-//            lmonth--;
-//            if(lmonth < 0){
-//                lmonth = 0;
-//            }
-//            llowestDate = getDayOfYear(1, lmonth, year);
-//
-//            lhighestDate = getDayOfYear(daysInMonth[lmonth], lmonth, year);
-//            ltext = months[lmonth];
-//
-//        }
-//
-//        public void increaseMonth() {
-//            lmonth++;
-//            if (lmonth > 11) {  // assuming lmonth is zero-based (0 = Jan, 11 = Dec)
-//                lmonth = 11;
-//            }
-//
-//            llowestDate = getDayOfYear(1, lmonth, year);
-//            lhighestDate = getDayOfYear(daysInMonth[lmonth], lmonth, year);
-//            ltext = months[lmonth];
-//        }
-//
-//
-//        // Helper to get days in month with leap year check
-//        public int getDaysInMonth(int month, int year) {
-//            switch (month) {
-//                case 2:
-//                    return (isLeapYear(year)) ? 29 : 28;
-//                case 4: case 6: case 9: case 11:
-//                    return 30;
-//                default:
-//                    return 31;
-//            }
-//        }
-//
-//        public boolean isLeapYear(int year) {
-//            return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
-//        }
-//
-//        public int getSundayOfWeek(int year, int month, int day) {
-//
-//            int dayOfWeek = getDayOfWeek(year, month, day);  // Sunday=1 ... Saturday=7
-//
-//            // Calculate Sunday day of year by subtracting days since Sunday
-//            int sundayDayOfYear = ldayOfYear - (dayOfWeek - 1);
-//
-//            // Make sure sundayDayOfYear is at least 1 (handle start of year case)
-//            if (sundayDayOfYear < 1) {
-//                // If before Jan 1, wrap to previous year's last days (optional, depending on your logic)
-//                // For simplicity, clamp to 1 here:
-//                sundayDayOfYear = 1;
-//            }
-//
-//            return sundayDayOfYear;
-//        }
-//
-//
-//        public String getText() {
-//            return ltext;
-//        }
-//
-//        public int getLowestDate() {
-//            return llowestDate;
-//        }
-//
-//        public int getHighestDate() {
-//            return lhighestDate;
-//        }
-//
-//
-//        public  int getDayOfYear(int day, int month, int year) {
-//            // Month is 1-based (January = 1)
-//            int[] daysInMonth = {
-//                    31, (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) ? 29 : 28,
-//                    31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-//            };
-//
-//            int doy = 0;
-//            for (int i = 0; i < month - 1; i++) {
-//                doy += daysInMonth[i];
-//            }
-//            doy += day;
-//
-//            return doy;
-//        }
-//
-//        public int getMonthFromDayOfYear(int dayOfYear, int year) {
-//            int daysInFebruary = (year % 4 == 0) ? 29 : 28;
-//            int[] daysInMonth = {31, daysInFebruary, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-//
-//            int cumulativeDays = 0;
-//
-//            for (int month = 0; month < 12; month++) {
-//                cumulativeDays += daysInMonth[month];
-//                if (dayOfYear <= cumulativeDays) {
-//                    return month; // Return 1-based month (Jan = 1)
-//                }
-//            }
-//
-//            throw new IllegalArgumentException("Invalid day of year: " + dayOfYear);
-//        }
-//
-//        public int getDayOfMonthFromDayOfYear(int dayOfYear, int year) {
-//            int daysInFebruary = (year % 4 == 0) ? 29 : 28;
-//            int[] daysInMonth = {31, daysInFebruary, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-//
-//            int dayCount = dayOfYear;
-//
-//            for (int month = 0; month < 12; month++) {
-//                if (dayCount <= daysInMonth[month]) {
-//                    return dayCount; // Correct day of the month
-//                }
-//                dayCount -= daysInMonth[month];
-//            }
-//
-//            throw new IllegalArgumentException("Invalid day of year: " + dayOfYear);
-//        }
-//
-//
-//
-//    }
-//
+    public String[] setDateRange(String currentDay, String viewRange) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+        Calendar cal = Calendar.getInstance();
 
-    //</editor-fold>
+        try {
+            Date date = sdf.parse(currentDay);
+            cal.setTime(date);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return new String[] {"", ""};
+        }
+
+        String startDate, endDate;
+
+        switch (viewRange.toLowerCase()) {
+            case "day":
+                startDate = currentDay;
+                endDate = currentDay;
+                break;
+
+            case "week":
+                cal.set(Calendar.DAY_OF_WEEK, cal.getFirstDayOfWeek()); // typically Sunday
+                startDate = sdf.format(cal.getTime());
+                cal.add(Calendar.DAY_OF_WEEK, 6);
+                endDate = sdf.format(cal.getTime());
+                break;
+
+            case "month":
+                cal.set(Calendar.DAY_OF_MONTH, 1);
+                startDate = sdf.format(cal.getTime());
+                cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH));
+                endDate = sdf.format(cal.getTime());
+                break;
+
+            case "year":
+                cal.set(Calendar.DAY_OF_YEAR, 1);
+                startDate = sdf.format(cal.getTime());
+                cal.set(Calendar.DAY_OF_YEAR, cal.getActualMaximum(Calendar.DAY_OF_YEAR));
+                endDate = sdf.format(cal.getTime());
+                break;
+
+            default:
+                startDate = currentDay;
+                endDate = currentDay;
+                break;
+        }
+
+        return new String[] {startDate, endDate};
+    }
+
+    public int findDailyUsageIndex(List<DailyUsage> dailyUsageList, String targetDay) {
+        if (dailyUsageList == null || targetDay == null) {
+            return -1;
+        }
+        for (int i = 0; i < dailyUsageList.size(); i++) {
+            DailyUsage dailyUsage = dailyUsageList.get(i);
+            if (targetDay.equals(dailyUsage.getDay())) {  // assuming getDay() returns a String like "YYYY-MM-DD"
+                return i;
+            }
+        }
+        return -1; // not found
+    }
+
+    public void addRandomLogsForDateRange(WaterUsageDao waterUsageDao) {
+        // Date format to parse and format dates
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Calendar startCal = Calendar.getInstance();
+        Calendar endCal = Calendar.getInstance();
+
+        Date todayDate = null; // zero time part
+        try {
+            todayDate = sdf.parse(sdf.format(startCal.getTime()));
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+
+        }
+        long todayTimestamp = todayDate.getTime();
+        dao.deleteLogsOlderThan(todayTimestamp);
+
+
+        try {
+            // Start date: Jan 1, 2025
+            startCal.setTime(sdf.parse("2025-01-01"));
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return; // Abort on parse error
+        }
+
+        // End date: yesterday
+        endCal.add(Calendar.DAY_OF_MONTH, -1);
+
+
+
+        Random random = new Random();
+
+
+        while (!startCal.after(endCal)) {
+            // Convert current day to timestamp (milliseconds)
+            long timestamp = startCal.getTimeInMillis();
+
+            // Generate a random float value for usage (e.g., between 10.0 and 50.0)
+            float randomUsage = (float) (target*0.1 + random.nextFloat() * 1.2*target);
+
+            // Create a WaterUsage object — adapt constructor/fields as needed
+            WaterUsage log = new WaterUsage(user.getEmail(), new Date(timestamp), randomUsage, "test");
+            dao.insertLog(log);
+
+            // Move to next day
+            startCal.add(Calendar.DAY_OF_MONTH, 1);
+        }
+    }
+
+    public void setLabelText(String s) {
+        binding.labelText.setText(s);
+    }
+
+    public void setStatistics(float low, float high, Float avg) {
+        binding.statistics.low.setText("Low: " + String.format("%.2f", low));
+        binding.statistics.high.setText("High: " + String.format("%.2f", high));
+        binding.statistics.avg.setText("Avg: " + String.format("%.2f", avg));
+    }
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
+    }
+
 }

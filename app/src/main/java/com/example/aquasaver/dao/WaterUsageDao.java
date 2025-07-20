@@ -9,6 +9,7 @@ import androidx.room.Update;
 
 // Import WaterUsage class
 import com.example.aquasaver.model.WaterUsage;
+import com.example.aquasaver.ui.water_usage.DailyUsage;
 
 import java.util.List;
 
@@ -67,5 +68,26 @@ public interface WaterUsageDao {
     @Query("SELECT * FROM water_usage_log WHERE user_email = :userEmail ORDER BY date DESC LIMIT 1")
     WaterUsage getLatestLogForUser(String userEmail);
 
+    @Query("SELECT date(date / 1000, 'unixepoch') as day, SUM(amount_liters) as total_liters " +
+            "FROM water_usage_log " +
+            "WHERE user_email = :email AND date BETWEEN :start AND :end " +
+            "GROUP BY day " +
+            "ORDER BY day ASC")
+    List<DailyUsage> getDailyUsageBetween(String email, long start, long end);
+
+    @Query("SELECT date(date / 1000, 'unixepoch') as day, SUM(amount_liters) as total_liters " +
+            "FROM water_usage_log " +
+            "WHERE user_email = :email AND date(date / 1000, 'unixepoch') = date(:dayTimestamp / 1000, 'unixepoch') " +
+            "GROUP BY day " +
+            "LIMIT 1")
+    DailyUsage getDailyUsageForDay(String email, long dayTimestamp);
+
+    @Query("SELECT date(date / 1000, 'unixepoch', 'localtime') as day, SUM(amount_liters) as total_liters " +
+            "FROM water_usage_log " +
+            "WHERE user_email = :email " +
+            "GROUP BY day " +
+            "ORDER BY day ASC")
+    List<DailyUsage> getAllDailyUsageForUser(String email);
 
 }
+
