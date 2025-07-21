@@ -8,6 +8,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.aquasaver.dao.GoalProgressDao;
@@ -17,6 +18,7 @@ import com.example.aquasaver.db.AppDatabase;
 import com.example.aquasaver.model.GoalProgress;
 import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.model.WaterUsage;
+import com.example.aquasaver.model.enums.GoalType;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.LegendEntry;
@@ -27,6 +29,7 @@ import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.interfaces.datasets.IDataSet;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 
@@ -68,6 +71,8 @@ public class WaterUsageFragment extends Fragment {
     private String[] days = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
     private String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
+    private int[] daysInMonth = {31, calendar.get(Calendar.YEAR) % 4 == 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
     private String[] dataRange;
 
     private String viewRange;
@@ -79,6 +84,10 @@ public class WaterUsageFragment extends Fragment {
     float avg;
 
     float target;
+
+    float goalValue;
+
+    GoalType goalType;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -113,21 +122,38 @@ public class WaterUsageFragment extends Fragment {
                 return;
             }
 
-            GoalProgress goalProgress = goalProgressDao.getTodayProgress(userEmail);
-            float targetValue = goalProgress != null ? goalProgress.getGoalAmount() : 100f;
-            target = targetValue;
+            Calendar cal = Calendar.getInstance();
+            cal.set(Calendar.HOUR, 23);
+            cal.set(Calendar.MINUTE, 59);
+            cal.set(Calendar.SECOND, 59);
+            calendar.set(Calendar.MILLISECOND, 99);
+            Date startDate = cal.getTime();
+            cal.set(Calendar.DAY_OF_MONTH, 1);
+            Date endDate = cal.getTime();
 
-            //addRandomLogsForDateRange(dao);
+            GoalProgress goalProgress = goalProgressDao.getMonthlyProgress(user.getEmail(), endDate, startDate);
+            if(goalProgress == null) {
+                Log.d("TEST", "goalProgress is null");
+            }
+
+            float targetValue = goalProgress != null ? goalProgress.getGoalAmount() : 100f;
+            goalValue = targetValue;
+            goalType = user.getGoalType();
+            adjustTarget();
+
+            addRandomLogsForDateRange(dao);
             float litersUsed = dao.getLitersUsedToday(user.getEmail());
             Log.d("TEST", "litersUsed: " + litersUsed);
             List<DailyUsage> usageData = dao.getAllDailyUsageForUser(user.getEmail());
 
             requireActivity().runOnUiThread(() -> {
+
                 barChart = binding.waterGraph;;
                 binding.graphToggle.check(R.id.week);
                 viewRange = "week";
                 data = usageData;
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+
                 dataRange = setDateRange(sdf.format(curCalendar.getTime()), viewRange);
                 List<DailyUsage> sublist = getSublistByViewRange(data, dataRange);
                 List<BarEntry> entries = convertDailyUsageToBarEntries(sublist);
@@ -220,6 +246,7 @@ public class WaterUsageFragment extends Fragment {
             case "month":
                 startCal.add(Calendar.MONTH, -1);
                 endCal.add(Calendar.MONTH, -1);
+                adjustTarget();
                 break;
             case "year":
                 startCal.add(Calendar.YEAR, -1);
@@ -256,6 +283,20 @@ public class WaterUsageFragment extends Fragment {
         }
     }
 
+    public void adjustTarget() {
+        float targetValue = goalValue;
+        switch (goalType) {
+            case DAILY:
+                break;
+            case WEEKLY:
+                targetValue /= 7.0;
+            case MONTHLY:
+                targetValue /= daysInMonth[calendar.get(Calendar.MONTH)];
+                break;
+        }
+        target = targetValue;
+    }
+
     public void forwardPress() {
         if (dataRange == null || dataRange.length < 2) return;
 
@@ -289,6 +330,7 @@ public class WaterUsageFragment extends Fragment {
             case "month":
                 startCal.add(Calendar.MONTH, 1);
                 endCal.add(Calendar.MONTH, 1);
+                adjustTarget();
                 break;
 
             case "year":
@@ -306,8 +348,12 @@ public class WaterUsageFragment extends Fragment {
         // Check if both dates are valid indexes
         int startIndex = findDailyUsageIndex(data, dataRange[0]);
         int endIndex = findDailyUsageIndex(data, dataRange[1]);
+        String today = sdf.format(Calendar.getInstance().getTime());
+        Log.d("TEST", "today: " + today);
+        Log.d("TEST", "dataRange[0]: " + dataRange[0]);
+        Log.d("TEST", "dataRange[1]: " + dataRange[1]);
 
-        if (startIndex == -1 && endIndex == -1) {
+        if (startIndex == -1 && endIndex == -1 && !(oldEnd.compareTo(sdf.format(Calendar.getInstance().getTime())) < 0)) {
             // Revert changes because both dates not found
             dataRange[0] = oldStart;
             dataRange[1] = oldEnd;
@@ -364,7 +410,7 @@ public class WaterUsageFragment extends Fragment {
         rightAxis.setAxisMinimum(0f);
 
         float maxY = getMaxY(dataToUse);  // Custom helper to find max usage
-        float upperLimit = Math.max(Math.max(avg, targetValue), maxY) + 10;
+        float upperLimit = Math.max(Math.max(avg, targetValue), maxY) + 20;
         leftAxis.setAxisMaximum(upperLimit);
         rightAxis.setAxisMaximum(upperLimit);
 
@@ -432,18 +478,18 @@ public class WaterUsageFragment extends Fragment {
         xAxis.setLabelCount(100, false);
         xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
 
-        int targetColor = Color.argb(225, 0, 255, 0);
+        int targetColor = Color.argb(255, 229, 57, 53);
 
         int avgColor = Color.argb(128, 0, 0, 0);
         // 5. Add average and target limit lines
-        LimitLine avgLine = new LimitLine(avg, "avg");
+        LimitLine avgLine = new LimitLine(avg, "");
         avgLine.setLineColor(avgColor);
         avgLine.setLineWidth(2f);
         avgLine.setTextColor(avgColor);
         avgLine.setTextSize(12f);
-        avgLine.enableDashedLine(10f, 10f, 0f);
+        avgLine.enableDashedLine(15f, 10f, 0f);
 
-        LimitLine targetLine = new LimitLine(targetValue, "target");
+        LimitLine targetLine = new LimitLine(targetValue, "");
         targetLine.setLineColor(targetColor);
         targetLine.setLineWidth(2f);
         targetLine.setTextSize(12f);
@@ -454,12 +500,18 @@ public class WaterUsageFragment extends Fragment {
         leftAxis.addLimitLine(targetLine);
 
         // 7. Enable both Y axes
+
+
         leftAxis.setEnabled(true);
         rightAxis.setEnabled(true);
 
+        setLegend("Water Usage", "Average", "Target", colorPrimary, avgColor, targetColor);
+        barChart.setExtraBottomOffset(16f);
+        barChart.setExtraLeftOffset(10f);
+        barChart.setExtraRightOffset(10f);
+        barChart.getLegend().setEnabled(false);
         barChart.getBarData().setDrawValues(false);
         barChart.getDescription().setEnabled(false);
-        barChart.setExtraBottomOffset(16f);
         barChart.invalidate();
     }
 
@@ -470,6 +522,21 @@ public class WaterUsageFragment extends Fragment {
             if (entry.getY() > max) max = entry.getY();
         }
         return max;
+    }
+
+    public void setLegend(String dataLabel, String avgLabel, String targetLabel, int dataColor, int avgColor, int targetColor) {
+        TextView legendWaterUsageText = binding.legend.legendWaterUsageText;
+        TextView legendAverageText = binding.legend.legendAverageText;
+        TextView legendTargetText = binding.legend.legendTargetText;
+        legendWaterUsageText.setText(dataLabel);
+        legendAverageText.setText(avgLabel);
+        legendTargetText.setText(targetLabel);
+        View legendWaterUsageIcon = binding.legend.legendWaterUsageIcon;
+        View legendAverageIcon = binding.legend.legendAverageIcon;
+        View legendTargetIcon = binding.legend.legendTargetIcon;
+        legendWaterUsageIcon.setBackgroundColor(dataColor);
+        legendAverageIcon.setBackgroundColor(avgColor);
+        legendTargetIcon.setBackgroundColor(targetColor);
     }
 
 
@@ -709,6 +776,11 @@ public class WaterUsageFragment extends Fragment {
         // Date format to parse and format dates
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Calendar startCal = Calendar.getInstance();
+        startCal.set(Calendar.HOUR, 0);
+        startCal.set(Calendar.MINUTE, 0);
+        startCal.set(Calendar.SECOND, 0);
+        startCal.set(Calendar.MILLISECOND, 0);
+
         Calendar endCal = Calendar.getInstance();
 
         Date todayDate = null; // zero time part
@@ -720,7 +792,6 @@ public class WaterUsageFragment extends Fragment {
         }
         long todayTimestamp = todayDate.getTime();
         dao.deleteLogsOlderThan(todayTimestamp);
-
 
         try {
             // Start date: Jan 1, 2025
@@ -743,7 +814,7 @@ public class WaterUsageFragment extends Fragment {
             long timestamp = startCal.getTimeInMillis();
 
             // Generate a random float value for usage (e.g., between 10.0 and 50.0)
-            float randomUsage = (float) (target*0.1 + random.nextFloat() * 1.2*target);
+            float randomUsage = (float) (target*0.5 + random.nextFloat() * 1.0*target);
 
             // Create a WaterUsage object — adapt constructor/fields as needed
             WaterUsage log = new WaterUsage(user.getEmail(), new Date(timestamp), randomUsage, "test");
@@ -758,10 +829,19 @@ public class WaterUsageFragment extends Fragment {
         binding.labelText.setText(s);
     }
 
-    public void setStatistics(float low, float high, Float avg) {
+    public void setStatistics(float low, float high, Float avgValue) {
+        if (avgValue == null) {
+            avgValue = 0f;
+        }
+        if (low == Float.MAX_VALUE) {
+            low = 0f;
+        }
+        if (high == Float.MIN_VALUE) {
+            high = 0f;
+        }
         binding.statistics.low.setText("Low: " + String.format("%.2f", low));
         binding.statistics.high.setText("High: " + String.format("%.2f", high));
-        binding.statistics.avg.setText("Avg: " + String.format("%.2f", avg));
+        binding.statistics.avg.setText("Avg: " + String.format("%.2f", avgValue));
     }
     @Override
     public void onDestroyView() {
