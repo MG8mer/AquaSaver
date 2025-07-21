@@ -348,8 +348,12 @@ public class WaterUsageFragment extends Fragment {
         // Check if both dates are valid indexes
         int startIndex = findDailyUsageIndex(data, dataRange[0]);
         int endIndex = findDailyUsageIndex(data, dataRange[1]);
+        String today = sdf.format(Calendar.getInstance().getTime());
+        Log.d("TEST", "today: " + today);
+        Log.d("TEST", "dataRange[0]: " + dataRange[0]);
+        Log.d("TEST", "dataRange[1]: " + dataRange[1]);
 
-        if (startIndex == -1 && endIndex == -1) {
+        if (startIndex == -1 && endIndex == -1 && !(oldEnd.compareTo(sdf.format(Calendar.getInstance().getTime())) < 0)) {
             // Revert changes because both dates not found
             dataRange[0] = oldStart;
             dataRange[1] = oldEnd;
@@ -825,10 +829,19 @@ public class WaterUsageFragment extends Fragment {
         binding.labelText.setText(s);
     }
 
-    public void setStatistics(float low, float high, Float avg) {
+    public void setStatistics(float low, float high, Float avgValue) {
+        if (avgValue == null) {
+            avgValue = 0f;
+        }
+        if (low == Float.MAX_VALUE) {
+            low = 0f;
+        }
+        if (high == Float.MIN_VALUE) {
+            high = 0f;
+        }
         binding.statistics.low.setText("Low: " + String.format("%.2f", low));
         binding.statistics.high.setText("High: " + String.format("%.2f", high));
-        binding.statistics.avg.setText("Avg: " + String.format("%.2f", avg));
+        binding.statistics.avg.setText("Avg: " + String.format("%.2f", avgValue));
     }
     @Override
     public void onDestroyView() {
