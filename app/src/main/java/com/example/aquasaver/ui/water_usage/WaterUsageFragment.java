@@ -29,6 +29,7 @@ import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.interfaces.datasets.IDataSet;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 
@@ -121,23 +122,38 @@ public class WaterUsageFragment extends Fragment {
                 return;
             }
 
-            GoalProgress goalProgress = goalProgressDao.getTodayProgress(userEmail);
+            Calendar cal = Calendar.getInstance();
+            cal.set(Calendar.HOUR, 23);
+            cal.set(Calendar.MINUTE, 59);
+            cal.set(Calendar.SECOND, 59);
+            calendar.set(Calendar.MILLISECOND, 99);
+            Date startDate = cal.getTime();
+            cal.set(Calendar.DAY_OF_MONTH, 1);
+            Date endDate = cal.getTime();
+
+            GoalProgress goalProgress = goalProgressDao.getMonthlyProgress(user.getEmail(), endDate, startDate);
+            if(goalProgress == null) {
+                Log.d("TEST", "goalProgress is null");
+            }
+
             float targetValue = goalProgress != null ? goalProgress.getGoalAmount() : 100f;
             goalValue = targetValue;
             goalType = user.getGoalType();
             adjustTarget();
 
-            //addRandomLogsForDateRange(dao);
+            addRandomLogsForDateRange(dao);
             float litersUsed = dao.getLitersUsedToday(user.getEmail());
             Log.d("TEST", "litersUsed: " + litersUsed);
             List<DailyUsage> usageData = dao.getAllDailyUsageForUser(user.getEmail());
 
             requireActivity().runOnUiThread(() -> {
+
                 barChart = binding.waterGraph;;
                 binding.graphToggle.check(R.id.week);
                 viewRange = "week";
                 data = usageData;
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+
                 dataRange = setDateRange(sdf.format(curCalendar.getTime()), viewRange);
                 List<DailyUsage> sublist = getSublistByViewRange(data, dataRange);
                 List<BarEntry> entries = convertDailyUsageToBarEntries(sublist);
@@ -480,11 +496,15 @@ public class WaterUsageFragment extends Fragment {
         leftAxis.addLimitLine(targetLine);
 
         // 7. Enable both Y axes
+
+
         leftAxis.setEnabled(true);
         rightAxis.setEnabled(true);
 
         setLegend("Water Usage", "Average", "Target", colorPrimary, avgColor, targetColor);
         barChart.setExtraBottomOffset(16f);
+        barChart.setExtraLeftOffset(10f);
+        barChart.setExtraRightOffset(10f);
         barChart.getLegend().setEnabled(false);
         barChart.getBarData().setDrawValues(false);
         barChart.getDescription().setEnabled(false);
@@ -752,6 +772,11 @@ public class WaterUsageFragment extends Fragment {
         // Date format to parse and format dates
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Calendar startCal = Calendar.getInstance();
+        startCal.set(Calendar.HOUR, 0);
+        startCal.set(Calendar.MINUTE, 0);
+        startCal.set(Calendar.SECOND, 0);
+        startCal.set(Calendar.MILLISECOND, 0);
+
         Calendar endCal = Calendar.getInstance();
 
         Date todayDate = null; // zero time part
@@ -763,7 +788,6 @@ public class WaterUsageFragment extends Fragment {
         }
         long todayTimestamp = todayDate.getTime();
         dao.deleteLogsOlderThan(todayTimestamp);
-
 
         try {
             // Start date: Jan 1, 2025
@@ -786,7 +810,7 @@ public class WaterUsageFragment extends Fragment {
             long timestamp = startCal.getTimeInMillis();
 
             // Generate a random float value for usage (e.g., between 10.0 and 50.0)
-            float randomUsage = (float) (target*0.1 + random.nextFloat() * 1.2*target);
+            float randomUsage = (float) (target*0.5 + random.nextFloat() * 1.0*target);
 
             // Create a WaterUsage object — adapt constructor/fields as needed
             WaterUsage log = new WaterUsage(user.getEmail(), new Date(timestamp), randomUsage, "test");
