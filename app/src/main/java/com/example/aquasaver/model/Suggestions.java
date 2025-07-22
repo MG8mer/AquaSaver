@@ -22,25 +22,32 @@ public class Suggestions {
     @ColumnInfo(name = "user_email")
     public String userEmail;
 
+    @ColumnInfo(name = "condition")
+    public String condition;  // New field
+
     @ColumnInfo(name = "title")
     public String title;
 
     @ColumnInfo(name = "description")
     public String description;
 
-    // Constructor
+    // Constructor with condition
     public Suggestions(@NonNull String userEmail,
-                      String title,
-                      String description)
-    {
+                       String condition,
+                       String title,
+                       String description) {
         this.userEmail = userEmail;
+        this.condition = condition;
         this.title = title;
         this.description = description;
     }
 
-    // Getters and setters for each instance variable
+    // Getters and setters
     public String getUserEmail() { return userEmail; }
     public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
+
+    public String getCondition() { return condition; }
+    public void setCondition(String condition) { this.condition = condition; }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }

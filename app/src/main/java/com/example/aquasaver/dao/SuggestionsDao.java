@@ -51,4 +51,6 @@ public interface SuggestionsDao
     @Query("SELECT * FROM suggestions WHERE title = :title LIMIT 1")
     Suggestions getSuggestionByTitle(String title);
 
+
+
 }

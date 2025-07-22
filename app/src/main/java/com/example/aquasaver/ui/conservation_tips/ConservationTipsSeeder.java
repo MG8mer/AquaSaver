@@ -11,30 +11,32 @@ public class ConservationTipsSeeder {
 
     public static List<Suggestions> getConservationTips(String userEmail) {
         List<Suggestions> suggestions = new ArrayList<>();
-        suggestions.add(new Suggestions(userEmail, "Rainy", "Collect rainwater: Install a rain barrel to capture water from downspouts for garden irrigation or other outdoor uses."));
-        suggestions.add(new Suggestions(userEmail, "Rainy", "Check for leaks: Even during rainy periods, ensure your indoor plumbing and outdoor spigots aren't leaking, as this wastes water that's already readily available."));
-        suggestions.add(new Suggestions(userEmail, "Rainy", "Adjust irrigation: Turn off or significantly reduce automatic irrigation systems during and immediately after rainfall."));
-        suggestions.add(new Suggestions(userEmail, "Rainy", "Direct downspouts: Guide downspouts to permeable areas like lawns or gardens instead of directly onto paved surfaces to encourage groundwater recharge."));
-        suggestions.add(new Suggestions(userEmail, "Rainy", "Plant strategically: Consider planting rain gardens or native plants that thrive with natural rainfall and require less supplemental watering."));
 
-        suggestions.add(new Suggestions(userEmail, "Sunny", "Water during cool hours: Water your lawn and plants in the early morning or late evening to minimize evaporation."));
-        suggestions.add(new Suggestions(userEmail, "Sunny", "Deep and infrequent watering: Water deeply to encourage root growth, but less frequently to prevent overwatering and allow soil to retain moisture."));
-        suggestions.add(new Suggestions(userEmail, "Sunny", "Mulch garden beds: Apply a layer of mulch around plants to reduce water evaporation from the soil."));
-        suggestions.add(new Suggestions(userEmail, "Sunny", "Prioritize watering: Focus water on new plants or those that show signs of stress, rather than uniformly watering everything."));
-        suggestions.add(new Suggestions(userEmail, "Sunny", "Use drip irrigation: Install drip irrigation or soaker hoses for targeted watering, minimizing water loss to evaporation and runoff."));
+        suggestions.add(new Suggestions(userEmail, "Rainy", "Collect Rainwater", "Install a rain barrel to capture water from downspouts for garden irrigation or other outdoor uses."));
+        suggestions.add(new Suggestions(userEmail, "Rainy", "Check for Leaks", "Ensure your indoor plumbing and outdoor spigots aren't leaking, as this wastes water."));
+        suggestions.add(new Suggestions(userEmail, "Rainy", "Adjust Irrigation", "Turn off or reduce automatic irrigation systems during and after rainfall."));
+        suggestions.add(new Suggestions(userEmail, "Rainy", "Direct Downspouts", "Guide downspouts to permeable areas to encourage groundwater recharge."));
+        suggestions.add(new Suggestions(userEmail, "Rainy", "Plant Strategically", "Plant rain gardens or native plants that thrive with natural rainfall."));
 
-        suggestions.add(new Suggestions(userEmail, "Humid", "Reduce watering frequency: Humid conditions mean less evaporation from plants, so they may not need as much frequent watering. Check soil moisture before watering."));
-        suggestions.add(new Suggestions(userEmail, "Humid", "Monitor for overwatering: High humidity can increase the risk of fungal diseases if plants are consistently overwatered. Allow soil to dry out slightly between waterings."));
-        suggestions.add(new Suggestions(userEmail, "Humid", "Consider plant choices: Select plants that are well-suited to humid climates and naturally require less supplemental water."));
-        suggestions.add(new Suggestions(userEmail, "Humid", "Check for condensation: In indoor settings, ensure air conditioning units are draining properly and not dripping excessively, as this indicates wasted water."));
-        suggestions.add(new Suggestions(userEmail, "Humid", "Ventilate greenhouses: If you have a greenhouse, proper ventilation can help manage humidity and reduce the need for excessive watering."));
+        suggestions.add(new Suggestions(userEmail, "Sunny", "Water During Cool Hours", "Water your lawn and plants in early morning or late evening to minimize evaporation."));
+        suggestions.add(new Suggestions(userEmail, "Sunny", "Deep and Infrequent Watering", "Water deeply to encourage root growth but less frequently."));
+        suggestions.add(new Suggestions(userEmail, "Sunny", "Mulch Garden Beds", "Apply mulch to reduce water evaporation from the soil."));
+        suggestions.add(new Suggestions(userEmail, "Sunny", "Prioritize Watering", "Focus water on new plants or those showing stress."));
+        suggestions.add(new Suggestions(userEmail, "Sunny", "Use Drip Irrigation", "Install drip irrigation for targeted watering."));
 
-        suggestions.add(new Suggestions(userEmail, "General", "Fix leaks promptly: A constantly dripping faucet can waste thousands of gallons of water per year. Repair all leaks immediately."));
-        suggestions.add(new Suggestions(userEmail, "General", "Take shorter showers: Aim for 5-minute showers instead of baths."));
-        suggestions.add(new Suggestions(userEmail, "General", "Turn off the tap: Don't let the water run while brushing your teeth, shaving, or washing dishes."));
-        suggestions.add(new Suggestions(userEmail, "General", "Full loads of laundry/dishwasher: Only run washing machines and dishwashers when they are full."));
-        suggestions.add(new Suggestions(userEmail, "General", "Install water-efficient fixtures: Replace old toilets, showerheads, sprinklers, and faucets with low-flow models."));
-        suggestions.add(new Suggestions(userEmail, "General", "Educate others: Share water conservation tips with friends, family, and your community."));
+        suggestions.add(new Suggestions(userEmail, "Humid", "Reduce Watering Frequency", "Water less frequently, check soil moisture first."));
+        suggestions.add(new Suggestions(userEmail, "Humid", "Monitor for Overwatering", "Avoid fungal diseases by letting soil dry out."));
+        suggestions.add(new Suggestions(userEmail, "Humid", "Consider Plant Choices", "Select plants suited to humid climates."));
+        suggestions.add(new Suggestions(userEmail, "Humid", "Check for Condensation", "Ensure AC units drain properly to avoid water waste."));
+        suggestions.add(new Suggestions(userEmail, "Humid", "Ventilate Greenhouses", "Manage humidity to reduce excess watering."));
+
+        suggestions.add(new Suggestions(userEmail, "General", "Fix Leaks Promptly", "Repair dripping faucets immediately."));
+        suggestions.add(new Suggestions(userEmail, "General", "Take Shorter Showers", "Aim for 5-minute showers instead of baths."));
+        suggestions.add(new Suggestions(userEmail, "General", "Turn Off Tap", "Don't let water run while brushing teeth or washing dishes."));
+        suggestions.add(new Suggestions(userEmail, "General", "Full Loads Only", "Run washing machines and dishwashers only when full."));
+        suggestions.add(new Suggestions(userEmail, "General", "Install Water-Efficient Fixtures", "Replace old fixtures with low-flow models."));
+        suggestions.add(new Suggestions(userEmail, "General", "Educate Others", "Share water conservation tips with your community."));
+
         return suggestions;
     }
 }
