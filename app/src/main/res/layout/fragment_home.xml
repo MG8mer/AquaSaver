@@ -24,25 +24,15 @@
         android:layout_below="@id/welcomeText"
         android:layout_marginTop="16dp" />
 
-    <!-- Log Water Usage Button -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/logWaterUsageButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Log Water Usage"
-        android:layout_below="@id/pieChart"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="16dp" />
-
     <!-- Icons Section -->
     <LinearLayout
         android:id="@+id/iconsLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_below="@id/logWaterUsageButton"
+        android:layout_below="@id/pieChart"
         android:gravity="center"
-        android:layout_marginTop="24dp">
+        android:layout_marginTop="12dp">
 
         <!-- Shower -->
         <LinearLayout
@@ -145,7 +135,7 @@
         android:orientation="horizontal"
         android:gravity="center"
         android:layout_below="@id/iconsLayout"
-        android:layout_marginTop="24dp">
+        android:layout_marginTop="12dp">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/decrementTimer"
@@ -169,5 +159,37 @@
             android:layout_height="wrap_content"
             android:text="+1 min\" />
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/waterUsagePreview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select an activity and set a timer"
+        android:textSize="16sp"
+        android:textColor="@color/black"
+        android:layout_below="@id/timerLayout"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="8dp" />
+
+
+    <!-- Log Water Usage Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/logWaterUsageButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Log Water Usage"
+        android:layout_below="@id/timerLayout"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="32dp" />
+
+    <!--Undo Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/undoButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="↻ Undo"
+        android:layout_below="@id/logWaterUsageButton"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="32dp" />
 
 </RelativeLayout>

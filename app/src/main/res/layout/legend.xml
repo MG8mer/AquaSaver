@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/custom_legend"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <!-- Legend item Water Usage -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <View
+                android:id="@+id/legend_water_usage_icon"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:background="@color/colorPrimary" />
+
+            <TextView
+                android:id="@+id/legend_water_usage_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="6dp"
+                android:text="Water Usage"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Legend item Average -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <View
+                android:id="@+id/legend_average_icon"
+                android:layout_width="12dp"
+                android:layout_height="5dp"
+                android:background="#80000000" />
+
+            <TextView
+                android:id="@+id/legend_average_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="6dp"
+                android:text="Average"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Legend item Target -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <View
+                android:id="@+id/legend_target_icon"
+                android:layout_width="12dp"
+                android:layout_height="5dp"
+                android:background="#00FF00" />
+
+            <TextView
+                android:id="@+id/legend_target_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="6dp"
+                android:text="Target"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

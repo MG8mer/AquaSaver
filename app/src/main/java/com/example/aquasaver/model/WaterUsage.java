@@ -7,7 +7,11 @@ import androidx.room.Index;
 import androidx.room.PrimaryKey;
 import androidx.annotation.NonNull;
 
+import com.github.mikephil.charting.data.BarEntry;
+
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 @Entity(tableName = "water_usage_log",
         foreignKeys = @ForeignKey(entity = UserProfile.class, // Parent entity
@@ -27,6 +31,7 @@ public class WaterUsage {
 
     @ColumnInfo(name = "date")
     public Date usageDate;
+
 
     @ColumnInfo(name = "amount_liters")
     public double amountLiters;

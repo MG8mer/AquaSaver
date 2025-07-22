@@ -17,10 +17,21 @@ import androidx.navigation.ui.NavigationUI;
 import com.example.aquasaver.R;
 import com.example.aquasaver.databinding.ActivityMainBinding;
 import com.google.android.material.navigation.NavigationView;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
+import org.json.JSONObject;
+
+import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
+
+    private OkHttpClient client = new OkHttpClient();
     private AppBarConfiguration appBarConfiguration;
     private MainViewModel mainViewModel;
 
@@ -32,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
         // View Binding
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
 
         // Setup Toolbar
         setSupportActionBar(binding.appBarMain.toolbar);
@@ -51,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
         NavigationView navView = binding.navView;
 
         appBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_home, R.id.nav_water_usage, R.id.nav_goals, R.id.nav_climate_alerts, R.id.nav_settings)
+                R.id.nav_home, R.id.nav_water_usage, R.id.nav_goals, R.id.nav_settings, R.id.nav_conservation_tips)
                 .setOpenableLayout(drawer)
                 .build();
 

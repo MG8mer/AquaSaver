@@ -10,10 +10,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.LinearLayout;
+
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -30,25 +30,22 @@ import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.dao.GoalProgressDao;
 import com.example.aquasaver.dao.UserProfileDao;
 import com.example.aquasaver.dao.ChallengeProgressDao;
+import com.example.aquasaver.model.enums.GoalType;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
 
 public class GoalsFragment extends Fragment {
 
     private FragmentGoalsBinding binding;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private Challenges currentChallenge = null; // The single random challenge shown
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -65,143 +62,206 @@ public class GoalsFragment extends Fragment {
             return root;
         }
 
-        binding.goalTypeText.setText("Type: Daily");
-        binding.goalAmountText.setText("Goal Amount: Loading...");
+        loadUserData(email);
 
+        setupRecordButton(email);
+
+        return root;
+    }
+
+    private void loadUserData(String email) {
         executor.execute(() -> {
             try {
                 ChallengesDao dao = AppDatabase.getInstance(requireContext()).challengesDao();
                 GoalProgressDao goalDao = AppDatabase.getInstance(requireContext()).goalProgressDao();
 
                 List<Challenges> challenges = dao.getUserChallenges(email);
-                List<ChallengeWithProgress> challengeWithProgressList = dao.getAllChallengesWithProgress(email);
-                GoalProgress todayProgress = goalDao.getTodayProgress(email); // 💡 fetch goalProgress here
 
-                int goalAmount = (todayProgress != null) ? todayProgress.getGoalAmount() : 100; // fallback
-
-                Log.d("GoalsFragment", "Challenges: " + challenges.size());
+                GoalProgress todayProgress = goalDao.getTodayProgress(email);
+                int goalAmount = (todayProgress != null) ? todayProgress.getGoalAmount() : 400;
 
                 requireActivity().runOnUiThread(() -> {
                     if (challenges.isEmpty()) {
                         Toast.makeText(getContext(), "No challenges found", Toast.LENGTH_SHORT).show();
+                        binding.titleGoals.setText("Goal Progress");
+                    } else {
+                        binding.titleGoals.setText("Goal Progress");
+                        showSingleRandomChallenge(challenges);
                     }
-
-                    binding.goalAmountText.setText("Goal Amount: " + goalAmount + " L");
-
-                    loadGoalProgress(email);
-                    loadChallenges(email);
-                    updateCheckboxesWithChallenges(challengeWithProgressList);
-                    populateChallenges(challengeWithProgressList);
                 });
+
+                loadGoalProgress(email);
+                updateChallengesCompletedCount(email);
+
             } catch (Exception e) {
-                Log.e("GoalsFragment", "Error loading challenges", e);
+                Log.e("GoalsFragment", "Error loading data", e);
+                requireActivity().runOnUiThread(() ->
+                        Toast.makeText(getContext(), "Error loading data", Toast.LENGTH_SHORT).show());
             }
         });
-
-        Button recordButton = root.findViewById(R.id.recordChallengeButton);
-        LinearLayout dropdown = root.findViewById(R.id.challengeDropdown);
-
-        // Toggle dropdown visibility
-        recordButton.setOnClickListener(v -> {
-            if (dropdown.getVisibility() == View.GONE) {
-                dropdown.setVisibility(View.VISIBLE);
-            } else {
-                dropdown.setVisibility(View.GONE);
-            }
-        });
-
-        // === DYNAMIC CHECKBOXES SETUP ===
-        LinearLayout checkboxContainer = root.findViewById(R.id.challengeCheckboxContainer);
-        checkboxContainer.removeAllViews();
-
-        // Submit button handler
-        Button submitButton = root.findViewById(R.id.submitChallengeProgressButton);
-        submitButton.setOnClickListener(v -> {
-            executor.execute(() -> {
-                ChallengesDao challengesDao = AppDatabase.getInstance(requireContext()).challengesDao();
-                ChallengeProgressDao progressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
-
-                boolean anyUpdated = false;
-
-                for (int i = 0; i < checkboxContainer.getChildCount(); i++) {
-                    View child = checkboxContainer.getChildAt(i);
-                    if (child instanceof CheckBox) {
-                        CheckBox cb = (CheckBox) child;
-                        if (cb.isChecked()) {
-                            String challengeTitle = (String) cb.getTag();
-
-                            ChallengeProgress progress = progressDao.getChallengeProgressById(challengeTitle, email);
-                            if (progress == null) {
-                                // Create new ChallengeProgress if none exists yet
-                                progress = new ChallengeProgress(email, challengeTitle, 1f, true);
-                                // Optionally set currentProgress to goal or zero here if you want
-                                progressDao.insertChallengeProgress(progress);
-                                anyUpdated = true;
-                            } else if (!progress.completion) {
-                                // Update existing progress if not completed
-                                progress.setCompletion(true);
-                                progressDao.updateChallengeProgress(progress);
-                                anyUpdated = true;
-                            }
-                        }
-                    }
-                }
-
-                if (anyUpdated) {
-                    List<ChallengeWithProgress> updatedList = challengesDao.getAllChallengesWithProgress(email);
-
-                    requireActivity().runOnUiThread(() -> {
-                        populateChallenges(updatedList);
-                        updateCheckboxesWithChallenges(updatedList);
-                        binding.challengeDropdown.setVisibility(View.GONE);
-                        Toast.makeText(getContext(), "Challenges updated!", Toast.LENGTH_SHORT).show();
-                    });
-                } else {
-                    requireActivity().runOnUiThread(() -> {
-                        Toast.makeText(getContext(), "No challenges selected", Toast.LENGTH_SHORT).show();
-                        binding.challengeDropdown.setVisibility(View.GONE);
-                    });
-                }
-            });
-        });
-        return root;
     }
-
-    private void loadGoalProgress(String email) {
-        GoalProgressDao dao = AppDatabase.getInstance(requireContext()).goalProgressDao();
-
+    private void loadOneRandomChallenge(String email) {
         executor.execute(() -> {
-            GoalProgress todayProgress = dao.getTodayProgress(email);
+            ChallengesDao dao = AppDatabase.getInstance(requireContext()).challengesDao();
+            ChallengeProgressDao progressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
 
-            if (todayProgress == null) {
+            List<Challenges> allChallenges = dao.getUserChallenges(email);
+
+            List<Challenges> incompleteChallenges = new ArrayList<>();
+            for (Challenges c : allChallenges) {
+                ChallengeProgress progress = progressDao.getChallengeProgressById(c.getTitle(), email);
+                if (progress == null || !progress.completion) {
+                    incompleteChallenges.add(c);
+                }
+            }
+
+            if (incompleteChallenges.isEmpty()) {
+                currentChallenge = null;
                 requireActivity().runOnUiThread(() -> {
-                    binding.streakText.setText("Streak: 0 days");
-                    binding.challengesCompletedText.setText("No progress logged today.");
-                    binding.goalAmountText.setText("Goal Amount: 100 L");
-                    updateProgressBar(0, 100);
+                    binding.challengeTitleText.setVisibility(View.GONE);
+                    binding.challengeDescriptionText.setVisibility(View.GONE);
+                    binding.completeChallengeButton.setVisibility(View.GONE);
+                    binding.noChallengesMessage.setVisibility(View.VISIBLE);
                 });
                 return;
             }
 
-            int goalAmount = todayProgress.getGoalAmount();
-            int progress = (int) todayProgress.getAmountLogged();
-            boolean onTarget = todayProgress.getOnTarget();
+            Collections.shuffle(incompleteChallenges);
+            currentChallenge = incompleteChallenges.get(0);
 
             requireActivity().runOnUiThread(() -> {
-                binding.challengesCompletedText.setText(onTarget ? "On Target ✅" : "Over Limit ❌");
-                binding.goalAmountText.setText("Goal Amount: " + goalAmount + " L");
-                updateProgressBar(progress, goalAmount);
-            });
+                binding.noChallengesMessage.setVisibility(View.GONE);
+                binding.challengeTitleText.setVisibility(View.VISIBLE);
+                binding.challengeDescriptionText.setVisibility(View.VISIBLE);
+                binding.completeChallengeButton.setVisibility(View.VISIBLE);
 
-            // Update streak info on background thread but UI on main thread
-            executor.execute(() -> {
-                try {
-                    updateGoalProgress(email, todayProgress);
-                    Log.d("GoalsFragment", "Goal progress updated");
-                } catch (Exception e) {
-                    Log.e("GoalsFragment", "Error updating goal progress", e);
-                }
+                binding.challengeTitleText.setText(currentChallenge.getTitle());
+                binding.challengeDescriptionText.setText(currentChallenge.getDescription());
             });
+        });
+    }
+
+    private void showSingleRandomChallenge(List<Challenges> challenges) {
+        if (challenges.isEmpty()) {
+            binding.challengeTitleText.setText("No challenges available.");
+            binding.challengeDescriptionText.setText("");
+            binding.completeChallengeButton.setEnabled(false);
+            return;
+        }
+
+        Collections.shuffle(challenges);
+        currentChallenge = challenges.get(0);
+
+        binding.challengeTitleText.setText(currentChallenge.getTitle());
+        binding.challengeDescriptionText.setText(currentChallenge.getDescription());
+        binding.completeChallengeButton.setEnabled(true);
+    }
+
+    private void setupRecordButton(String email) {
+        binding.completeChallengeButton.setOnClickListener(v -> {
+            if (currentChallenge == null) {
+                Toast.makeText(getContext(), "No challenge to complete.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            executor.execute(() -> {
+                ChallengeProgressDao progressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
+
+                // Check if already completed today
+                ChallengeProgress todayChallenge = progressDao.getTodayChallengeProgress(email);
+                if (todayChallenge != null && todayChallenge.getTitle().equals(currentChallenge.getTitle())) {
+                    requireActivity().runOnUiThread(() -> {
+                        Toast.makeText(getContext(), "You've already completed this challenge today!", Toast.LENGTH_LONG).show();
+                    });
+                    return;
+                }
+
+                ChallengeProgress progress = new ChallengeProgress(email, currentChallenge.getTitle(), 1f, true, new Date());
+                progress.timestamp = new Date();
+                progressDao.insertChallengeProgress(progress);
+
+                requireActivity().runOnUiThread(() -> {
+                    Toast.makeText(getContext(), "Challenge completed!", Toast.LENGTH_SHORT).show();
+                    // Refresh challenge display to show next one or no challenges
+                    loadOneRandomChallenge(email);
+                });
+            });
+        });
+
+    }
+
+    private void loadGoalProgress(String email) {
+        GoalProgressDao progressDao = AppDatabase.getInstance(requireContext()).goalProgressDao();
+        UserProfileDao userDao = AppDatabase.getInstance(requireContext()).userProfileDao();
+
+        executor.execute(() -> {
+            try {
+                UserProfile user = userDao.getUserByEmail(email);
+                GoalType goalType = user.getGoalType();
+                GoalProgress progress;
+
+                Date startDate, endDate;
+
+                switch (goalType) {
+                    case WEEKLY:
+                        startDate = getStartOfWeek();
+                        endDate = getEndOfWeek();
+                        progress = progressDao.getWeeklyProgress(email, startDate, endDate);
+                        break;
+                    case MONTHLY:
+                        startDate = getStartOfMonth();
+                        endDate = getEndOfMonth();
+                        progress = progressDao.getMonthlyProgress(email, startDate, endDate);
+                        break;
+                    case DAILY:
+                    default:
+                        startDate = getTodayDateTruncated();
+                        endDate = new Date();
+                        progress = progressDao.getTodayProgress(email);
+                        break;
+                }
+
+                if (progress == null) {
+                    float defaultGoal;
+                    switch (goalType) {
+                        case WEEKLY:
+                            defaultGoal = 2800f;
+                            break;
+                        case MONTHLY:
+                            defaultGoal = 11200f;
+                            break;
+                        case DAILY:
+                        default:
+                            defaultGoal = 400f;
+                            break;
+                    }
+                    progress = new GoalProgress(email, 0f, startDate, true, (int) defaultGoal);
+                    progressDao.insertGoalProgress(progress);
+                }
+
+                final GoalProgress finalProgress = progress;
+                final int goalAmount = (int) finalProgress.getGoalAmount();
+                final int amountLogged = (int) finalProgress.getAmountLogged();
+                final boolean onTarget = finalProgress.getOnTarget();
+
+                requireActivity().runOnUiThread(() -> {
+                    binding.goalAmountText.setText("Goal Amount: " + goalAmount + " L");
+                    binding.goalTypeText.setText("Type: " + goalType.toString());
+                    binding.challengesCompletedText.setText(onTarget ? "On Target ✅" : "Over Limit ❌");
+                    updateProgressBar(amountLogged, goalAmount);
+                });
+
+                if (goalType == GoalType.DAILY) {
+                    updateGoalProgress(email, finalProgress);
+                } else {
+                    requireActivity().runOnUiThread(() -> binding.streakText.setText("Streak: -"));
+                }
+
+            } catch (Exception e) {
+                Log.e("GoalsFragment", "Error in loadGoalProgress", e);
+                requireActivity().runOnUiThread(() ->
+                        Toast.makeText(getContext(), "Error loading goal progress", Toast.LENGTH_SHORT).show());
+            }
         });
     }
 
@@ -211,92 +271,59 @@ public class GoalsFragment extends Fragment {
 
         if (todayGoal == null) return;
 
-        // Run DB updates in background
         executor.execute(() -> {
             boolean onTarget = todayGoal.getAmountLogged() <= todayGoal.getGoalAmount();
             todayGoal.setOnTarget(onTarget);
             progressDao.updateGoalProgress(todayGoal);
 
             UserProfile user = userDao.getUserByEmail(email);
-            Date today = new Date();
+            Date now = new Date();
             Date lastUpdate = user.getLastStreakUpdate();
+            GoalType goalType = user.getGoalType();
 
-            boolean isNewDay = lastUpdate == null || !DateUtils.isToday(lastUpdate.getTime());
+            boolean isNewPeriod = false;
 
-            if (isNewDay) {
-                user.setStreak(onTarget ? user.getStreak() + 1 : 0);
-                user.setLastStreakUpdate(today);
+            Calendar calNow = Calendar.getInstance();
+            calNow.setTime(now);
+
+            Calendar calLast = Calendar.getInstance();
+            calLast.setTime(lastUpdate != null ? lastUpdate : new Date(0));
+
+            switch (goalType) {
+                case DAILY:
+                    isNewPeriod = lastUpdate == null || !DateUtils.isToday(lastUpdate.getTime());
+                    break;
+                case WEEKLY:
+                    int weekNow = calNow.get(Calendar.WEEK_OF_YEAR);
+                    int weekLast = calLast.get(Calendar.WEEK_OF_YEAR);
+                    int yearNow = calNow.get(Calendar.YEAR);
+                    int yearLast = calLast.get(Calendar.YEAR);
+                    isNewPeriod = lastUpdate == null || weekNow != weekLast || yearNow != yearLast;
+                    break;
+                case MONTHLY:
+                    int monthNow = calNow.get(Calendar.MONTH);
+                    int monthLast = calLast.get(Calendar.MONTH);
+                    yearNow = calNow.get(Calendar.YEAR);
+                    yearLast = calLast.get(Calendar.YEAR);
+                    isNewPeriod = lastUpdate == null || monthNow != monthLast || yearNow != yearLast;
+                    break;
+            }
+
+            if (isNewPeriod) {
+                if (onTarget) {
+                    user.setStreak(user.getStreak() + 1);
+                } else {
+                    user.setStreak(0);
+                }
+                user.setLastStreakUpdate(now);
                 userDao.updateUserProfile(user);
             }
 
             int streakCount = user.getStreak();
             requireActivity().runOnUiThread(() ->
-                    binding.streakText.setText("Streak: " + streakCount + " days 🔥")
+                    binding.streakText.setText("Streak: " + streakCount + " " + (goalType == GoalType.DAILY ? "days" : goalType == GoalType.WEEKLY ? "weeks" : "months") + " 🔥")
             );
         });
-    }
-
-    private void loadChallenges(String email) {
-        ChallengesDao dao = AppDatabase.getInstance(requireContext()).challengesDao();
-
-        executor.execute(() -> {
-            List<Challenges> allChallenges = dao.getUserChallenges(email); // just the raw challenge data
-            List<Challenges> dailyChallenges = getDailyChallenges(allChallenges);
-
-            // Optional: if you need progress too, map titles to get ChallengeWithProgress
-            ChallengeProgressDao progressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
-            List<ChallengeWithProgress> challengeList = new ArrayList<>();
-
-            for (Challenges challenge : dailyChallenges) {
-                ChallengeProgress progress = progressDao.getChallengeProgressById(challenge.getTitle(), email);
-                ChallengeWithProgress cwp = new ChallengeWithProgress();
-                cwp.challenge = challenge;
-                cwp.progress = progress;
-                challengeList.add(cwp);
-            }
-
-            requireActivity().runOnUiThread(() -> populateChallenges(challengeList));
-        });
-    }
-
-    private void populateChallenges(List<ChallengeWithProgress> challengeListWithProgress) {
-        LinearLayout challengeList = binding.challengeListLayout;
-        challengeList.removeAllViews();
-        Log.d("GoalsFragment", "Challenges loaded: " + challengeListWithProgress.size());
-
-        if (challengeListWithProgress.isEmpty()) {
-            TextView emptyText = new TextView(getContext());
-            emptyText.setText("No challenges found.");
-            challengeList.addView(emptyText);
-            return;
-        }
-
-        for (int i = 0; i < challengeListWithProgress.size(); i++) {
-            ChallengeWithProgress entry = challengeListWithProgress.get(i);
-            Challenges challenge = entry.challenge;
-            ChallengeProgress progress = entry.progress;
-
-            String statusSymbol = getStatusSymbol(progress);
-            String displayText = (i + 1) + ". " + challenge.getTitle() + "\n" + statusSymbol + " " + challenge.getDescription();
-
-            TextView textView = new TextView(getContext());
-            textView.setText(displayText);
-            textView.setTextSize(16);
-            textView.setPadding(0, 8, 0, 8);
-            challengeList.addView(textView);
-        }
-    }
-
-    private String getStatusSymbol(ChallengeProgress progress) {
-        if (progress == null) {
-            return "⬜"; // Not started
-        } else if (progress.completion) {
-            return "✅"; // Completed
-        } else if (progress.currentProgress > 0) {
-            return "🟦"; // In progress
-        } else {
-            return "⬜"; // Not started
-        }
     }
 
     private void updateProgressBar(int current, int total) {
@@ -322,7 +349,6 @@ public class GoalsFragment extends Fragment {
         }
     }
 
-    // Added segments param for consistency
     private int getSegmentColor(int index, int filledSegments, int totalSegments) {
         if (index >= filledSegments) return 0xFFD3D3D3; // Light gray (unfilled)
 
@@ -331,6 +357,7 @@ public class GoalsFragment extends Fragment {
         else if (percent < 0.75f) return 0xFFFFD700; // Yellow
         else return 0xFFFF4500;   // Red-orange
     }
+
     private static Date getTodayDateTruncated() {
         Calendar cal = Calendar.getInstance();
         cal.set(Calendar.HOUR_OF_DAY, 0);
@@ -339,78 +366,57 @@ public class GoalsFragment extends Fragment {
         cal.set(Calendar.MILLISECOND, 0);
         return cal.getTime();
     }
-    private List<Challenges> getDailyChallenges(List<Challenges> allChallenges) {
-        SharedPreferences prefs = requireContext().getSharedPreferences("DailyChallengePrefs", Context.MODE_PRIVATE);
 
-        long lastShuffleMillis = prefs.getLong("lastShuffleMillis", 0);
-        Date today = getTodayDateTruncated();
-
-        // Check if the last shuffle was earlier than today
-        if (lastShuffleMillis < today.getTime()) {
-            // New day: shuffle and pick 3
-            Collections.shuffle(allChallenges);
-            List<Challenges> dailyChallenges = allChallenges.subList(0, Math.min(3, allChallenges.size()));
-
-            // Save challenge titles
-            StringBuilder sb = new StringBuilder();
-            for (Challenges c : dailyChallenges) {
-                sb.append(c.getTitle()).append(";");
-            }
-
-            prefs.edit()
-                    .putLong("lastShuffleMillis", today.getTime())
-                    .putString("selectedChallengeTitles", sb.toString())
-                    .apply();
-
-            return dailyChallenges;
-        } else {
-            // Same day: load saved challenge titles
-            String savedTitles = prefs.getString("selectedChallengeTitles", "");
-            if (savedTitles.isEmpty()) {
-                // fallback shuffle if something goes wrong
-                Collections.shuffle(allChallenges);
-                return allChallenges.subList(0, Math.min(3, allChallenges.size()));
-            }
-
-            Set<String> titleSet = new HashSet<>(Arrays.asList(savedTitles.split(";")));
-            List<Challenges> savedChallenges = new ArrayList<>();
-            for (Challenges c : allChallenges) {
-                if (titleSet.contains(c.getTitle())) {
-                    savedChallenges.add(c);
-                }
-            }
-
-            return savedChallenges;
-        }
+    private Date getStartOfWeek() {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.DAY_OF_WEEK, cal.getFirstDayOfWeek());
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
     }
 
-    private void updateCheckboxesWithChallenges(List<ChallengeWithProgress> challengeWithProgressList) {
-        LinearLayout checkboxContainer = binding.challengeCheckboxContainer;
-        checkboxContainer.removeAllViews();
-
-        boolean hasAvailableChallenges = false;
-
-        for (ChallengeWithProgress entry : challengeWithProgressList) {
-            Challenges challenge = entry.challenge;
-            ChallengeProgress progress = entry.progress;
-
-            // Show only challenges not yet completed
-            if (progress == null || !progress.completion) {
-                CheckBox checkBox = new CheckBox(getContext());
-                checkBox.setText(challenge.getTitle());
-                checkBox.setTag(challenge.getTitle()); // Tag it with a unique ID/title for later reference
-                checkboxContainer.addView(checkBox);
-                hasAvailableChallenges = true;
-            }
-        }
-
-        if (!hasAvailableChallenges) {
-            TextView noMoreText = new TextView(getContext());
-            noMoreText.setText("No more challenges available.");
-            noMoreText.setPadding(8, 8, 8, 8);
-            checkboxContainer.addView(noMoreText);
-        }
+    private Date getEndOfWeek() {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(getStartOfWeek());
+        cal.add(Calendar.DAY_OF_MONTH, 7);
+        return cal.getTime();
     }
+
+    private Date getStartOfMonth() {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
+    }
+
+    private Date getEndOfMonth() {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        cal.add(Calendar.MONTH, 1);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
+    }
+    private void updateChallengesCompletedCount(String email) {
+        executor.execute(() -> {
+            ChallengeProgressDao progressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
+            // Get all challenges completed by user
+            List<ChallengeProgress> completedChallenges = progressDao.getCompletedChallengesByUser(email);
+            int completedCount = completedChallenges != null ? completedChallenges.size() : 0;
+
+            requireActivity().runOnUiThread(() -> {
+                binding.challengesCompletedText.setText("Challenges completed: " + completedCount);
+            });
+        });
+    }
+
 
     @Override
     public void onDestroyView() {

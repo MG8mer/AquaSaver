@@ -170,11 +170,11 @@ public class SignupActivity extends AppCompatActivity {
                         UserProfile newUser = new UserProfile(userEmail, pass, loc, useGps, finalGoalType, notify, "12:00 AM", weatherAlert, joinDate, lastStreakUpdate);
                         GoalProgress userGp;
                         if (finalGoalType == GoalType.DAILY) {
-                            userGp = new GoalProgress(userEmail, 0, joinDate, true, 100);
+                            userGp = new GoalProgress(userEmail, 0, joinDate, true, 400);
                         } else if (finalGoalType == GoalType.WEEKLY) {
-                            userGp = new GoalProgress(userEmail, 0, joinDate, true, 700);
+                            userGp = new GoalProgress(userEmail, 0, joinDate, true, 2800);
                         } else {
-                            userGp = new GoalProgress(userEmail, 0, joinDate, true, 3100);
+                            userGp = new GoalProgress(userEmail, 0, joinDate, true, 11200);
                         }
 
                         userDao.insertUserProfile(newUser);
@@ -183,11 +183,19 @@ public class SignupActivity extends AppCompatActivity {
                         ChallengesDao challengesDao = db.challengesDao();
                         int count = challengesDao.countChallengesForUser(userEmail);
                         if (count == 0) {
-                            List<Challenges> challenges = ChallengeSeeder.getRandomChallenges(userEmail, 3);
-                            for (Challenges challenge : challenges) {
-                                challengesDao.insertChallenge(challenge);
-                                Log.d("SignupActivity", "Inserted challenge: " + challenge.getTitle());
+                            List<Challenges> challenges = ChallengeSeeder.getDefaultChallenges(userEmail);
+                            try {
+                                db.runInTransaction(() -> {
+                                    for (Challenges challenge : challenges) {
+                                        challengesDao.insertChallenge(challenge);
+                                        Log.d("SignupActivity", "Inserted challenge: " + challenge.getTitle());
+                                    }
+                                });
+                            } catch (Exception e) {
+                                Log.e("SignupActivity", "Error inserting challenges for user: " + userEmail, e);
                             }
+                            int countAfter = challengesDao.countChallengesForUser(userEmail);
+                            Log.d("SignupActivity", "Challenges count after insert: " + countAfter);
                         }
 
                         Log.d("UserRegistration", "User created and challenges seeded for: " + userEmail);

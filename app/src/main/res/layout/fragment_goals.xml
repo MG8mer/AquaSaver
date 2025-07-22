@@ -108,65 +108,55 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Eco-Challenges"
-            android:textSize="20sp"
+            android:text="Eco-Challenge"
+            android:textSize="26sp"
             android:textStyle="bold"
             android:layout_marginBottom="8dp" />
 
-        <!-- Challenge List Placeholder -->
         <LinearLayout
-            android:id="@+id/challengeListLayout"
+            android:id="@+id/challengeContainer"
+            android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="8dp"
-            android:background="#F5F5F5"
-            android:elevation="2dp"
-            android:layout_marginBottom="16dp" />
-        <!-- Record Button -->
-        <Button
-            android:id="@+id/recordChallengeButton"
-            android:text="Record Challenge Progress"
-            android:layout_marginTop="12dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            />
-        <!-- Dropdown Panel (initially hidden) -->
-        <LinearLayout
-            android:id="@+id/challengeDropdown"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp"
-            android:visibility="gone"
-            android:background="#F5F5F5"
-            android:layout_marginTop="8dp">
+            android:padding="16dp">
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Select a Challenge to Record:"
-                android:textStyle="bold"
-                android:textSize="16sp"
-                android:layout_marginBottom="8dp" />
-
-            <!-- New container for checkboxes -->
-            <LinearLayout
-                android:id="@+id/challengeCheckboxContainer"
+                android:id="@+id/challengeTitleText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical" />
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="#000000"
+                android:paddingBottom="8dp"
+                android:text="Challenge Title" />
+
+            <TextView
+                android:id="@+id/challengeDescriptionText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="#444444"
+                android:paddingBottom="16dp"
+                android:text="Challenge description goes here" />
 
             <Button
-                android:id="@+id/submitChallengeProgressButton"
+                android:id="@+id/completeChallengeButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Submit Completed Challenges"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="12dp"/>
-        </LinearLayout>
+                android:text="Complete Challenge" />
 
+            <TextView
+                android:id="@+id/noChallengesMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🎉 No challenges available! You've completed them all."
+                android:textSize="18sp"
+                android:textColor="#4CAF50"
+                android:gravity="center"
+                android:visibility="gone"
+                android:paddingTop="20dp" />
+
+        </LinearLayout>
 
         <!-- Challenge Page Indicator -->
         <LinearLayout
