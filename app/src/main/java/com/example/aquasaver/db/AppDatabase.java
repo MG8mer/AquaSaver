@@ -67,26 +67,21 @@ public abstract class AppDatabase extends RoomDatabase {
             database.execSQL("ALTER TABLE user_profiles ADD COLUMN streak INTEGER NOT NULL DEFAULT 0");
         }
     };
-
     public static final Migration MIGRATION_4_5 = new Migration(4, 5) {
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase database) {
-            // Store Date as INTEGER (timestamp), and use correct column name
             database.execSQL("ALTER TABLE user_profiles ADD COLUMN last_streak_update INTEGER");
         }
     };
     static final Migration MIGRATION_5_6 = new Migration(5, 6) {
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase database) {
-            // Add the missing goal_amount column
             database.execSQL("ALTER TABLE goal_progress ADD COLUMN goal_amount INTEGER NOT NULL DEFAULT 100");
         }
     };
-
     static final Migration MIGRATION_6_7 = new Migration(6, 7) {
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase database) {
-            // Create ChallengeProgress table including the timestamp column
             database.execSQL("CREATE TABLE IF NOT EXISTS ChallengeProgress (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
                     "challengeId INTEGER NOT NULL, " +
@@ -98,7 +93,6 @@ public abstract class AppDatabase extends RoomDatabase {
     static final Migration MIGRATION_7_8 = new Migration(7, 8) {
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase database) {
-            // Make sure table name matches your Room table name: "challenge_progress"
             database.execSQL("ALTER TABLE challenge_progress ADD COLUMN timestamp INTEGER");
         }
     };
