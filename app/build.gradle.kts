@@ -23,12 +23,6 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        val weatherApiKey: String = localProperties["WEATHER_API_KEY"] as? String ?: ""
-        buildConfigField("String", "WEATHER_API_KEY", "\"$weatherApiKey\"")
-
-        val openaiApiKey: String = localProperties["OPENAI_API_KEY"] as? String ?: ""
-        buildConfigField("String", "OPENAI_API_KEY", "\"$openaiApiKey\"")
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         javaCompileOptions {
