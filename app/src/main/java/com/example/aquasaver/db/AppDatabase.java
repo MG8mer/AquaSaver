@@ -27,9 +27,10 @@ import java.util.concurrent.Executors;
                 WeatherSuggestions.class,
                 Reports.class,
                 Challenges.class,
-                ChallengeProgress.class
+                ChallengeProgress.class,
+                Suggestions.class
         },
-        version = 8,
+        version = 10,
         exportSchema = false
 )
 @TypeConverters({Converters.class})
@@ -44,6 +45,7 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract ReportsDao reportsDao();
     public abstract ChallengesDao challengesDao();
     public abstract ChallengeProgressDao challengeProgressDao();
+    public abstract SuggestionsDao suggestionsDao();
 
     private static volatile AppDatabase INSTANCE;
 
@@ -97,7 +99,27 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     };
 
-
+    static final Migration MIGRATION_8_9 = new Migration(8, 9) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `suggestions` (" +
+                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            "`user_email` TEXT NOT NULL, " +
+                            "`title` TEXT, " +
+                            "`description` TEXT, " +
+                            "FOREIGN KEY(`user_email`) REFERENCES `user_profiles`(`email`) ON DELETE CASCADE ON UPDATE NO ACTION)"
+            );
+            database.execSQL("CREATE INDEX IF NOT EXISTS `index_suggestions_user_email` ON `suggestions` (`user_email`)");
+        }
+    };
+    static final Migration MIGRATION_9_10 = new Migration(9, 10) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            // Add the new 'condition' column, nullable (since existing rows don't have a value)
+            database.execSQL("ALTER TABLE suggestions ADD COLUMN condition TEXT");
+        }
+    };
 
 
 
@@ -112,7 +134,16 @@ public abstract class AppDatabase extends RoomDatabase {
                                     AppDatabase.class,
                                     "aqua_saver.db"
                             )
-                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+                            .addMigrations(
+                                    MIGRATION_1_2,
+                                    MIGRATION_2_3,
+                                    MIGRATION_3_4,
+                                    MIGRATION_4_5,
+                                    MIGRATION_5_6,
+                                    MIGRATION_6_7,
+                                    MIGRATION_7_8,
+                                    MIGRATION_8_9,
+                                    MIGRATION_9_10)
                             .build();
                     Log.d("AppDatabase", "AppDatabase instance built.");
                 }

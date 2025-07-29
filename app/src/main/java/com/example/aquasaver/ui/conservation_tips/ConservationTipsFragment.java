@@ -3,112 +3,96 @@ package com.example.aquasaver.ui.conservation_tips;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.aquasaver.R;
 import com.example.aquasaver.databinding.FragmentConservationTipsBinding;
-import com.example.aquasaver.smart_suggestions.weatherapi.WeatherRepository;
+import com.example.aquasaver.model.Suggestions;
 
-import android.text.Html;
-
-import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ConservationTipsFragment extends Fragment {
 
     private FragmentConservationTipsBinding binding;
     private ConservationTipsViewModel viewModel;
-    TextView temperatureText;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentConservationTipsBinding.inflate(inflater, container, false);
         viewModel = new ViewModelProvider(this).get(ConservationTipsViewModel.class);
 
-        // Get user preferences
-        SharedPreferences userPrefs = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
-        String email = userPrefs.getString("username", null);
-        String location = userPrefs.getString("location", null);
+        SharedPreferences prefs = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
+        String email = prefs.getString("username", null);
 
-        if (email == null || location == null) {
-            Toast.makeText(getContext(), "User not logged in or location missing", Toast.LENGTH_LONG).show();
-            binding.textConservationTips.setText("Please log in and set your location.");
-            Log.w("ConservationTipsFragment", "Missing user info: email=" + email + ", location=" + location);
+        if (email == null) {
+            Toast.makeText(getContext(), "Please log in to see suggestions.", Toast.LENGTH_LONG).show();
+            binding.conservationTipsLabel.setText("User not logged in.");
             return binding.getRoot();
         }
 
-        // Smart Suggestions Logic
-        viewModel.loadSmartSuggestions(requireContext(), email, location);
-        viewModel.getSuggestionLiveData().observe(getViewLifecycleOwner(), suggestions -> {
-            if (suggestions != null && !suggestions.isEmpty()) {
-                // Extract just the 5 numbered tips using regex
-                List<String> tips = new ArrayList<>();
-                TextView[] alertTitles = {
-                        binding.alertTitle1,
-                        binding.alertTitle2,
-                        binding.alertTitle3,
-                        binding.alertTitle4,
-                        binding.alertTitle5
-                };
-                TextView[] alertTexts = {
-                        binding.alertText1,
-                        binding.alertText2,
-                        binding.alertText3,
-                        binding.alertText4,
-                        binding.alertText5
-                };
-                ConstraintLayout[] alertBoxes = {
-                        binding.alertBox1,
-                        binding.alertBox2,
-                        binding.alertBox3,
-                        binding.alertBox4,
-                        binding.alertBox5
-                };
-
-                int index = 0;
-                Matcher matcher = Pattern.compile("(?m)^\\d+\\.\\s\\*\\*(.*?)\\*\\*:?\\s*(.*?)(?=^\\d+\\.\\s\\*\\*|\\z)", Pattern.DOTALL)
-                        .matcher(suggestions);
-
-                while (matcher.find() && index < alertTitles.length) {
-                    String title = matcher.group(1).trim();
-                    String body = matcher.group(2).trim();
-
-                    alertTitles[index].setText("💧 " + title);
-                    alertTexts[index].setText(body);
-                    alertBoxes[index].setVisibility(View.VISIBLE);
-                    index++;
-                }
-
-                for (int i = index; i < alertBoxes.length; i++) {
-                    alertBoxes[i].setVisibility(View.GONE);
-                }
-            } else {
-                binding.alertText1.setText("No suggestions available.");
-                binding.alertText2.setText("");
-                binding.alertText3.setText("");
-                binding.alertText4.setText("");
-                binding.alertText5.setText("");
-            }
-        });
+        viewModel.loadSuggestions(email);
+        viewModel.getSuggestionsLiveData().observe(getViewLifecycleOwner(), this::displaySuggestions);
 
         return binding.getRoot();
+    }
+
+    private void displaySuggestions(List<Suggestions> suggestions) {
+        LinearLayout container = binding.conservationTipsContainer;
+        container.removeAllViews();
+
+        if (suggestions == null || suggestions.isEmpty()) {
+            TextView emptyText = new TextView(requireContext());
+            emptyText.setText("No tips available.");
+            emptyText.setTextSize(16);
+            emptyText.setPadding(8, 8, 8, 8);
+            container.addView(emptyText);
+            return;
+        }
+
+        Map<String, List<Suggestions>> grouped = suggestions.stream()
+                .collect(Collectors.groupingBy(Suggestions::getCondition));
+
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+
+        for (Map.Entry<String, List<Suggestions>> entry : grouped.entrySet()) {
+            String condition = entry.getKey();
+            List<Suggestions> tips = entry.getValue();
+
+            // Add section header
+            TextView sectionHeader = new TextView(requireContext());
+            sectionHeader.setText("Tips for " + condition + " Weather:");
+            sectionHeader.setTextSize(18);
+            sectionHeader.setTypeface(null, Typeface.BOLD);
+            sectionHeader.setTextColor(Color.parseColor("#3F51B5"));
+            sectionHeader.setPadding(0, 24, 0, 8);
+            container.addView(sectionHeader);
+
+            // Add each tip as an alert box
+            for (Suggestions tip : tips) {
+                View alertBox = inflater.inflate(R.layout.item_alert_box, container, false);
+                TextView title = alertBox.findViewById(R.id.alertTitle);
+                TextView text = alertBox.findViewById(R.id.alertText);
+
+                title.setText(tip.getTitle());
+                text.setText(tip.getDescription());
+
+                container.addView(alertBox);
+            }
+        }
     }
 
     @Override
