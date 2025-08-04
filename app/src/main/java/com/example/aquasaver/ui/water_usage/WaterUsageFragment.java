@@ -68,10 +68,10 @@ public class WaterUsageFragment extends Fragment {
 
     private UserProfile user;
 
-    private String[] days = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
-    private String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+    private final String[] days = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+    private final String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
-    private int[] daysInMonth = {31, calendar.get(Calendar.YEAR) % 4 == 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    private final int[] daysInMonth = {31, calendar.get(Calendar.YEAR) % 4 == 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
     private String[] dataRange;
 
@@ -148,7 +148,7 @@ public class WaterUsageFragment extends Fragment {
 
             requireActivity().runOnUiThread(() -> {
 
-                barChart = binding.waterGraph;;
+                barChart = binding.waterGraph;
                 binding.graphToggle.check(R.id.week);
                 viewRange = "week";
                 data = usageData;

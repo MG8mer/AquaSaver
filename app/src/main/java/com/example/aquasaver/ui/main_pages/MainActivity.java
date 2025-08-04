@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
 
-    private OkHttpClient client = new OkHttpClient();
+    private final OkHttpClient client = new OkHttpClient();
     private AppBarConfiguration appBarConfiguration;
     private MainViewModel mainViewModel;
 

@@ -240,13 +240,13 @@ public class GoalsFragment extends Fragment {
                 }
 
                 final GoalProgress finalProgress = progress;
-                final int goalAmount = (int) finalProgress.getGoalAmount();
+                final int goalAmount = finalProgress.getGoalAmount();
                 final int amountLogged = (int) finalProgress.getAmountLogged();
                 final boolean onTarget = finalProgress.getOnTarget();
 
                 requireActivity().runOnUiThread(() -> {
                     binding.goalAmountText.setText("Goal Amount: " + goalAmount + " L");
-                    binding.goalTypeText.setText("Type: " + goalType.toString());
+                    binding.goalTypeText.setText("Type: " + goalType);
                     binding.challengesCompletedText.setText(onTarget ? "On Target ✅" : "Over Limit ❌");
                     updateProgressBar(amountLogged, goalAmount);
                 });
