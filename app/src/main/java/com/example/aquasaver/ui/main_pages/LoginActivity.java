@@ -11,7 +11,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.aquasaver.db.AppDatabase;
-import com.example.aquasaver.dao.UserProfileDao;
+import com.example.aquasaver.repository.UserProfileRepository;
 import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.R;
 
@@ -33,7 +33,7 @@ public class LoginActivity extends AppCompatActivity {
         signupBtn = findViewById(R.id.signupBtn);
 
         AppDatabase db = AppDatabase.getInstance(this);
-        UserProfileDao userDao = db.userProfileDao();
+        UserProfileRepository userDao = db.userProfileDao();
 
         // Handle Login button click
         loginBtn.setOnClickListener(v -> {

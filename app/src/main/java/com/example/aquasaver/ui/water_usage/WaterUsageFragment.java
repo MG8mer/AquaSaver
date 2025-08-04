@@ -11,17 +11,15 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.aquasaver.dao.GoalProgressDao;
-import com.example.aquasaver.dao.UserProfileDao;
-import com.example.aquasaver.dao.WaterUsageDao;
+import com.example.aquasaver.repository.GoalProgressRepository;
+import com.example.aquasaver.repository.UserProfileRepository;
+import com.example.aquasaver.repository.WaterUsageRepository;
 import com.example.aquasaver.db.AppDatabase;
 import com.example.aquasaver.model.GoalProgress;
 import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.model.WaterUsage;
 import com.example.aquasaver.model.enums.GoalType;
 import com.github.mikephil.charting.charts.BarChart;
-import com.github.mikephil.charting.components.Legend;
-import com.github.mikephil.charting.components.LegendEntry;
 import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
@@ -29,8 +27,6 @@ import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
-import com.github.mikephil.charting.formatter.ValueFormatter;
-import com.github.mikephil.charting.interfaces.datasets.IDataSet;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 
 import androidx.annotation.NonNull;
@@ -41,8 +37,6 @@ import com.example.aquasaver.databinding.FragmentWaterUsageBinding;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -64,7 +58,7 @@ public class WaterUsageFragment extends Fragment {
 
     private FragmentWaterUsageBinding binding;
 
-    private WaterUsageDao dao;
+    private WaterUsageRepository dao;
 
     private UserProfile user;
 
@@ -101,8 +95,8 @@ public class WaterUsageFragment extends Fragment {
         AppDatabase db = AppDatabase.getInstance(context);
 
         dao = db.waterUsageDao();
-        UserProfileDao userProfileDao = db.userProfileDao();
-        GoalProgressDao goalProgressDao = db.goalProgressDao();
+        UserProfileRepository userProfileDao = db.userProfileDao();
+        GoalProgressRepository goalProgressDao = db.goalProgressDao();
 
         new Thread(() -> {
             SharedPreferences prefs = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
@@ -772,7 +766,7 @@ public class WaterUsageFragment extends Fragment {
         return -1; // not found
     }
 
-    public void addRandomLogsForDateRange(WaterUsageDao waterUsageDao) {
+    public void addRandomLogsForDateRange(WaterUsageRepository waterUsageDao) {
         // Date format to parse and format dates
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Calendar startCal = Calendar.getInstance();

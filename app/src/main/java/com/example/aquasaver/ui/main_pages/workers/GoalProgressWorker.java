@@ -2,18 +2,15 @@
 
 package com.example.aquasaver.ui.main_pages.workers;
 
-import static androidx.core.content.ContentProviderCompat.requireContext;
-
 import android.content.Context;
 import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
-import androidx.room.Room;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import com.example.aquasaver.dao.GoalProgressDao;
-import com.example.aquasaver.dao.UserProfileDao;
+import com.example.aquasaver.repository.GoalProgressRepository;
+import com.example.aquasaver.repository.UserProfileRepository;
 import com.example.aquasaver.db.AppDatabase;
 import com.example.aquasaver.model.GoalProgress;
 import com.example.aquasaver.model.UserProfile;
@@ -24,8 +21,8 @@ import java.util.List;
 public class GoalProgressWorker extends Worker
 {
     private final AppDatabase db;
-    private final GoalProgressDao goalProgressDao;
-    private final UserProfileDao userProfileDao;
+    private final GoalProgressRepository goalProgressDao;
+    private final UserProfileRepository userProfileDao;
 
     public GoalProgressWorker(
             @NonNull Context context,

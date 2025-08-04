@@ -1,27 +1,16 @@
 package com.example.aquasaver.ui.main_pages;
 
 import android.app.Application;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.util.Log;
 
-import androidx.room.Room;
 import androidx.work.ExistingPeriodicWorkPolicy;
-import androidx.work.ExistingWorkPolicy;
-import androidx.work.ListenableWorker;
-import androidx.work.OneTimeWorkRequest;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
-import com.example.aquasaver.ui.main_pages.workers.GoalProgressWorker;
-import com.example.aquasaver.dao.UserProfileDao;
 import com.example.aquasaver.db.AppDatabase;
-import com.example.aquasaver.model.UserProfile;
 
 import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
-import androidx.work.ListenableWorker.Result;
-import com.example.aquasaver.model.enums.GoalType;
+
 import com.example.aquasaver.ui.main_pages.workers.ReportsWorker;
 
 public class AquaSaverApp extends Application {
