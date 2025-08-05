@@ -4,12 +4,13 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 
 import com.example.aquasaver.challenges.ChallengeSeeder;
-import com.example.aquasaver.dao.ChallengesDao;
-import com.example.aquasaver.dao.GoalProgressDao;
-import com.example.aquasaver.dao.SuggestionsDao;
+import com.example.aquasaver.repository.ChallengesRepository;
+import com.example.aquasaver.repository.GoalProgressRepository;
+import com.example.aquasaver.repository.SuggestionsRepository;
 import com.example.aquasaver.model.Challenges;
 import com.example.aquasaver.model.GoalProgress;
 import com.example.aquasaver.model.Suggestions;
+import com.example.aquasaver.repository.UserProfileRepository;
 import com.example.aquasaver.ui.conservation_tips.ConservationTipsSeeder;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -35,11 +36,10 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import com.example.aquasaver.dao.UserProfileDao;
+
 import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.db.AppDatabase;
-import androidx.room.Room;
-import java.time.LocalDate;
+
 import java.util.concurrent.Executors;
 
 import com.example.aquasaver.model.enums.GoalType;
@@ -59,8 +59,8 @@ public class SignupActivity extends AppCompatActivity {
 
     private SharedPreferences prefs;
     private AppDatabase db;
-    private UserProfileDao userDao;
-    private GoalProgressDao goalProgressDao;
+    private UserProfileRepository userDao;
+    private GoalProgressRepository goalProgressDao;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -180,7 +180,7 @@ public class SignupActivity extends AppCompatActivity {
                         userDao.insertUserProfile(newUser);
                         goalProgressDao.insertGoalProgress(userGp);
 
-                        ChallengesDao challengesDao = db.challengesDao();
+                        ChallengesRepository challengesDao = db.challengesDao();
                         int count = challengesDao.countChallengesForUser(userEmail);
                         if (count == 0) {
                             List<Challenges> challenges = ChallengeSeeder.getDefaultChallenges(userEmail);
@@ -199,7 +199,7 @@ public class SignupActivity extends AppCompatActivity {
                         }
 
                         Log.d("UserRegistration", "User created and challenges seeded for: " + userEmail);
-                        SuggestionsDao suggestionsDao = db.suggestionsDao();
+                        SuggestionsRepository suggestionsDao = db.suggestionsDao();
                         List<Suggestions> suggestions = ConservationTipsSeeder.getConservationTips(userEmail);
                         for (Suggestions suggestion : suggestions) {
                             suggestionsDao.insertSuggestion(suggestion);

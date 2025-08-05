@@ -1,45 +1,17 @@
 package com.example.aquasaver.model;
 
-import androidx.room.ColumnInfo;
-import androidx.room.Entity;
-import androidx.room.ForeignKey;
-import androidx.room.Index;
-import androidx.room.PrimaryKey;
-import androidx.annotation.NonNull;
-
-import com.github.mikephil.charting.data.BarEntry;
-
 import java.util.Date;
-import java.util.List;
-import java.util.Map;
 
-@Entity(tableName = "water_usage_log",
-        foreignKeys = @ForeignKey(entity = UserProfile.class, // Parent entity
-                parentColumns = "email",     // Primary key in parent
-                childColumns = "user_email", // Foreign key in this entity
-                onDelete = ForeignKey.CASCADE, // Action on parent delete
-                onUpdate = ForeignKey.NO_ACTION), // Action on parent update
-        indices = {@Index(value = {"user_email"})}) // Index for the foreign key column
 public class WaterUsage {
+    private int id;
+    private String userEmail;
+    private Date usageDate;
+    private double amountLiters;
+    private String activityType;
 
-    @PrimaryKey(autoGenerate = true) // Auto-generating ID for log entries
-    public int id;
+    public WaterUsage() {}
 
-    @ColumnInfo(name = "user_email") // Foreign key to UserProfile.email
-    @NonNull
-    public String userEmail;
-
-    @ColumnInfo(name = "date")
-    public Date usageDate;
-
-
-    @ColumnInfo(name = "amount_liters")
-    public double amountLiters;
-
-    @ColumnInfo(name = "activity_type") // e.g., "Shower", "Dishwasher", "Gardening"
-    public String activityType;
-
-    public WaterUsage(@NonNull String userEmail, Date usageDate, double amountLiters, String activityType) { // Constructor
+    public WaterUsage(String userEmail, Date usageDate, double amountLiters, String activityType) {
         this.userEmail = userEmail;
         this.usageDate = usageDate;
         this.amountLiters = amountLiters;
@@ -50,12 +22,11 @@ public class WaterUsage {
         return id;
     }
 
-    @NonNull
     public String getUserEmail() { // Getter for userEmail
         return userEmail;
     }
 
-    public void setUserEmail(@NonNull String userEmail) { // Setter for userEmail
+    public void setUserEmail(String userEmail) { // Setter for userEmail
         this.userEmail = userEmail;
     }
 

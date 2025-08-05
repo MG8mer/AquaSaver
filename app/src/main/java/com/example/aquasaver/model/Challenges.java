@@ -1,61 +1,22 @@
 package com.example.aquasaver.model;
 
-// Import important room db libraries
-import androidx.annotation.NonNull;
-import androidx.room.ColumnInfo;
-import androidx.room.Entity;
-import androidx.room.ForeignKey;
-import androidx.room.Index;
-import androidx.room.PrimaryKey;
-
 import com.example.aquasaver.model.enums.ChallengeGoalType;
-
 import java.util.Date;
 
-
-@Entity(tableName = "challenges",
-        foreignKeys = @ForeignKey(entity = UserProfile.class,
-                parentColumns = "email",
-                childColumns = "user_email",
-                onDelete = ForeignKey.CASCADE,
-                onUpdate = ForeignKey.NO_ACTION),
-        indices = {@Index(value = {"user_email"})})
 public class Challenges {
+    private int id;
+    private String userEmail;
+    private String title;
+    private String description;
+    private ChallengeGoalType goalType;
+    private int goalAmount;
+    private Date startDate;
+    private Date endDate;
 
-    @PrimaryKey(autoGenerate = true)
-    public int id;
+    public Challenges() {}
 
-    // Instance variables for columns of challenges db table/entity
-    @NonNull
-    @ColumnInfo(name = "user_email")
-    public String userEmail;
-
-    @ColumnInfo(name = "title")
-    public String title; // challenge title
-
-    @ColumnInfo(name = "description")
-    public String description; // challenge description
-
-    @ColumnInfo(name = "goal_type")
-    public ChallengeGoalType goalType; // user's goal type (daily/weekly challenges)
-
-    @ColumnInfo(name = "goal_amount")
-    public int goalAmount; // amount of goals user has
-
-    @ColumnInfo(name = "start_date")
-    public Date startDate; // start of challenge
-
-    @ColumnInfo(name = "end_date")
-    public Date endDate; // end of challenge
-
-    // Constructor
-    public Challenges(@NonNull String userEmail,
-                      String title,
-                      String description,
-                      ChallengeGoalType goalType,
-                      int goalAmount,
-                      Date startDate,
-                      Date endDate) {
+    public Challenges(String userEmail, String title, String description, ChallengeGoalType goalType,
+                      int goalAmount, Date startDate, Date endDate) {
         this.userEmail = userEmail;
         this.title = title;
         this.description = description;

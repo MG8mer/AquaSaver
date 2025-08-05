@@ -9,8 +9,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.LinearLayout;
 
@@ -18,18 +16,16 @@ import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import com.example.aquasaver.R;
-import com.example.aquasaver.challenges.ChallengeWithProgress;
-import com.example.aquasaver.dao.ChallengesDao;
+import com.example.aquasaver.repository.ChallengeProgressRepository;
+import com.example.aquasaver.repository.ChallengesRepository;
 import com.example.aquasaver.databinding.FragmentGoalsBinding;
 import com.example.aquasaver.db.AppDatabase;
 import com.example.aquasaver.model.ChallengeProgress;
 import com.example.aquasaver.model.Challenges;
 import com.example.aquasaver.model.GoalProgress;
 import com.example.aquasaver.model.UserProfile;
-import com.example.aquasaver.dao.GoalProgressDao;
-import com.example.aquasaver.dao.UserProfileDao;
-import com.example.aquasaver.dao.ChallengeProgressDao;
+import com.example.aquasaver.repository.GoalProgressRepository;
+import com.example.aquasaver.repository.UserProfileRepository;
 import com.example.aquasaver.model.enums.GoalType;
 
 import java.util.ArrayList;
@@ -72,8 +68,8 @@ public class GoalsFragment extends Fragment {
     private void loadUserData(String email) {
         executor.execute(() -> {
             try {
-                ChallengesDao dao = AppDatabase.getInstance(requireContext()).challengesDao();
-                GoalProgressDao goalDao = AppDatabase.getInstance(requireContext()).goalProgressDao();
+                ChallengesRepository dao = AppDatabase.getInstance(requireContext()).challengesDao();
+                GoalProgressRepository goalDao = AppDatabase.getInstance(requireContext()).goalProgressDao();
 
                 List<Challenges> challenges = dao.getUserChallenges(email);
 
@@ -102,8 +98,8 @@ public class GoalsFragment extends Fragment {
     }
     private void loadOneRandomChallenge(String email) {
         executor.execute(() -> {
-            ChallengesDao dao = AppDatabase.getInstance(requireContext()).challengesDao();
-            ChallengeProgressDao progressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
+            ChallengesRepository dao = AppDatabase.getInstance(requireContext()).challengesDao();
+            ChallengeProgressRepository progressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
 
             List<Challenges> allChallenges = dao.getUserChallenges(email);
 
@@ -165,7 +161,7 @@ public class GoalsFragment extends Fragment {
             }
 
             executor.execute(() -> {
-                ChallengeProgressDao progressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
+                ChallengeProgressRepository progressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
 
                 // Check if already completed today
                 ChallengeProgress todayChallenge = progressDao.getTodayChallengeProgress(email);
@@ -191,8 +187,8 @@ public class GoalsFragment extends Fragment {
     }
 
     private void loadGoalProgress(String email) {
-        GoalProgressDao progressDao = AppDatabase.getInstance(requireContext()).goalProgressDao();
-        UserProfileDao userDao = AppDatabase.getInstance(requireContext()).userProfileDao();
+        GoalProgressRepository progressDao = AppDatabase.getInstance(requireContext()).goalProgressDao();
+        UserProfileRepository userDao = AppDatabase.getInstance(requireContext()).userProfileDao();
 
         executor.execute(() -> {
             try {
@@ -266,8 +262,8 @@ public class GoalsFragment extends Fragment {
     }
 
     private void updateGoalProgress(String email, GoalProgress todayGoal) {
-        GoalProgressDao progressDao = AppDatabase.getInstance(requireContext()).goalProgressDao();
-        UserProfileDao userDao = AppDatabase.getInstance(requireContext()).userProfileDao();
+        GoalProgressRepository progressDao = AppDatabase.getInstance(requireContext()).goalProgressDao();
+        UserProfileRepository userDao = AppDatabase.getInstance(requireContext()).userProfileDao();
 
         if (todayGoal == null) return;
 
@@ -406,7 +402,7 @@ public class GoalsFragment extends Fragment {
     }
     private void updateChallengesCompletedCount(String email) {
         executor.execute(() -> {
-            ChallengeProgressDao progressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
+            ChallengeProgressRepository progressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
             // Get all challenges completed by user
             List<ChallengeProgress> completedChallenges = progressDao.getCompletedChallengesByUser(email);
             int completedCount = completedChallenges != null ? completedChallenges.size() : 0;

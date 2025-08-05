@@ -3,6 +3,8 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
+//    id("com.android.application")
+    id("com.google.gms.google-services")
 }
 
 val localProperties = Properties().apply {
@@ -71,6 +73,11 @@ dependencies {
     implementation(libs.work.runtime)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
+    implementation(platform("com.google.firebase:firebase-bom:34.0.0"))
+    implementation("com.google.firebase:firebase-firestore:24.11.1")
+    implementation("com.google.firebase:firebase-core:21.1.1")
+    implementation("com.google.android.gms:play-services-tasks:18.0.2")
+    implementation("com.google.firebase:firebase-analytics")
     androidTestImplementation(libs.espresso.core)
     implementation("com.google.android.gms:play-services-location:21.0.1")
 

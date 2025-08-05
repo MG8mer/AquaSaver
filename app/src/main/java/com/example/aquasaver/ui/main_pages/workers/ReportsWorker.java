@@ -1,30 +1,26 @@
 package com.example.aquasaver.ui.main_pages.workers;
 
-import static androidx.core.content.ContentProviderCompat.requireContext;
-
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
-import androidx.room.Room;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import com.example.aquasaver.challenges.ChallengeWithProgress;
-import com.example.aquasaver.dao.ChallengesDao;
-import com.example.aquasaver.dao.ChallengeProgressDao;
-import com.example.aquasaver.dao.GoalProgressDao;
+import com.example.aquasaver.repository.ChallengeProgressRepository;
+import com.example.aquasaver.repository.ChallengesRepository;
+import com.example.aquasaver.repository.GoalProgressRepository;
 import com.example.aquasaver.model.ChallengeProgress;
 import com.example.aquasaver.model.Challenges;
 import com.example.aquasaver.model.enums.GoalType;
 import com.example.aquasaver.model.enums.SummaryType;
 
-import com.example.aquasaver.dao.ReportsDao;
-import com.example.aquasaver.dao.UserProfileDao;
-import com.example.aquasaver.dao.WaterUsageDao;
+import com.example.aquasaver.repository.ReportsRepository;
+import com.example.aquasaver.repository.UserProfileRepository;
+import com.example.aquasaver.repository.WaterUsageRepository;
 import com.example.aquasaver.db.AppDatabase;
 import com.example.aquasaver.model.GoalProgress;
 import com.example.aquasaver.model.Reports;
@@ -37,13 +33,13 @@ import java.util.Date;
 import java.util.List;
 public class ReportsWorker extends Worker {
     private final AppDatabase db;
-    private final ReportsDao reportsDao;
-    private final WaterUsageDao waterUsageDao;
-    private final UserProfileDao userProfileDao;
+    private final ReportsRepository reportsDao;
+    private final WaterUsageRepository waterUsageDao;
+    private final UserProfileRepository userProfileDao;
 
-    private final GoalProgressDao goalProgressDao;
-    private final ChallengesDao challengesDao;
-    private final ChallengeProgressDao challengeProgressDao;
+    private final GoalProgressRepository goalProgressDao;
+    private final ChallengesRepository challengesDao;
+    private final ChallengeProgressRepository challengeProgressDao;
     private UserProfile user;
 
     public ReportsWorker(

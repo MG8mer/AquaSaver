@@ -1,54 +1,26 @@
 package com.example.aquasaver.model;
 
-import androidx.annotation.NonNull;
-import androidx.room.ColumnInfo;
-import androidx.room.Entity;
-
 import com.example.aquasaver.model.enums.GoalType;
-
 import java.util.Date;
 
-
-@Entity(tableName = "user_profiles",
-        primaryKeys = {"email"}) // Define composite primary key here
 public class UserProfile {
-    @NonNull
-    @ColumnInfo(name = "email")
-    public String email;
+    private String email;
+    private String location;
+    private GoalType goalType;
+    private String passwordHash;
+    private boolean useGPS;
+    private boolean notificationsOn;
+    private String reminderTime;
+    private boolean weatherAlertsEnabled;
+    private Date joinDate;
+    private int streak;
+    private Date lastStreakUpdate;
 
-    @ColumnInfo(name = "location")
-    public String location;
+    public UserProfile() {}
 
-    @ColumnInfo(name = "goal_type")
-    public GoalType goalType; // Enum for goal types
-
-    @ColumnInfo(name = "password")
-    public String passwordHash; // Store a hash of the password
-
-    @ColumnInfo(name = "use_gps")
-    public boolean useGPS;
-
-    @ColumnInfo(name = "notifications_on")
-    public boolean notificationsOn;
-
-    @ColumnInfo(name = "reminder_time")
-    public String reminderTime;
-
-    @ColumnInfo(name = "weather_alerts_enabled", defaultValue = "false")
-    public boolean weatherAlertsEnabled;
-
-    @ColumnInfo(name = "join_date")
-    public Date joinDate;
-
-    @ColumnInfo(name = "streak")
-    public int streak = 0;
-
-    @ColumnInfo(name = "last_streak_update")
-    public Date lastStreakUpdate;
-
-
-    public UserProfile(@NonNull String email, String passwordHash, String location, boolean useGPS,
-                       GoalType goalType, boolean notificationsOn, String reminderTime, boolean weatherAlertsEnabled, Date joinDate, Date lastStreakUpdate) { // Constructor
+    public UserProfile(String email, String passwordHash, String location, boolean useGPS,
+                       GoalType goalType, boolean notificationsOn, String reminderTime,
+                       boolean weatherAlertsEnabled, Date joinDate, Date lastStreakUpdate) {
         this.email = email;
         this.location = location;
         this.passwordHash = passwordHash;

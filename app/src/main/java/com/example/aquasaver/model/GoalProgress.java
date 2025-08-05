@@ -1,44 +1,18 @@
 package com.example.aquasaver.model;
 
-import androidx.room.ColumnInfo;
-import androidx.room.Entity;
-import androidx.room.ForeignKey;
-import androidx.room.Index;
-import androidx.room.PrimaryKey;
-import androidx.annotation.NonNull;
-
 import java.util.Date;
 
-@Entity(tableName = "goal_progress",
-        foreignKeys = @ForeignKey(entity = UserProfile.class, // Parent entity
-                parentColumns = "email",     // Primary key in parent
-                childColumns = "user_email", // Foreign key in this entity
-                onDelete = ForeignKey.CASCADE, // Action on parent delete
-                onUpdate = ForeignKey.NO_ACTION), // Action on parent update
-        indices = {@Index(value = {"user_email"})}) // Index for the foreign key column
 public class GoalProgress {
+    private int id;
+    private String userEmail;
+    private int goalAmount;
+    private double amountLogged;
+    private Date progressDate;
+    private boolean onTarget;
 
-    @PrimaryKey(autoGenerate = true) // Auto-generating ID for log entries
-    public int id;
+    public GoalProgress() {}
 
-    @NonNull
-    @ColumnInfo(name = "user_email") // Foreign key part 1
-    public String userEmail;
-
-    @ColumnInfo(name = "goal_amount")
-    public int goalAmount;
-
-    @ColumnInfo(name = "amount_logged")
-    public double amountLogged; // THIS IS THE SUM from WaterUsage
-
-    @ColumnInfo(name = "progress_date") // Date this progress record was last updated or represents
-    public Date progressDate; // Timestamp
-
-    @ColumnInfo(name = "on_target")
-    public boolean onTarget;
-
-    // Constructor
-    public GoalProgress(@NonNull String userEmail, double amountLogged, Date progressDate, boolean onTarget, int goalAmount) {
+    public GoalProgress(String userEmail, double amountLogged, Date progressDate, boolean onTarget, int goalAmount) {
         this.userEmail = userEmail;
         this.amountLogged = amountLogged;
         this.progressDate = progressDate;
@@ -51,12 +25,11 @@ public class GoalProgress {
         return id;
     }
 
-    @NonNull
     public String getUserEmail() { // Getter for userEmail
         return userEmail;
     }
 
-    public void setUserEmail(@NonNull String userEmail) { // Setter for userEmail
+    public void setUserEmail( String userEmail) { // Setter for userEmail
         this.userEmail = userEmail;
     }
 

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1018393257115",
+    "project_id": "aquasaver-2dd48",
+    "storage_bucket": "aquasaver-2dd48.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1018393257115:android:182229dfad07cf151d923e",
+        "android_client_info": {
+          "package_name": "com.example.aquasaver"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAIHgop6mwvxqXpJjnUACH1po1_R2sCCwU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

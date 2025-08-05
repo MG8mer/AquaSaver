@@ -1,42 +1,19 @@
 package com.example.aquasaver.model;
 
-// Import important room libraries
-import androidx.room.ColumnInfo;
-import androidx.room.Entity;
-import androidx.room.PrimaryKey;
-
 import com.example.aquasaver.model.enums.AlertType;
 
-// Enum data type for weather alert variants (heatwaves, drought, etc.)
+public class Alerts {
+    private int id;
+    private String location;
+    private AlertType alertType;
+    private String description;
+    private String severity;
+    private Long startTime;
+    private Long endTime;
 
-@Entity(tableName = "alerts")
+    public Alerts() {}
 
-public class Alerts
-{
-    @PrimaryKey(autoGenerate = true)
-    public int id;
-
-    // Define instance variables for each column
-    @ColumnInfo(name = "location")
-    public String location; // User location
-
-    @ColumnInfo(name = "alert_type")
-    public AlertType alertType; // Type of alert
-
-    @ColumnInfo(name = "description")
-    public String description; // Alert description
-
-    @ColumnInfo(name = "severity")
-    public String severity; // Alert severity
-    @ColumnInfo(name = "start_time")
-    public Long startTime; // Start time of an alert
-
-    @ColumnInfo(name = "end_time")
-    public Long endTime; // End time of an alert
-
-    // Constructor
-    public Alerts(String location, AlertType alertType, String description, String severity, Long startTime, Long endTime)
-    {
+    public Alerts(String location, AlertType alertType, String description, String severity, Long startTime, Long endTime) {
         this.location = location;
         this.alertType = alertType;
         this.description = description;

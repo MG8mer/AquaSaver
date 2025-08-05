@@ -1,61 +1,22 @@
 package com.example.aquasaver.model;
 
-// Import important room db libraries
-import androidx.annotation.NonNull;
-import androidx.room.ColumnInfo;
-import androidx.room.Entity;
-import androidx.room.ForeignKey;
-import androidx.room.Index;
-import androidx.room.PrimaryKey;
-
-// Import SummaryType enum
 import com.example.aquasaver.model.enums.SummaryType;
-
 import java.util.Date;
 
-@Entity(tableName = "reports",
-        foreignKeys = @ForeignKey(entity = UserProfile.class,
-                parentColumns = "email",
-                childColumns = "user_email",
-                onDelete = ForeignKey.CASCADE,
-                onUpdate = ForeignKey.NO_ACTION),
-        indices = {@Index(value = {"user_email"})})
 public class Reports {
+    private int id;
+    private String userEmail;
+    private SummaryType summaryType;
+    private Date startDate;
+    private Date endDate;
+    private int totalLitersUsed;
+    private int challengesCompleted;
+    private int streakCount;
 
-    @PrimaryKey(autoGenerate = true)
-    public int id;
+    public Reports() {}
 
-    // Instance variable for each reports table column
-    @NonNull
-    @ColumnInfo(name = "user_email")
-    public String userEmail;
-
-    @ColumnInfo(name = "summary_type")
-    public SummaryType summaryType; // How the report is broken down (daily, weekly, monthly)
-
-    @ColumnInfo(name = "start_date")
-    public Date startDate; // Start date of report
-
-    @ColumnInfo(name = "end_date")
-    public Date endDate; // End date of report
-
-    @ColumnInfo(name = "total_liters_used")
-    public int totalLitersUsed; // Total liters of water used
-
-    @ColumnInfo(name = "challenges_completed")
-    public int challengesCompleted; // No. of fun "eco-challenges" completed
-
-    @ColumnInfo(name = "streak_count")
-    public int streakCount; // How many times user met water goal!
-
-    // Constructor
-    public Reports(@NonNull String userEmail,
-                   SummaryType summaryType,
-                   Date startDate,
-                   Date endDate,
-                   int totalLitersUsed,
-                   int challengesCompleted,
-                   int streakCount) {
+    public Reports(String userEmail, SummaryType summaryType, Date startDate, Date endDate,
+                   int totalLitersUsed, int challengesCompleted, int streakCount) {
         this.userEmail = userEmail;
         this.summaryType = summaryType;
         this.startDate = startDate;

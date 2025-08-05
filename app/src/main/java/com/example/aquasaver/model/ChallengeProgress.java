@@ -1,46 +1,18 @@
 package com.example.aquasaver.model;
 
-// Import important room db libraries
-import androidx.annotation.NonNull;
-import androidx.room.ColumnInfo;
-import androidx.room.Entity;
-import androidx.room.ForeignKey;
-import androidx.room.Index;
-import androidx.room.PrimaryKey;
-
 import java.util.Date;
 
-@Entity(tableName = "challenge_progress",
-        foreignKeys = @ForeignKey(entity = UserProfile.class,
-                parentColumns = "email",
-                childColumns = "user_email",
-                onDelete = ForeignKey.CASCADE,
-                onUpdate = ForeignKey.NO_ACTION),
-        indices = {@Index(value = {"user_email"})})
 public class ChallengeProgress {
+    private int id;
+    private String userEmail;
+    private String title;
+    private float currentProgress;
+    private boolean completion;
+    private Date timestamp;
 
-    @PrimaryKey(autoGenerate = true)
-    public int id;
+    public ChallengeProgress() {}
 
-    // Instance variables for challenge progress db entity columns
-    @NonNull
-    @ColumnInfo(name = "user_email")
-    public String userEmail;
-
-    @ColumnInfo(name = "title")
-    public String title;
-
-    @ColumnInfo(name = "current_progress")
-    public float currentProgress;
-
-    @ColumnInfo(name = "completion")
-    public boolean completion;
-
-    @ColumnInfo(name = "timestamp")
-    public Date timestamp;
-
-    // Constructor
-    public ChallengeProgress(@NonNull String userEmail, String title, float currentProgress, boolean completion, Date timestamp) {
+    public ChallengeProgress(String userEmail, String title, float currentProgress, boolean completion, Date timestamp) {
         this.userEmail = userEmail;
         this.title = title;
         this.currentProgress = currentProgress;
