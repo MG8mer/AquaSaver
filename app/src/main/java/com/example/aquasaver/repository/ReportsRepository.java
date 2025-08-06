@@ -10,17 +10,57 @@ import java.util.*;
 public class ReportsRepository {
     private final CollectionReference ref = FirebaseFirestore.getInstance().collection("reports");
 
-    public void insert(Reports r) { ref.add(r); }
-
-    public void insertAll(List<Reports> list) {
-        for (Reports r : list) ref.add(r);
+    // insert one water report
+    public void insertReport(Reports report) {
+        ref.add(report);
     }
 
-    public void update(String docId, Reports r) { ref.document(docId).set(r); }
+    // insert many water reports
+    public void insertAllReports(List<Reports> reportList) {
+        for (Reports report : reportList) {
+            ref.add(report);
+        }
+    }
 
-    public void delete(String docId) { ref.document(docId).delete(); }
+    // updates a specific report
+    public void updateReport(String docId, Reports report) {
+        ref.document(docId).set(report);
+    }
 
-    public void getByUser(String email, OnSuccessListener<QuerySnapshot> listener) {
-        ref.whereEqualTo("userEmail", email).get().addOnSuccessListener(listener);
+    // deletes a specific report
+    public void deleteReport(String docId) {
+        ref.document(docId).delete();
+    }
+
+    // deletes all user reports and return # rows deleted
+    public void deleteUserReports(String userEmail, OnSuccessListener<Integer> listener) {
+        ref.whereEqualTo("userEmail", userEmail).get()
+                .addOnSuccessListener(snapshot -> {
+                    WriteBatch batch = FirebaseFirestore.getInstance().batch();
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        batch.delete(doc.getReference());
+                    }
+                    batch.commit().addOnSuccessListener(unused -> listener.onSuccess(snapshot.size()));
+                });
+    }
+
+    // Returns a specific report by Id
+    public void getReportById(String reportId, OnSuccessListener<DocumentSnapshot> listener) {
+        ref.document(reportId).get().addOnSuccessListener(listener);
+    }
+
+    // Returns all reports of a particular user
+    public void getUserReports(String userEmail, OnSuccessListener<QuerySnapshot> listener) {
+        ref.whereEqualTo("userEmail", userEmail)
+                .orderBy("startDate", Query.Direction.DESCENDING)
+                .get().addOnSuccessListener(listener);
+    }
+
+    // Returns all reports of a particular user at a specific time
+    public void getUserReportsByTime(String userEmail, long currentDate, OnSuccessListener<QuerySnapshot> listener) {
+        ref.whereEqualTo("userEmail", userEmail)
+                .whereLessThanOrEqualTo("startDate", currentDate)
+                .whereGreaterThanOrEqualTo("endDate", currentDate)
+                .get().addOnSuccessListener(listener);
     }
 }

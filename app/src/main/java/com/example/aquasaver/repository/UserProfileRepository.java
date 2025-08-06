@@ -10,17 +10,47 @@ import java.util.*;
 public class UserProfileRepository {
     private final CollectionReference ref = FirebaseFirestore.getInstance().collection("user_profiles");
 
-    public void insert(UserProfile p) { ref.document(p.getEmail()).set(p); }
-
-    public void update(UserProfile p) { ref.document(p.getEmail()).set(p); }
-
-    public void delete(String email) { ref.document(email).delete(); }
-
-    public void getByEmail(String email, OnSuccessListener<DocumentSnapshot> listener) {
-        ref.document(email).get().addOnSuccessListener(listener);
+    public void insertUserProfile(UserProfile p) {
+        String key = p.getEmail() + "_" + p.getLocation();
+        ref.document(key).set(p);
     }
 
-    public void getAll(OnSuccessListener<QuerySnapshot> listener) {
+    public void updateUserProfile(UserProfile p) {
+        String key = p.getEmail() + "_" + p.getLocation();
+        ref.document(key).set(p);
+    }
+
+    public void deleteUserProfile(UserProfile p) {
+        String key = p.getEmail() + "_" + p.getLocation();
+        ref.document(key).delete();
+    }
+
+    public void deleteUserProfileByIds(String email, String location) {
+        String key = email + "_" + location;
+        ref.document(key).delete();
+    }
+
+    public void getUserProfileByIds(String email, String password, OnSuccessListener<QuerySnapshot> listener) {
+        ref.whereEqualTo("email", email).whereEqualTo("password", password).get().addOnSuccessListener(listener);
+    }
+
+    public void getUserProfilesByEmail(String email, OnSuccessListener<QuerySnapshot> listener) {
+        ref.whereEqualTo("email", email).get().addOnSuccessListener(listener);
+    }
+
+    public void getAllUserProfiles(OnSuccessListener<QuerySnapshot> listener) {
         ref.get().addOnSuccessListener(listener);
+    }
+
+    public void doesProfileExist(String email, String location, OnSuccessListener<QuerySnapshot> listener) {
+        ref.whereEqualTo("email", email).whereEqualTo("location", location).limit(1).get().addOnSuccessListener(listener);
+    }
+
+    public void doesProfileExist(String email, OnSuccessListener<QuerySnapshot> listener) {
+        ref.whereEqualTo("email", email).limit(1).get().addOnSuccessListener(listener);
+    }
+
+    public void getUserByEmail(String email, OnSuccessListener<QuerySnapshot> listener) {
+        ref.whereEqualTo("email", email).limit(1).get().addOnSuccessListener(listener);
     }
 }
