@@ -6,8 +6,6 @@ import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
-import com.example.aquasaver.db.AppDatabase;
-
 import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 

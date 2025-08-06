@@ -19,7 +19,6 @@ import androidx.fragment.app.Fragment;
 import com.example.aquasaver.repository.ChallengeProgressRepository;
 import com.example.aquasaver.repository.ChallengesRepository;
 import com.example.aquasaver.databinding.FragmentGoalsBinding;
-import com.example.aquasaver.db.AppDatabase;
 import com.example.aquasaver.model.ChallengeProgress;
 import com.example.aquasaver.model.Challenges;
 import com.example.aquasaver.model.GoalProgress;
@@ -27,6 +26,7 @@ import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.repository.GoalProgressRepository;
 import com.example.aquasaver.repository.UserProfileRepository;
 import com.example.aquasaver.model.enums.GoalType;
+import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -68,21 +68,40 @@ public class GoalsFragment extends Fragment {
     private void loadUserData(String email) {
         executor.execute(() -> {
             try {
-                ChallengesRepository dao = AppDatabase.getInstance(requireContext()).challengesDao();
-                GoalProgressRepository goalDao = AppDatabase.getInstance(requireContext()).goalProgressDao();
+                ChallengesRepository challengesRepo = new ChallengesRepository();
+                GoalProgressRepository goalProgressRepo = new GoalProgressRepository();
 
-                List<Challenges> challenges = dao.getUserChallenges(email);
+                List<Challenges>[] challenges = new List[]{new ArrayList<>()};
+                challengesRepo.getUserChallenges(email, snapshot -> {
+                    for (DocumentSnapshot doc : snapshot) {
+                        Challenges challenge = doc.toObject(Challenges.class);
+                        if (challenge != null) challenges[0].add(challenge);
 
-                GoalProgress todayProgress = goalDao.getTodayProgress(email);
-                int goalAmount = (todayProgress != null) ? todayProgress.getGoalAmount() : 400;
+                    }
+                });
+
+                Calendar cal = Calendar.getInstance();
+                cal.set(Calendar.HOUR_OF_DAY, 0);
+                cal.set(Calendar.MINUTE, 0);
+                cal.set(Calendar.SECOND, 0);
+                cal.set(Calendar.MILLISECOND, 0);
+                Date today = cal.getTime();
+
+                final GoalProgress[] todayProgress = new GoalProgress[1];
+                goalProgressRepo.getTodayProgress(email, today, snapshot -> {
+                    todayProgress[0] = snapshot.getDocuments()
+                            .get(0)
+                            .toObject(GoalProgress.class);
+                });
+                int goalAmount = (todayProgress[0] != null) ? todayProgress[0].getGoalAmount() : 400;
 
                 requireActivity().runOnUiThread(() -> {
-                    if (challenges.isEmpty()) {
+                    if (challenges[0].isEmpty()) {
                         Toast.makeText(getContext(), "No challenges found", Toast.LENGTH_SHORT).show();
                         binding.titleGoals.setText("Goal Progress");
                     } else {
                         binding.titleGoals.setText("Goal Progress");
-                        showSingleRandomChallenge(challenges);
+                        showSingleRandomChallenge(challenges[0]);
                     }
                 });
 
@@ -98,15 +117,25 @@ public class GoalsFragment extends Fragment {
     }
     private void loadOneRandomChallenge(String email) {
         executor.execute(() -> {
-            ChallengesRepository dao = AppDatabase.getInstance(requireContext()).challengesDao();
-            ChallengeProgressRepository progressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
+            ChallengesRepository challengeRepo = new ChallengesRepository();
+            ChallengeProgressRepository challengeProgressRepo = new ChallengeProgressRepository();
 
-            List<Challenges> allChallenges = dao.getUserChallenges(email);
+            List<Challenges>[] allChallenges = new List[]{new ArrayList<>()};
+            challengeRepo.getUserChallenges(email, snapshot -> {
+                for (DocumentSnapshot doc : snapshot) {
+                    Challenges challenge = doc.toObject(Challenges.class);
+                    if (challenge != null) allChallenges[0].add(challenge);
+
+                }
+            });
 
             List<Challenges> incompleteChallenges = new ArrayList<>();
-            for (Challenges c : allChallenges) {
-                ChallengeProgress progress = progressDao.getChallengeProgressById(c.getTitle(), email);
-                if (progress == null || !progress.completion) {
+            for (Challenges c : allChallenges[0]) {
+                final ChallengeProgress[] progress = new ChallengeProgress[1];
+                challengeProgressRepo.getChallengeProgressById(c.getTitle(), snapshot ->{
+                    progress[0] = snapshot.getDocuments().get(0).toObject(ChallengeProgress.class);
+                });
+                if (progress == null || !progress[0].isCompletion()) {
                     incompleteChallenges.add(c);
                 }
             }
@@ -161,11 +190,14 @@ public class GoalsFragment extends Fragment {
             }
 
             executor.execute(() -> {
-                ChallengeProgressRepository progressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
+                ChallengeProgressRepository challengeProgressRepo = new ChallengeProgressRepository();
 
                 // Check if already completed today
-                ChallengeProgress todayChallenge = progressDao.getTodayChallengeProgress(email);
-                if (todayChallenge != null && todayChallenge.getTitle().equals(currentChallenge.getTitle())) {
+                final ChallengeProgress[] todayChallenge = new ChallengeProgress[1];
+                challengeProgressRepo.getTodayChallengeProgress(email, new Date(), snapshot -> {
+                    todayChallenge[0] = snapshot.getDocuments().get(0).toObject(ChallengeProgress.class);
+                });
+                if (todayChallenge[0] != null && todayChallenge[0].getTitle().equals(currentChallenge.getTitle())) {
                     requireActivity().runOnUiThread(() -> {
                         Toast.makeText(getContext(), "You've already completed this challenge today!", Toast.LENGTH_LONG).show();
                     });
@@ -173,8 +205,8 @@ public class GoalsFragment extends Fragment {
                 }
 
                 ChallengeProgress progress = new ChallengeProgress(email, currentChallenge.getTitle(), 1f, true, new Date());
-                progress.timestamp = new Date();
-                progressDao.insertChallengeProgress(progress);
+                progress.setTimestamp(new Date());
+                challengeProgressRepo.insertChallengeProgress(progress);
 
                 requireActivity().runOnUiThread(() -> {
                     Toast.makeText(getContext(), "Challenge completed!", Toast.LENGTH_SHORT).show();
@@ -187,14 +219,24 @@ public class GoalsFragment extends Fragment {
     }
 
     private void loadGoalProgress(String email) {
-        GoalProgressRepository progressDao = AppDatabase.getInstance(requireContext()).goalProgressDao();
-        UserProfileRepository userDao = AppDatabase.getInstance(requireContext()).userProfileDao();
+        GoalProgressRepository goalProgressRepo = new GoalProgressRepository();
+        UserProfileRepository userProfileRepo = new UserProfileRepository();
 
         executor.execute(() -> {
             try {
-                UserProfile user = userDao.getUserByEmail(email);
-                GoalType goalType = user.getGoalType();
-                GoalProgress progress;
+                final GoalProgress[] todayProgress = new GoalProgress[1];
+                goalProgressRepo.getTodayProgress(email, new Date(), snapshot -> {
+                    todayProgress[0] = snapshot.getDocuments()
+                            .get(0)
+                            .toObject(GoalProgress.class);
+                });
+
+                final UserProfile[] user = new UserProfile[1];
+                userProfileRepo.getUserByEmail(email, snapshot -> {
+                    user[0] = snapshot.getDocuments().get(0).toObject(UserProfile.class);
+                });
+                GoalType goalType = user[0].getGoalType();
+                final GoalProgress[] progress = new GoalProgress[1];
 
                 Date startDate, endDate;
 
@@ -202,18 +244,24 @@ public class GoalsFragment extends Fragment {
                     case WEEKLY:
                         startDate = getStartOfWeek();
                         endDate = getEndOfWeek();
-                        progress = progressDao.getWeeklyProgress(email, startDate, endDate);
+                        goalProgressRepo.getWeeklyProgress(email, startDate, endDate, snapshot -> {
+                            progress[0] = snapshot.getDocuments().get(0).toObject(GoalProgress.class);
+                        });
                         break;
                     case MONTHLY:
                         startDate = getStartOfMonth();
                         endDate = getEndOfMonth();
-                        progress = progressDao.getMonthlyProgress(email, startDate, endDate);
+                        goalProgressRepo.getMonthlyProgress(email, startDate, endDate, snapshot -> {
+                            progress[0] = snapshot.getDocuments().get(0).toObject(GoalProgress.class);
+                        });
                         break;
                     case DAILY:
                     default:
                         startDate = getTodayDateTruncated();
                         endDate = new Date();
-                        progress = progressDao.getTodayProgress(email);
+                        goalProgressRepo.getTodayProgress(email, new Date(), snapshot -> {
+                            progress[0] = snapshot.getDocuments().get(0).toObject(GoalProgress.class);
+                        });
                         break;
                 }
 
@@ -231,11 +279,11 @@ public class GoalsFragment extends Fragment {
                             defaultGoal = 400f;
                             break;
                     }
-                    progress = new GoalProgress(email, 0f, startDate, true, (int) defaultGoal);
-                    progressDao.insertGoalProgress(progress);
+                    progress[0] = new GoalProgress(email, 0f, startDate, true, (int) defaultGoal);
+                    goalProgressRepo.insertGoalProgress(progress[0]);
                 }
 
-                final GoalProgress finalProgress = progress;
+                final GoalProgress finalProgress = progress[0];
                 final int goalAmount = finalProgress.getGoalAmount();
                 final int amountLogged = (int) finalProgress.getAmountLogged();
                 final boolean onTarget = finalProgress.getOnTarget();
@@ -262,20 +310,32 @@ public class GoalsFragment extends Fragment {
     }
 
     private void updateGoalProgress(String email, GoalProgress todayGoal) {
-        GoalProgressRepository progressDao = AppDatabase.getInstance(requireContext()).goalProgressDao();
-        UserProfileRepository userDao = AppDatabase.getInstance(requireContext()).userProfileDao();
+        GoalProgressRepository goalProgressRepo = new GoalProgressRepository();
+        UserProfileRepository userProfileRepo = new UserProfileRepository();
 
         if (todayGoal == null) return;
 
         executor.execute(() -> {
-            boolean onTarget = todayGoal.getAmountLogged() <= todayGoal.getGoalAmount();
-            todayGoal.setOnTarget(onTarget);
-            progressDao.updateGoalProgress(todayGoal);
+            final boolean[] onTarget = new boolean[1];
+            goalProgressRepo.getTodayProgress(email, todayGoal.getProgressDate(), snapshot -> {
+                if (!snapshot.isEmpty()) {
+                    DocumentSnapshot doc = snapshot.getDocuments().get(0);
+                    String docId = doc.getId();
 
-            UserProfile user = userDao.getUserByEmail(email);
+                    onTarget[0] = todayGoal.getAmountLogged() <= todayGoal.getGoalAmount();
+                    todayGoal.setOnTarget(onTarget[0]);
+
+                    goalProgressRepo.updateGoalProgress(docId, todayGoal);
+                }
+            });
+
+            final UserProfile[] user = new UserProfile[1];
+            userProfileRepo.getUserByEmail(email, snapshot -> {
+                user[0] = snapshot.getDocuments().get(0).toObject(UserProfile.class);
+            });
             Date now = new Date();
-            Date lastUpdate = user.getLastStreakUpdate();
-            GoalType goalType = user.getGoalType();
+            Date lastUpdate = user[0].getLastStreakUpdate();
+            GoalType goalType = user[0].getGoalType();
 
             boolean isNewPeriod = false;
 
@@ -306,16 +366,16 @@ public class GoalsFragment extends Fragment {
             }
 
             if (isNewPeriod) {
-                if (onTarget) {
-                    user.setStreak(user.getStreak() + 1);
+                if (onTarget[0]) {
+                    user[0].setStreak(user[0].getStreak() + 1);
                 } else {
-                    user.setStreak(0);
+                    user[0].setStreak(0);
                 }
-                user.setLastStreakUpdate(now);
-                userDao.updateUserProfile(user);
+                user[0].setLastStreakUpdate(now);
+                userProfileRepo.updateUserProfile(user[0]);
             }
 
-            int streakCount = user.getStreak();
+            int streakCount = user[0].getStreak();
             requireActivity().runOnUiThread(() ->
                     binding.streakText.setText("Streak: " + streakCount + " " + (goalType == GoalType.DAILY ? "days" : goalType == GoalType.WEEKLY ? "weeks" : "months") + " 🔥")
             );
@@ -402,10 +462,16 @@ public class GoalsFragment extends Fragment {
     }
     private void updateChallengesCompletedCount(String email) {
         executor.execute(() -> {
-            ChallengeProgressRepository progressDao = AppDatabase.getInstance(requireContext()).challengeProgressDao();
+            ChallengeProgressRepository challengeProgressRepo = new ChallengeProgressRepository();
             // Get all challenges completed by user
-            List<ChallengeProgress> completedChallenges = progressDao.getCompletedChallengesByUser(email);
-            int completedCount = completedChallenges != null ? completedChallenges.size() : 0;
+            final List<ChallengeProgress>[] completedChallenges = new List[]{new ArrayList<>()};
+            challengeProgressRepo.getCompletedChallengesByUser(email, snapshot -> {
+                for (DocumentSnapshot doc: snapshot) {
+                    ChallengeProgress challengeProgress = doc.toObject(ChallengeProgress.class);
+                    if (challengeProgress != null) completedChallenges[0].add(challengeProgress);
+                }
+            });
+            int completedCount = completedChallenges[0] != null ? completedChallenges[0].size() : 0;
 
             requireActivity().runOnUiThread(() -> {
                 binding.challengesCompletedText.setText("Challenges completed: " + completedCount);

@@ -10,34 +10,70 @@ import java.util.*;
 public class WeatherSuggestionsRepository {
     private final CollectionReference ref = FirebaseFirestore.getInstance().collection("weather_suggestions");
 
-    public void insert(WeatherSuggestions suggestion) { ref.add(suggestion); }
-
-    public void insertAll(List<WeatherSuggestions> list) {
-        for (WeatherSuggestions s : list) ref.add(s);
+    public void insertSuggestion(WeatherSuggestions suggestion) {
+        ref.add(suggestion);
     }
 
-    public void update(String docId, WeatherSuggestions s) { ref.document(docId).set(s); }
-
-    public void delete(String docId) { ref.document(docId).delete(); }
-
-    public void getByUser(String email, OnSuccessListener<QuerySnapshot> listener) {
-        ref.whereEqualTo("userEmail", email)
-                .orderBy("date", Query.Direction.DESCENDING)
-                .get().addOnSuccessListener(listener);
+    public void insertAllSuggestions(List<WeatherSuggestions> suggestions) {
+        for (WeatherSuggestions s : suggestions) ref.add(s);
     }
 
-    public void getByUserAndDate(String email, Date date, OnSuccessListener<QuerySnapshot> listener) {
-        ref.whereEqualTo("userEmail", email)
-                .whereEqualTo("date", date)
-                .orderBy("id", Query.Direction.DESCENDING)
-                .get().addOnSuccessListener(listener);
+    public void updateSuggestion(String docId, WeatherSuggestions suggestion) {
+        ref.document(docId).set(suggestion);
     }
 
-    public void getByDateRange(String email, Date start, Date end, OnSuccessListener<QuerySnapshot> listener) {
-        ref.whereEqualTo("userEmail", email)
+    public void deleteSuggestion(String docId) {
+        ref.document(docId).delete();
+    }
+
+    public void deleteSuggestionsForUser(String userEmail) {
+        ref.whereEqualTo("userEmail", userEmail).get()
+                .addOnSuccessListener(q -> {
+                    for (DocumentSnapshot doc : q.getDocuments()) doc.getReference().delete();
+                });
+    }
+
+    public void deleteSuggestionsOlderThan(Date dateTimestamp) {
+        ref.whereLessThan("date", dateTimestamp).get()
+                .addOnSuccessListener(q -> {
+                    for (DocumentSnapshot doc : q.getDocuments()) doc.getReference().delete();
+                });
+    }
+
+    public void getSuggestionById(String docId, OnSuccessListener<DocumentSnapshot> listener) {
+        ref.document(docId).get().addOnSuccessListener(listener);
+    }
+
+    public void getSuggestionsForUser(String userEmail, OnSuccessListener<QuerySnapshot> listener) {
+        ref.whereEqualTo("userEmail", userEmail).orderBy("date", Query.Direction.DESCENDING).get().addOnSuccessListener(listener);
+    }
+
+    public void getSuggestionsForUserAndDate(String userEmail, Date date, OnSuccessListener<QuerySnapshot> listener) {
+        ref.whereEqualTo("userEmail", userEmail).whereEqualTo("date", date).orderBy("id", Query.Direction.DESCENDING).get().addOnSuccessListener(listener);
+    }
+
+    public void getLatestSuggestionForUserAndDate(String userEmail, Date date, OnSuccessListener<QuerySnapshot> listener) {
+        ref.whereEqualTo("userEmail", userEmail).whereEqualTo("date", date).orderBy("id", Query.Direction.DESCENDING).limit(1).get().addOnSuccessListener(listener);
+    }
+
+    public void getSuggestionsForUserInDateRange(String userEmail, Date start, Date end, OnSuccessListener<QuerySnapshot> listener) {
+        ref.whereEqualTo("userEmail", userEmail)
                 .whereGreaterThanOrEqualTo("date", start)
                 .whereLessThanOrEqualTo("date", end)
                 .orderBy("date", Query.Direction.DESCENDING)
                 .get().addOnSuccessListener(listener);
+    }
+
+    public void getSuggestionForUserAndDate(String email, String loc, Date date, OnSuccessListener<QuerySnapshot> listener) {
+        ref.whereEqualTo("userEmail", email)
+                .whereEqualTo("location", loc)
+                .whereEqualTo("date", date)
+                .limit(1).get().addOnSuccessListener(listener);
+    }
+
+    public void getTodaySuggestion(String email, Date date, OnSuccessListener<QuerySnapshot> listener) {
+        ref.whereEqualTo("userEmail", email)
+                .whereEqualTo("date", date)
+                .limit(1).get().addOnSuccessListener(listener);
     }
 }

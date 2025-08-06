@@ -11,17 +11,69 @@ import java.util.*;
 public class ChallengesRepository {
     private final CollectionReference ref = FirebaseFirestore.getInstance().collection("challenges");
 
-    public void insert(Challenges c) { ref.add(c); }
+    public void insertChallenge(Challenges c) { ref.add(c); }
 
-    public void insertAll(List<Challenges> list) {
+    public void insertAllChallenges(List<Challenges> list) {
         for (Challenges c : list) ref.add(c);
     }
 
-    public void update(String docId, Challenges c) { ref.document(docId).set(c); }
+    public void updateChallenge(String docId, Challenges c) { ref.document(docId).set(c); }
 
-    public void delete(String docId) { ref.document(docId).delete(); }
+    public void deleteChallenge(String docId) { ref.document(docId).delete(); }
 
-    public void getByUser(String userEmail, OnSuccessListener<QuerySnapshot> listener) {
+    public void deleteUserChallenges(String userEmail) {
+        ref.whereEqualTo("userEmail", userEmail).get().addOnSuccessListener(snapshot -> {
+            for (DocumentSnapshot doc : snapshot) doc.getReference().delete();
+        });
+    }
+
+    public void getChallengeById(String docId, OnSuccessListener<DocumentSnapshot> listener) {
+        ref.document(docId).get().addOnSuccessListener(listener);
+    }
+
+    public void getUserChallenges(String userEmail, OnSuccessListener<QuerySnapshot> listener) {
         ref.whereEqualTo("userEmail", userEmail).get().addOnSuccessListener(listener);
+    }
+
+    public void getUserChallengesByTime(String userEmail, long currentDate, OnSuccessListener<QuerySnapshot> listener) {
+        ref.whereEqualTo("userEmail", userEmail)
+                .whereLessThanOrEqualTo("startDate", currentDate)
+                .whereGreaterThanOrEqualTo("endDate", currentDate)
+                .get().addOnSuccessListener(listener);
+    }
+
+    public void getAllChallengesWithProgress(String userEmail, OnSuccessListener<QuerySnapshot> listener) {
+        ref.whereEqualTo("userEmail", userEmail).get().addOnSuccessListener(listener); // Join with ChallengeProgress client-side
+    }
+
+    public void countChallengesForUser(String email, OnSuccessListener<QuerySnapshot> listener) {
+        ref.whereEqualTo("userEmail", email).get().addOnSuccessListener(listener); // Size = count
+    }
+
+    public void getChallengeByTitle(String title, OnSuccessListener<QuerySnapshot> listener) {
+        ref.whereEqualTo("title", title).limit(1).get().addOnSuccessListener(listener);
+    }
+
+    public void getOneDayChallengesBeforeDate(String userEmail, long currentDate, OnSuccessListener<QuerySnapshot> listener) {
+        ref.whereEqualTo("userEmail", userEmail)
+                .whereEqualTo("goalAmount", 1)
+                .whereLessThanOrEqualTo("endDate", currentDate)
+                .get().addOnSuccessListener(listener);
+    }
+
+    public void getWeeklyChallengesBeforeDate(String userEmail, long currentDate, OnSuccessListener<QuerySnapshot> listener) {
+        ref.whereEqualTo("userEmail", userEmail)
+                .whereGreaterThan("goalAmount", 1)
+                .whereLessThanOrEqualTo("goalAmount", 7)
+                .whereLessThanOrEqualTo("endDate", currentDate)
+                .get().addOnSuccessListener(listener);
+    }
+
+    public void getMonthlyChallengesBeforeDate(String userEmail, long currentDate, OnSuccessListener<QuerySnapshot> listener) {
+        ref.whereEqualTo("userEmail", userEmail)
+                .whereGreaterThan("goalAmount", 7)
+                .whereLessThanOrEqualTo("goalAmount", 28)
+                .whereLessThanOrEqualTo("endDate", currentDate)
+                .get().addOnSuccessListener(listener);
     }
 }

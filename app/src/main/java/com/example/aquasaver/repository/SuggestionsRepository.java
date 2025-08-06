@@ -9,17 +9,30 @@ import java.util.*;
 public class SuggestionsRepository {
     private final CollectionReference ref = FirebaseFirestore.getInstance().collection("suggestions");
 
-    public void insert(Suggestions s) { ref.add(s); }
+    public void insertSuggestion(Suggestions s) { ref.add(s); }
 
-    public void insertAll(List<Suggestions> list) {
+    public void insertAllSuggestions(List<Suggestions> list) {
         for (Suggestions s : list) ref.add(s);
     }
 
-    public void update(String docId, Suggestions s) { ref.document(docId).set(s); }
+    public void updateSuggestion(String docId, Suggestions s) { ref.document(docId).set(s); }
 
-    public void delete(String docId) { ref.document(docId).delete(); }
+    public void deleteSuggestion(String docId) { ref.document(docId).delete(); }
 
-    public void getByUser(String email, OnSuccessListener<QuerySnapshot> listener) {
-        ref.whereEqualTo("userEmail", email).get().addOnSuccessListener(listener);
+    public void deleteSuggestionsByEmail(String userEmail) {
+        ref.whereEqualTo("userEmail", userEmail).get()
+                .addOnSuccessListener(querySnapshot -> {
+                    for (DocumentSnapshot doc : querySnapshot) {
+                        doc.getReference().delete();
+                    }
+                });
+    }
+
+    public void getUserSuggestions(String userEmail, OnSuccessListener<QuerySnapshot> listener) {
+        ref.whereEqualTo("userEmail", userEmail).get().addOnSuccessListener(listener);
+    }
+
+    public void getSuggestionByTitle(String title, OnSuccessListener<QuerySnapshot> listener) {
+        ref.whereEqualTo("title", title).limit(1).get().addOnSuccessListener(listener);
     }
 }
