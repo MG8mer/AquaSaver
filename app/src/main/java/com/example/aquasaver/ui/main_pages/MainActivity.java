@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
 
-    private OkHttpClient client = new OkHttpClient();
+    private final OkHttpClient client = new OkHttpClient();
     private AppBarConfiguration appBarConfiguration;
     private MainViewModel mainViewModel;
 
@@ -45,7 +45,6 @@ public class MainActivity extends AppCompatActivity {
         // View Binding
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
 
         // Setup Toolbar
         setSupportActionBar(binding.appBarMain.toolbar);
