@@ -24,4 +24,26 @@ public class ChallengesRepository {
     public void getByUser(String userEmail, OnSuccessListener<QuerySnapshot> listener) {
         ref.whereEqualTo("userEmail", userEmail).get().addOnSuccessListener(listener);
     }
+    public void getUserChallenges(String email, OnChallengesLoaded callback) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("challenges")
+                .whereEqualTo("email", email)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    List<Challenges> list = new ArrayList<>();
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        Challenges c = doc.toObject(Challenges.class);
+                        list.add(c);
+                    }
+                    callback.onSuccess(list);
+                })
+                .addOnFailureListener(e -> callback.onFailure(e));
+    }
+
+    public interface OnChallengesLoaded {
+        void onSuccess(List<Challenges> challenges);
+        void onFailure(Exception e);
+    }
+
+
 }

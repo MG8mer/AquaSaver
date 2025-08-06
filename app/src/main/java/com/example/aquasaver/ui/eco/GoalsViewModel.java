@@ -1,4 +1,4 @@
-package com.example.aquasaver.ui.goals;
+package com.example.aquasaver.ui.eco;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;

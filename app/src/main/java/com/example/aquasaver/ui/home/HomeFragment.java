@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -18,24 +19,25 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.bumptech.glide.Glide;
 import com.example.aquasaver.R;
-import com.example.aquasaver.repository.GoalProgressRepository;
-import com.example.aquasaver.repository.UserProfileRepository;
-import com.example.aquasaver.repository.WaterUsageRepository;
-import com.example.aquasaver.db.AppDatabase;
-import com.example.aquasaver.model.GoalProgress;
-import com.example.aquasaver.model.UserProfile;
-import com.example.aquasaver.model.WaterUsage;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.ValueFormatter;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class HomeFragment extends Fragment {
 
@@ -45,16 +47,16 @@ public class HomeFragment extends Fragment {
     int timerValue = 0;
     TextView timerLabel;
     PieChart pieChart;
-    AppDatabase db;
-    WaterUsageRepository waterUsageDao;
-    UserProfileRepository userProfileDao;
-    GoalProgressRepository goalProgressDao;
     TextView waterUsagePreview;
-    UserProfile user;
-    String goalType;
-    float goal;
-
+    String goalType = "DAILY";
+    float goal = 400f; // Default daily goal
+    String userEmail;
     boolean unDoAble = false;
+    String lastLoggedDocumentId = null;
+
+    // Firebase instances
+    private FirebaseFirestore db;
+    private FirebaseAuth auth;
 
     public HomeFragment() {}
 
@@ -68,6 +70,20 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Initialize Firebase
+        db = FirebaseFirestore.getInstance();
+        auth = FirebaseAuth.getInstance();
+
+        // Get current user
+        FirebaseUser currentUser = auth.getCurrentUser();
+        if (currentUser != null) {
+            userEmail = currentUser.getEmail();
+        } else {
+            Toast.makeText(requireContext(), "User not logged in", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // Initialize views
         pieChart = view.findViewById(R.id.pieChart);
         timerLabel = view.findViewById(R.id.timerLabel);
         waterUsagePreview = view.findViewById(R.id.waterUsagePreview);
@@ -76,11 +92,36 @@ public class HomeFragment extends Fragment {
         Button logWaterUsage = view.findViewById(R.id.logWaterUsageButton);
         Button undoButton = view.findViewById(R.id.undoButton);
 
+
+        ImageView showerIcon = view.findViewById(R.id.showerIcon);
+        ImageView washerIcon = view.findViewById(R.id.washerIcon);
+        ImageView sprinklerIcon = view.findViewById(R.id.sprinklerIcon);
+        ImageView otherIcon = view.findViewById(R.id.otherIcon);
+
+        // Load images from assets (only if using dynamic loading)
+        Glide.with(this)
+                .load("file:///android_asset/shower-icon.png")
+                .into(showerIcon);
+
+        Glide.with(this)
+                .load("file:///android_asset/washer-icon.png")
+                .into(washerIcon);
+
+        Glide.with(this)
+                .load("file:///android_asset/sprinkler-icon.png")
+                .into(sprinklerIcon);
+
+        Glide.with(this)
+                .load("file:///android_asset/other-icon.png")
+                .into(otherIcon);
+
+        // Get LinearLayouts for clickable areas
         LinearLayout showerButton = view.findViewById(R.id.showerButton);
         LinearLayout washerButton = view.findViewById(R.id.washerButton);
         LinearLayout sprinklerButton = view.findViewById(R.id.sprinklerButton);
         LinearLayout otherOption = view.findViewById(R.id.otherOption);
 
+        // Set click listeners for activity selection
         showerButton.setOnClickListener(v -> setSelectedActivity(showerButton, "Shower"));
         washerButton.setOnClickListener(v -> setSelectedActivity(washerButton, "Washer"));
         sprinklerButton.setOnClickListener(v -> setSelectedActivity(sprinklerButton, "Sprinkler"));
@@ -97,6 +138,7 @@ public class HomeFragment extends Fragment {
             builder.show();
         });
 
+        // Timer controls
         incrementButton.setOnClickListener(v -> {
             timerValue++;
             updateTimerLabel();
@@ -111,178 +153,185 @@ public class HomeFragment extends Fragment {
             }
         });
 
+        // Load user profile and initialize chart
+        loadUserProfileAndUpdateChart();
 
-        new Thread(() -> {
-            db = AppDatabase.getInstance(requireContext());
-            waterUsageDao = db.waterUsageDao();
-            userProfileDao = db.userProfileDao();
-            goalProgressDao = db.goalProgressDao();
-
-            SharedPreferences prefs = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
-            String userEmail = prefs.getString("username", null);
-
-            if (userEmail == null) {
-                requireActivity().runOnUiThread(() ->
-                        Toast.makeText(requireContext(), "User not logged in", Toast.LENGTH_LONG).show());
+        // Log water usage
+        logWaterUsage.setOnClickListener(v -> {
+            if (selectedActivity == null || timerValue == 0) {
+                Toast.makeText(requireContext(), "Please select an activity and set the time.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            user = userProfileDao.getUserByEmail(userEmail);
-            if (user == null) {
-                requireActivity().runOnUiThread(() ->
-                        Toast.makeText(requireContext(), "User not found. Please log in.", Toast.LENGTH_LONG).show());
-                return;
-            }
-
-            goalType = user.getGoalType() != null ? user.getGoalType().toString() : "DAILY";
-
-            float totalUsage;
-            if ("DAILY".equals(goalType)) {
-                long[] window = computeTodayWindow();
-                totalUsage = waterUsageDao.getLitersUsedBetween(userEmail, window[0], window[1]);
-            } else if ("WEEKLY".equals(goalType)) {
-                long[] window = computeCurrentWeekWindow();
-                totalUsage = waterUsageDao.getLitersUsedBetween(userEmail, window[0], window[1]);
-            } else {
-                long[] window = computeCurrentMonthWindow();
-                totalUsage = waterUsageDao.getLitersUsedBetween(userEmail, window[0], window[1]);
-            }
-
-            List<GoalProgress> goalProgressList = goalProgressDao.getAllProgressForUser(userEmail);
-            GoalProgress defaultGoal;
-            if (goalProgressList.isEmpty()) {
-                if ("DAILY".equals(goalType)) {
-                    defaultGoal = new GoalProgress(userEmail, 0f, new Date(), true, 400);
-                } else if ("WEEKLY".equals(goalType)) {
-                    defaultGoal = new GoalProgress(userEmail, 0f, new Date(), true, 2800);
-                } else {
-                   defaultGoal = new GoalProgress(userEmail, 0f, new Date(), true, 11200);
-                }
-                goalProgressDao.insertGoalProgress(defaultGoal);
-                goalProgressList = goalProgressDao.getAllProgressForUser(userEmail);
-            }
-
-            goal = goalProgressList.get(0).getGoalAmount();
-
-            List<GoalProgress> finalGoalProgressList = goalProgressList;
-            float finalTotalUsage = totalUsage;
-
-            requireActivity().runOnUiThread(() -> {
-                updatePieChart(finalTotalUsage, goal);
-
-                logWaterUsage.setOnClickListener(v -> {
-                    if (selectedActivity == null || timerValue == 0) {
-                        Toast.makeText(requireContext(), "Please select an activity and set the time.", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-
-                    double multiplier;
-                    switch (selectedActivity) {
-                        case "Shower":
-                            multiplier = 9;  // liters per minute (mid-range shower flow)
-                            break;
-                        case "Sprinkler":
-                            multiplier = 9;  // liters per minute (estimate)
-                            break;
-                        case "Washer":
-                            multiplier = 2;  // liters per minute (modern efficient washer)
-                            break;
-                        case "Washing Car":
-                        case "Cleaning":
-                        case "Filling Pool":
-                            multiplier = 10; // liters per minute (estimate)
-                            break;
-                        case "Watering Garden":
-                            multiplier = 5;  // liters per minute
-                            break;
-                        default:
-                            multiplier = 1;  // fallback liters per unit time
-                    }
-
-                    double litersUsed = timerValue * multiplier;
-                    Date currentDate = new Date();
-                    WaterUsage usage = new WaterUsage(userEmail, currentDate, litersUsed, selectedActivity);
-
-                    new Thread(() -> {
-                        if (userProfileDao.getUserByEmail(userEmail) == null) {
-                            requireActivity().runOnUiThread(() ->
-                                    Toast.makeText(requireContext(), "User does not exist: " + userEmail, Toast.LENGTH_LONG).show());
-                            return;
-                        }
-
-                        waterUsageDao.insertLog(usage);
-                        unDoAble = true;
-
-                        float updatedUsage;
-                        if ("DAILY".equals(goalType)) {
-                            long[] window = computeTodayWindow();
-                            updatedUsage = waterUsageDao.getLitersUsedBetween(userEmail, window[0], window[1]);
-                        } else if ("WEEKLY".equals(goalType)) {
-                            long[] window = computeCurrentWeekWindow();
-                            updatedUsage = waterUsageDao.getLitersUsedBetween(userEmail, window[0], window[1]);
-                        } else {
-                            long[] window = computeCurrentMonthWindow();
-                            updatedUsage = waterUsageDao.getLitersUsedBetween(userEmail, window[0], window[1]);
-                        }
-
-                        GoalProgress mostRecentGoal = finalGoalProgressList.get(0);
-                        mostRecentGoal.setAmountLogged(updatedUsage);
-                        mostRecentGoal.setProgressDate(new Date());
-                        mostRecentGoal.setOnTarget(updatedUsage <= goal);
-                        goalProgressDao.updateGoalProgress(mostRecentGoal);
-
-                        requireActivity().runOnUiThread(() -> {
-                            timerValue = 0;
-                            updateTimerLabel();
-                            updatePieChart(updatedUsage, goal);
-                            Toast.makeText(requireContext(), "Water usage logged", Toast.LENGTH_SHORT).show();
-
-                            if (selectedLayout != null) {
-                                selectedLayout.setBackgroundResource(R.drawable.default_background);
-                                selectedLayout = null;
-                            }
-                            selectedActivity = null;
-                        });
-                    }).start();
-                });
-            });
-        }).start();
-
-        undoButton.setOnClickListener(v -> {
-            new Thread(() -> {
-                WaterUsage latestLog = waterUsageDao.getLatestLogForUser(user.getEmail());
-
-                if (latestLog != null && unDoAble) {
-                    waterUsageDao.deleteLog(latestLog);
-                    unDoAble = false;
-
-                    float updatedUsage;
-                    if ("DAILY".equals(goalType)) {
-                        long[] window = computeTodayWindow();
-                        updatedUsage = waterUsageDao.getLitersUsedBetween(user.getEmail(), window[0], window[1]);
-                    } else if ("WEEKLY".equals(goalType)) {
-                        long[] window = computeCurrentWeekWindow();
-                        updatedUsage = waterUsageDao.getLitersUsedBetween(user.getEmail(), window[0], window[1]);
-                    } else {
-                        long[] window = computeCurrentMonthWindow();
-                        updatedUsage = waterUsageDao.getLitersUsedBetween(user.getEmail(), window[0], window[1]);
-                    }
-
-                    requireActivity().runOnUiThread(() -> {
-                        updatePieChart(updatedUsage, goal);
-                        Toast.makeText(requireContext(),
-                                "Undid log: " + latestLog.getActivityType() +
-                                        " (" + latestLog.getAmountLiters() + " L)", Toast.LENGTH_SHORT).show();
-                    });
-
-                } else {
-                    // No log to undo
-                    requireActivity().runOnUiThread(() ->
-                            Toast.makeText(requireContext(),
-                                    "Please log your water usage to undo", Toast.LENGTH_SHORT).show());
-                }
-            }).start();
+            logWaterUsage();
         });
+
+        // Undo button
+        undoButton.setOnClickListener(v -> undoLastLog());
+    }
+
+    private void loadUserProfileAndUpdateChart() {
+        db.collection("users").document(userEmail)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        goalType = documentSnapshot.getString("goalType");
+                        if (goalType == null) goalType = "DAILY";
+
+                        // Set default goals based on goal type
+                        switch (goalType) {
+                            case "WEEKLY":
+                                goal = 2800f;
+                                break;
+                            case "MONTHLY":
+                                goal = 11200f;
+                                break;
+                            default:
+                                goal = 400f;
+                        }
+
+                        // Get custom goal if exists
+                        Double customGoal = documentSnapshot.getDouble("goalAmount");
+                        if (customGoal != null) {
+                            goal = customGoal.floatValue();
+                        }
+                    }
+
+                    // Load water usage and update chart
+                    loadWaterUsageAndUpdateChart();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(requireContext(), "Error loading user profile", Toast.LENGTH_SHORT).show();
+                    loadWaterUsageAndUpdateChart(); // Use defaults
+                });
+    }
+
+    private void loadWaterUsageAndUpdateChart() {
+        long[] window = getTimeWindow();
+
+        db.collection("waterUsage")
+                .whereEqualTo("userEmail", userEmail)
+                .whereGreaterThanOrEqualTo("timestamp", new Date(window[0]))
+                .whereLessThan("timestamp", new Date(window[1]))
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    float totalUsage = 0f;
+                    for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                        Double amount = doc.getDouble("amountLiters");
+                        if (amount != null) {
+                            totalUsage += amount.floatValue();
+                        }
+                    }
+                    updatePieChart(totalUsage, goal);
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(requireContext(), "Error loading water usage", Toast.LENGTH_SHORT).show();
+                    updatePieChart(0f, goal);
+                });
+    }
+
+    private void logWaterUsage() {
+        double multiplier = getWaterUsageMultiplier(selectedActivity);
+        double litersUsed = timerValue * multiplier;
+
+        Map<String, Object> waterUsage = new HashMap<>();
+        waterUsage.put("userEmail", userEmail);
+        waterUsage.put("timestamp", new Date());
+        waterUsage.put("amountLiters", litersUsed);
+        waterUsage.put("activityType", selectedActivity);
+
+        db.collection("waterUsage")
+                .add(waterUsage)
+                .addOnSuccessListener(documentReference -> {
+                    lastLoggedDocumentId = documentReference.getId();
+                    unDoAble = true;
+
+                    // Reset UI
+                    timerValue = 0;
+                    updateTimerLabel();
+
+                    if (selectedLayout != null) {
+                        selectedLayout.setBackgroundResource(R.drawable.default_background);
+                        selectedLayout = null;
+                    }
+                    selectedActivity = null;
+                    setWaterUsagePreview();
+
+                    // Reload chart
+                    loadWaterUsageAndUpdateChart();
+
+                    Toast.makeText(requireContext(), "Water usage logged", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(requireContext(), "Error logging water usage", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void undoLastLog() {
+        if (!unDoAble || lastLoggedDocumentId == null) {
+            Toast.makeText(requireContext(), "Please log your water usage to undo", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        db.collection("waterUsage").document(lastLoggedDocumentId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        String activityType = documentSnapshot.getString("activityType");
+                        Double amountLiters = documentSnapshot.getDouble("amountLiters");
+
+                        // Delete the document
+                        db.collection("waterUsage").document(lastLoggedDocumentId)
+                                .delete()
+                                .addOnSuccessListener(aVoid -> {
+                                    unDoAble = false;
+                                    lastLoggedDocumentId = null;
+
+                                    // Reload chart
+                                    loadWaterUsageAndUpdateChart();
+
+                                    String message = "Undid log: " + activityType + " (" +
+                                            String.format("%.1f", amountLiters) + " L)";
+                                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                                })
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(requireContext(), "Error undoing log", Toast.LENGTH_SHORT).show();
+                                });
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(requireContext(), "Error finding log to undo", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private double getWaterUsageMultiplier(String activity) {
+        switch (activity) {
+            case "Shower":
+                return 9.0;  // liters per minute
+            case "Sprinkler":
+                return 9.0;  // liters per minute
+            case "Washer":
+                return 2.0;  // liters per minute
+            case "Washing Car":
+            case "Cleaning":
+            case "Filling Pool":
+                return 10.0; // liters per minute
+            case "Watering Garden":
+                return 5.0;  // liters per minute
+            default:
+                return 1.0;  // fallback
+        }
+    }
+
+    private long[] getTimeWindow() {
+        switch (goalType) {
+            case "WEEKLY":
+                return computeCurrentWeekWindow();
+            case "MONTHLY":
+                return computeCurrentMonthWindow();
+            default:
+                return computeTodayWindow();
+        }
     }
 
     private void updateTimerLabel() {
@@ -292,7 +341,6 @@ public class HomeFragment extends Fragment {
     private void updatePieChart(float usage, float goal) {
         ArrayList<PieEntry> entries = new ArrayList<>();
 
-        // usage and goal already in liters
         float usageLiters = usage;
         float totalLiters = goal;
         float remaining = Math.max(totalLiters - usageLiters, 0);
@@ -321,14 +369,14 @@ public class HomeFragment extends Fragment {
 
         String label;
         switch (goalType) {
-            case "DAILY":
-                label = "used today";
-                break;
             case "WEEKLY":
                 label = "used this week";
                 break;
-            default:
+            case "MONTHLY":
                 label = "used this month";
+                break;
+            default:
+                label = "used today";
                 break;
         }
 
@@ -358,38 +406,14 @@ public class HomeFragment extends Fragment {
     }
 
     private void setWaterUsagePreview() {
-        if (selectedActivity != null && timerValue > 0)
-        {
-            double multiplier;
-            switch (selectedActivity) {
-                case "Shower":
-                    multiplier = 9;  // liters per minute (mid-range shower flow)
-                    break;
-                case "Sprinkler":
-                    multiplier = 9;  // liters per minute (estimate)
-                    break;
-                case "Washer":
-                    multiplier = 2;  // liters per minute (modern efficient washer)
-                    break;
-                case "Washing Car":
-                case "Cleaning":
-                case "Filling Pool":
-                    multiplier = 10; // liters per minute (estimate)
-                    break;
-                case "Watering Garden":
-                    multiplier = 5;  // liters per minute
-                    break;
-                default:
-                    multiplier = 1;  // fallback liters per unit time
-            }
-
+        if (selectedActivity != null && timerValue > 0) {
+            double multiplier = getWaterUsageMultiplier(selectedActivity);
             double litersUsed = timerValue * multiplier;
             waterUsagePreview.setText(
                     String.format("Estimated Usage: %.1f liters for %d min (%s)",
                             litersUsed, timerValue, selectedActivity)
             );
-        }
-        else {
+        } else {
             waterUsagePreview.setText("Select an activity and set a timer");
         }
     }

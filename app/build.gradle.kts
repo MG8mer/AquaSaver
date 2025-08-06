@@ -71,6 +71,7 @@ dependencies {
     implementation(libs.navigation.ui)
     implementation(libs.navigation.runtime.android)
     implementation(libs.work.runtime)
+    implementation(libs.firebase.auth)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     implementation(platform("com.google.firebase:firebase-bom:34.0.0"))
@@ -87,4 +88,5 @@ dependencies {
 
     implementation("com.squareup.retrofit2:retrofit:2.0.0")
     implementation("com.squareup.retrofit2:converter-gson:2.0.0")
+    implementation("com.github.bumptech.glide:glide:4.15.1")
 }
