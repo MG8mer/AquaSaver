@@ -10,7 +10,6 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.aquasaver.db.AppDatabase;
 import com.example.aquasaver.repository.UserProfileRepository;
 import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.R;
@@ -32,8 +31,7 @@ public class LoginActivity extends AppCompatActivity {
         loginBtn = findViewById(R.id.loginBtn);
         signupBtn = findViewById(R.id.signupBtn);
 
-        AppDatabase db = AppDatabase.getInstance(this);
-        UserProfileRepository userDao = db.userProfileDao();
+        UserProfileRepository userProfileRepo = new UserProfileRepository();
 
         // Handle Login button click
         loginBtn.setOnClickListener(v -> {
@@ -47,17 +45,22 @@ public class LoginActivity extends AppCompatActivity {
 
             Executors.newSingleThreadExecutor().execute(() -> {
                 // Query DB for user with email and password
-                UserProfile existingUser = userDao.getUserProfileByIds(user, pass);
+                final UserProfile[] existingUser = new UserProfile[1];
+                userProfileRepo.getUserProfileByIds(user, pass, snapshot -> {
+                    if (!snapshot.isEmpty()) {
+                        existingUser[0] = snapshot.getDocuments().get(0).toObject(UserProfile.class);
+                    }
+                });
 
                 runOnUiThread(() -> {
-                    if (existingUser != null) {
-                        Log.d("LoginActivity", "Login success: user=" + existingUser.getEmail());
+                    if (existingUser[0] != null) {
+                        Log.d("LoginActivity", "Login success: user=" + existingUser[0].getEmail());
 
                         // Save user info in SharedPreferences for later use
                         SharedPreferences prefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
                         prefs.edit()
-                                .putString("username", existingUser.getEmail())
-                                .putString("location", existingUser.getLocation())
+                                .putString("username", existingUser[0].getEmail())
+                                .putString("location", existingUser[0].getLocation())
                                 .apply();
 
                         Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();

@@ -33,17 +33,18 @@ import androidx.core.app.ActivityCompat;
 import com.google.android.gms.location.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 import com.example.aquasaver.model.UserProfile;
-import com.example.aquasaver.db.AppDatabase;
 
 import java.util.concurrent.Executors;
 
 import com.example.aquasaver.model.enums.GoalType;
 import com.example.aquasaver.R;
+import com.google.firebase.firestore.DocumentSnapshot;
 
 
 public class SignupActivity extends AppCompatActivity {
@@ -58,9 +59,8 @@ public class SignupActivity extends AppCompatActivity {
     private static final int LOCATION_PERMISSION_CODE = 1001;
 
     private SharedPreferences prefs;
-    private AppDatabase db;
-    private UserProfileRepository userDao;
-    private GoalProgressRepository goalProgressDao;
+    private UserProfileRepository userProfileRepo;
+    private GoalProgressRepository goalProgressRepo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,10 +112,9 @@ public class SignupActivity extends AppCompatActivity {
         notifications.setOnCheckedChangeListener((buttonView, isChecked) -> {
             extraNotificationOptions.setVisibility(isChecked ? View.VISIBLE : View.GONE);
         });
-        db = AppDatabase.getInstance(this);
 
-        userDao = db.userProfileDao();
-        goalProgressDao = db.goalProgressDao();
+        userProfileRepo = new UserProfileRepository();
+        goalProgressRepo = new GoalProgressRepository();
 
         // Signup button click: validate and save profile
 
@@ -153,9 +152,17 @@ public class SignupActivity extends AppCompatActivity {
             } else {
                 GoalType finalGoalType = goalType;
                 Executors.newSingleThreadExecutor().execute(() -> {
-                    List<UserProfile> existing = userDao.getUserProfilesByEmail(userEmail);
+                    final List<UserProfile>[] existing = new List[]{new ArrayList<>()};
+                    userProfileRepo.getUserProfilesByEmail(userEmail, snapshot -> {
+                        for (DocumentSnapshot doc : snapshot) {
+                            UserProfile userProfile = doc.toObject(UserProfile.class);
+                            if (userProfile != null) existing[0].add(userProfile);
+                        }
 
-                    if (existing.size() > 0) {
+                        // You can now use challenges[0] here
+                    });
+
+                    if (existing[0].size() > 0) {
                         runOnUiThread(() ->
                                 Toast.makeText(
                                         SignupActivity.this,
@@ -177,29 +184,36 @@ public class SignupActivity extends AppCompatActivity {
                             userGp = new GoalProgress(userEmail, 0, joinDate, true, 11200);
                         }
 
-                        userDao.insertUserProfile(newUser);
-                        goalProgressDao.insertGoalProgress(userGp);
+                        userProfileRepo.insertUserProfile(newUser);
+                        goalProgressRepo.insertGoalProgress(userGp);
 
-                        ChallengesRepository challengesDao = db.challengesDao();
-                        int count = challengesDao.countChallengesForUser(userEmail);
-                        if (count == 0) {
+                        ChallengesRepository challengesRepo = new ChallengesRepository();
+                        final int[] count = new int[1];
+
+                        challengesRepo.countChallengesForUser(userEmail, snapshot -> {
+                            count[0] = snapshot.size();
+                        });
+
+                        if (count[0] == 0) {
                             List<Challenges> challenges = ChallengeSeeder.getDefaultChallenges(userEmail);
                             try {
-                                db.runInTransaction(() -> {
-                                    for (Challenges challenge : challenges) {
-                                        challengesDao.insertChallenge(challenge);
-                                        Log.d("SignupActivity", "Inserted challenge: " + challenge.getTitle());
-                                    }
-                                });
+                                for (Challenges challenge : challenges) {
+                                    challengesRepo.insertChallenge(challenge);
+                                    Log.d("SignupActivity", "Inserted challenge: " + challenge.getTitle());
+                                }
                             } catch (Exception e) {
                                 Log.e("SignupActivity", "Error inserting challenges for user: " + userEmail, e);
                             }
-                            int countAfter = challengesDao.countChallengesForUser(userEmail);
-                            Log.d("SignupActivity", "Challenges count after insert: " + countAfter);
+                            final int[] countAfter = new int[1];
+
+                            challengesRepo.countChallengesForUser(userEmail, snapshot -> {
+                                countAfter[0] = snapshot.size();
+                            });
+                            Log.d("SignupActivity", "Challenges count after insert: " + countAfter[0]);
                         }
 
                         Log.d("UserRegistration", "User created and challenges seeded for: " + userEmail);
-                        SuggestionsRepository suggestionsDao = db.suggestionsDao();
+                        SuggestionsRepository suggestionsDao = new SuggestionsRepository();
                         List<Suggestions> suggestions = ConservationTipsSeeder.getConservationTips(userEmail);
                         for (Suggestions suggestion : suggestions) {
                             suggestionsDao.insertSuggestion(suggestion);
