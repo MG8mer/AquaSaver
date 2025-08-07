@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,23 +23,31 @@ import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.aquasaver.R;
+import com.example.aquasaver.model.GoalProgress;
 import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.model.enums.GoalType;
+import com.example.aquasaver.repository.GoalProgressRepository;
 import com.example.aquasaver.repository.UserProfileRepository;
 import com.google.firebase.firestore.DocumentSnapshot;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SettingsFragment extends Fragment {
 
     private UserProfileRepository userProfileRepo;
+    private GoalProgressRepository goalProgressRepo;
 
     private TextView textUserEmail;
     private SwitchCompat switchNotifications, switchGPS, switchWeatherAlerts;
     private Button buttonSave;
 
-    private EditText editCurrentPassword, editNewPassword, editLocation;
-    private Spinner spinnerGoalType;
+    private EditText editCurrentPassword, editNewPassword, editLocation, goalAmount;
+    private Spinner spinnerGoalType, spinnerUnitType;
 
-    private UserProfile userProfile;
+    final UserProfile[] userProfile = new UserProfile[1];
+
+    List<GoalProgress>[] goalProgress = new List[]{new ArrayList<>()};
 
     private String userEmail;  // will hold the logged-in user email
 
@@ -52,25 +61,37 @@ public class SettingsFragment extends Fragment {
 
         // Initialize views
         textUserEmail = view.findViewById(R.id.text_user_email);
-
-        switchNotifications = view.findViewById(R.id.switch_notifications);
-        switchGPS = view.findViewById(R.id.switch_gps);
-        switchWeatherAlerts = view.findViewById(R.id.switch_weather_alerts);
         buttonSave = view.findViewById(R.id.button_save_settings);
 
         editCurrentPassword = view.findViewById(R.id.edit_current_password);
         editNewPassword = view.findViewById(R.id.edit_new_password);
         editNewPassword.setEnabled(false); // Disabled until current password is verified
-        editLocation = view.findViewById(R.id.edit_location);
         spinnerGoalType = view.findViewById(R.id.spinner_goal_type);
+        spinnerUnitType = view.findViewById(R.id.spinner_units);
+        goalAmount = view.findViewById(R.id.edit_custom_goal);
+        String input = goalAmount.toString();
+        int goal = 1;
+        try {
+            goal = Integer.parseInt(input);
+            if (goal <= 0) {
+                Toast.makeText(getContext(), "Goal must be greater than 0", Toast.LENGTH_SHORT).show();
+            }
 
-        // Setup spinner adapter
+            // Use the validated goal here
+            Log.d("GoalValidation", "Valid goal: " + goal);
+
+        } catch (NumberFormatException e) {
+            Toast.makeText(getContext(), "Invalid number format", Toast.LENGTH_SHORT).show();
+        }
+
+        // Setup spinner adapters
         ArrayAdapter<GoalType> adapter = new ArrayAdapter<>(requireContext(),
                 android.R.layout.simple_spinner_item, GoalType.values());
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerGoalType.setAdapter(adapter);
 
         userProfileRepo = new UserProfileRepository();
+        goalProgressRepo = new GoalProgressRepository();
 
         // Load logged-in user email from SharedPreferences
         SharedPreferences prefs = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
@@ -86,22 +107,17 @@ public class SettingsFragment extends Fragment {
         // Load user profile with real email
         loadUserProfile(userEmail);
 
-        // Set toggle switch colors initially and on changes
-        switchNotifications.setOnCheckedChangeListener((buttonView, isChecked) -> updateSwitchColor(switchNotifications));
-        switchGPS.setOnCheckedChangeListener((buttonView, isChecked) -> updateSwitchColor(switchGPS));
-        switchWeatherAlerts.setOnCheckedChangeListener((buttonView, isChecked) -> updateSwitchColor(switchWeatherAlerts));
-
         // Listen to current password input changes to verify and enable new password
         editCurrentPassword.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (userProfile == null) {
+                if (userProfile[0] == null) {
                     editNewPassword.setEnabled(false);
                     return;
                 }
                 String input = s.toString().trim();
-                if (input.equals(userProfile.getPasswordHash())) {
+                if (input.equals(userProfile[0].getPasswordHash())) {
                     editNewPassword.setEnabled(true);
                 } else {
                     editNewPassword.setEnabled(false);
@@ -111,14 +127,15 @@ public class SettingsFragment extends Fragment {
             @Override public void afterTextChanged(Editable s) { }
         });
 
+        int finalGoal = goal;
         buttonSave.setOnClickListener(v -> {
-            if (userProfile == null) {
+            if (userProfile[0] == null) {
                 Toast.makeText(requireContext(), "User profile not loaded", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             String currentPwdInput = editCurrentPassword.getText().toString().trim();
-            boolean isCurrentPwdCorrect = !TextUtils.isEmpty(currentPwdInput) && currentPwdInput.equals(userProfile.getPasswordHash());
+            boolean isCurrentPwdCorrect = !TextUtils.isEmpty(currentPwdInput) && currentPwdInput.equals(userProfile[0].getPasswordHash());
 
             // If new password is entered, current password must be correct
             if (!TextUtils.isEmpty(editNewPassword.getText().toString().trim()) && !isCurrentPwdCorrect) {
@@ -126,25 +143,24 @@ public class SettingsFragment extends Fragment {
                 return;
             }
 
-            userProfile.setNotificationsOn(switchNotifications.isChecked());
-            userProfile.setUseGPS(switchGPS.isChecked());
-            userProfile.setWeatherAlertsEnabled(switchWeatherAlerts.isChecked());
-
             if (isCurrentPwdCorrect && !TextUtils.isEmpty(editNewPassword.getText().toString().trim())) {
-                userProfile.setPasswordHash(editNewPassword.getText().toString().trim());
+                userProfile[0].setPasswordHash(editNewPassword.getText().toString().trim());
             }
 
             String locationInput = editLocation.getText().toString().trim();
             if (!locationInput.isEmpty()) {
-                userProfile.setLocation(locationInput);
+                userProfile[0].setLocation(locationInput);
             }
 
             GoalType selectedGoal = (GoalType) spinnerGoalType.getSelectedItem();
-            userProfile.setGoalType(selectedGoal);
+            userProfile[0].setGoalType(selectedGoal);
+
+            goalProgress[0].get(0).setGoalAmount(finalGoal);
+            goalProgress[0].get(0).setGoalUnits(spinnerUnitType.getSelectedItem().toString());
 
             // Update DB in background thread
             new Thread(() -> {
-                userProfileRepo.updateUserProfile(userProfile, count ->
+                userProfileRepo.updateUserProfile(userProfile[0], count ->
                 {
                     Toast.makeText(requireContext(), "Settings updated", Toast.LENGTH_SHORT).show();
                 }, e -> {
@@ -158,11 +174,17 @@ public class SettingsFragment extends Fragment {
 
     private void loadUserProfile(String email) {
         new Thread(() -> {
-            final UserProfile[] userProfile = new UserProfile[1];
             userProfileRepo.getUserProfilesByEmail(email, snapshot -> {
                 if (!snapshot.isEmpty())
                 {
                     userProfile[0] = snapshot.getDocuments().get(0).toObject(UserProfile.class);
+                }
+            });
+
+            goalProgressRepo.getAllProgressForUser(email, snapshot -> {
+                for (DocumentSnapshot doc : snapshot) {
+                    GoalProgress gP = doc.toObject(GoalProgress.class);
+                    if (gP != null) goalProgress[0].add(gP);
                 }
             });
             if (userProfile != null) {
@@ -170,21 +192,20 @@ public class SettingsFragment extends Fragment {
                     // Display user email
                     textUserEmail.setText(userProfile[0].getEmail());
 
-                    switchNotifications.setChecked(userProfile[0].isNotificationsOn());
-                    updateSwitchColor(switchNotifications);
+                    goalAmount.setText(goalProgress[0].get(0).getGoalAmount());
 
-                    switchGPS.setChecked(userProfile[0].isUseGPS());
-                    updateSwitchColor(switchGPS);
-
-                    switchWeatherAlerts.setChecked(userProfile[0].isWeatherAlertsEnabled());
-                    updateSwitchColor(switchWeatherAlerts);
-
-                    editLocation.setText(userProfile[0].getLocation());
 
                     GoalType[] goals = GoalType.values();
                     for (int i = 0; i < goals.length; i++) {
                         if (goals[i] == userProfile[0].getGoalType()) {
                             spinnerGoalType.setSelection(i);
+                            break;
+                        }
+                    }
+                    String[] units = {"Liters", "Gallons"};
+                    for (int i = 0; i < units.length; i++) {
+                        if (units[i].equals(goalProgress[0].get(0).getGoalUnits())) {
+                            spinnerUnitType.setSelection(i);
                             break;
                         }
                     }

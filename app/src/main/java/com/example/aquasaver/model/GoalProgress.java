@@ -6,18 +6,20 @@ public class GoalProgress {
     private int id;
     private String userEmail;
     private int goalAmount;
+    private String goalUnits;
     private double amountLogged;
     private Date progressDate;
     private boolean onTarget;
 
     public GoalProgress() {}
 
-    public GoalProgress(String userEmail, double amountLogged, Date progressDate, boolean onTarget, int goalAmount) {
+    public GoalProgress(String userEmail, double amountLogged, Date progressDate, boolean onTarget, int goalAmount, String goalUnits) {
         this.userEmail = userEmail;
         this.amountLogged = amountLogged;
         this.progressDate = progressDate;
         this.onTarget = onTarget;
         this.goalAmount = goalAmount;
+        this.goalUnits = goalUnits;
     }
 
 
@@ -66,5 +68,9 @@ public class GoalProgress {
     {
         goalAmount = gA;
     }
+
+    public String getGoalUnits() { return goalUnits; }
+
+    public void setGoalUnits(String goalUnits) { this.goalUnits = goalUnits; }
 
 }

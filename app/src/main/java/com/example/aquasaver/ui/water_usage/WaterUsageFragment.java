@@ -145,7 +145,7 @@ public class WaterUsageFragment extends Fragment {
             repo.getLitersUsedBetween(user[0].getEmail(), dailyWindow[0], dailyWindow[1], snapshot -> {
                 if (!snapshot.isEmpty()) {
                     WaterUsage usage = snapshot.getDocuments().get(0).toObject(WaterUsage.class);
-                    litersUsed[0] = (float) usage.getAmountLiters();
+                    litersUsed[0] = (float) usage.getAmount();
                     // Now you can use todayProgress[0]
                 }
             });

@@ -46,31 +46,6 @@
             android:textColor="#000000"
             android:layout_marginBottom="16dp" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="8dp">
-
-            <TextView
-                android:id="@+id/labelLocationPrefTracker"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Location Tracking"
-                android:textSize="16sp"
-                android:textColor="#333333"
-                android:layout_marginEnd="12dp" />
-
-            <Switch
-                android:id="@+id/locationTrackingSwitch"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp"
-                android:minWidth="48dp"
-                android:padding="12dp" />
-        </LinearLayout>
-
         <TextView
             android:id="@+id/labelLocationPref"
             android:layout_width="match_parent"
@@ -115,31 +90,30 @@
                 android:padding="8dp" />
         </LinearLayout>
 
-        <!-- Notifications block -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:minHeight="48dp"
             android:gravity="center_vertical"
             android:layout_marginBottom="16dp">
 
             <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Enable Notifications"
-                android:textSize="16sp"
-                android:textColor="#333333" />
-
-            <Switch
-                android:id="@+id/notifications"
+                android:id="@+id/labelUnits"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:minHeight="48dp"
-                android:minWidth="48dp"
-                android:padding="12dp" />
+                android:text="Units"
+                android:textSize="16sp"
+                android:textColor="#333333"
+                android:layout_marginEnd="12dp" />
+
+            <Spinner
+                android:id="@+id/unitsSpinner"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:padding="8dp" />
         </LinearLayout>
+
 
         <!-- Extra notification options visible only if notifications enabled -->
         <LinearLayout

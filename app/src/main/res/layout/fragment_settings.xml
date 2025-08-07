@@ -70,61 +70,54 @@
             android:hint="Enter new password"
             android:paddingBottom="24dp"/>
 
-        <!-- Location -->
+        <!-- Goal Type -->
+        <TextView
+            android:layout_width="63dp"
+            android:layout_height="32dp"
+            android:paddingBottom="4dp"
+            android:text="Goal Type"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <!-- Switches -->
+        <Spinner
+            android:id="@+id/spinner_goal_type"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="24dp" />
+
+        <!-- Set Goal -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Location"
+            android:text="Custom Goal"
             android:textSize="16sp"
             android:textStyle="bold"
             android:paddingBottom="4dp"/>
 
         <EditText
-            android:id="@+id/edit_location"
+            android:id="@+id/edit_custom_goal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Enter location"
+            android:inputType="textPassword"
+            android:hint="Enter new goal"
             android:paddingBottom="24dp"/>
 
         <!-- Goal Type -->
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Goal Type"
+            android:layout_width="63dp"
+            android:layout_height="32dp"
+            android:paddingBottom="4dp"
+            android:text="Units"
             android:textSize="16sp"
-            android:textStyle="bold"
-            android:paddingBottom="4dp"/>
-
-        <Spinner
-            android:id="@+id/spinner_goal_type"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingBottom="24dp"/>
+            android:textStyle="bold" />
 
         <!-- Switches -->
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/switch_notifications"
+        <Spinner
+            android:id="@+id/spinner_units"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Enable Notifications"
-            android:textStyle="bold"
-            android:paddingBottom="16dp"/>
-
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/switch_gps"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Use GPS"
-            android:textStyle="bold"
-            android:paddingBottom="16dp"/>
-
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/switch_weather_alerts"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Enable Weather Alerts"
-            android:textStyle="bold"
-            android:paddingBottom="32dp"/>
+            android:paddingBottom="24dp" />
 
         <!-- Save Button -->
         <Button
@@ -133,6 +126,7 @@
             android:layout_height="wrap_content"
             android:text="Save Changes"
             android:backgroundTint="@color/colorPrimary"
-            android:textColor="@color/colorOnPrimary"/>
+            android:textColor="@color/colorOnPrimary"
+            android:layout_gravity="center_horizontal" />
     </LinearLayout>
 </ScrollView>

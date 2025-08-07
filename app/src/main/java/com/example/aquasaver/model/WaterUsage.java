@@ -6,16 +6,18 @@ public class WaterUsage {
     private int id;
     private String userEmail;
     private Date usageDate;
-    private double amountLiters;
+    private double amount;
     private String activityType;
+    private String units;
 
     public WaterUsage() {}
 
-    public WaterUsage(String userEmail, Date usageDate, double amountLiters, String activityType) {
+    public WaterUsage(String userEmail, Date usageDate, double amount, String activityType, String units) {
         this.userEmail = userEmail;
         this.usageDate = usageDate;
-        this.amountLiters = amountLiters;
+        this.amount = amount;
         this.activityType = activityType;
+        this.units = units;
     }
 
     public int getId() { // Getter for id
@@ -38,12 +40,12 @@ public class WaterUsage {
         this.usageDate = usageDate;
     }
 
-    public double getAmountLiters() { // Getter for amountLiters
-        return amountLiters;
+    public double getAmount() { // Getter for amountLiters
+        return amount;
     }
 
-    public void setAmountLiters(double amountLiters) { // Setter for amountLiters
-        this.amountLiters = amountLiters;
+    public void setAmount(double amount) { // Setter for amountLiters
+        this.amount = this.amount;
     }
 
     public String getActivityType() { // Getter for activityType
@@ -52,5 +54,15 @@ public class WaterUsage {
 
     public void setActivityType(String activityType) { // Setter for activityType
         this.activityType = activityType;
+    }
+
+    public String getUnits()
+    {
+        return units;
+    }
+
+    public void setUnits(String units)
+    {
+        this.units = units;
     }
 }

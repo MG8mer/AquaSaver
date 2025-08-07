@@ -50,6 +50,7 @@ public class HomeFragment extends Fragment {
     TextView waterUsagePreview;
     String goalType = "DAILY";
     float goal = 400f; // Default daily goal
+    String units;
     String userEmail;
     boolean unDoAble = false;
     String lastLoggedDocumentId = null;
@@ -192,6 +193,7 @@ public class HomeFragment extends Fragment {
 
                         // Get custom goal if exists
                         Double customGoal = documentSnapshot.getDouble("goalAmount");
+                        String goalUnits = documentSnapshot.getString("goalUnits");
                         if (customGoal != null) {
                             goal = customGoal.floatValue();
                         }
@@ -222,11 +224,11 @@ public class HomeFragment extends Fragment {
                             totalUsage += amount.floatValue();
                         }
                     }
-                    updatePieChart(totalUsage, goal);
+                    updatePieChart(totalUsage, goal, units);
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(requireContext(), "Error loading water usage", Toast.LENGTH_SHORT).show();
-                    updatePieChart(0f, goal);
+                    updatePieChart(0f, goal, units);
                 });
     }
 
@@ -338,7 +340,7 @@ public class HomeFragment extends Fragment {
         timerLabel.setText("Timer: " + timerValue + " min");
     }
 
-    private void updatePieChart(float usage, float goal) {
+    private void updatePieChart(float usage, float goal, String units) {
         ArrayList<PieEntry> entries = new ArrayList<>();
 
         float usageLiters = usage;
@@ -358,7 +360,12 @@ public class HomeFragment extends Fragment {
         dataSet.setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
-                return String.format("%.1f L", value);
+                if (units.equals("Liters"))
+                {
+                    return String.format("%.1f L", value);
+                }
+                return String.format("%.1f G", value);
+
             }
         });
 

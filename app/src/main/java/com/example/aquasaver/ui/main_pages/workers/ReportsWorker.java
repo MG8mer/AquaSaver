@@ -117,7 +117,7 @@ public class ReportsWorker extends Worker {
                 WaterUsage usage = snapshot.getDocuments().get(0).toObject(WaterUsage.class);
                 if (usage != null)
                 {
-                    totalLiters[0] = (float)usage.getAmountLiters();
+                    totalLiters[0] = (float)usage.getAmount();
                 }
             }
         });
@@ -206,7 +206,8 @@ public class ReportsWorker extends Worker {
                 new Date(window[1]),
                 (int) totalLiters[0],
                 challengesCompleted,
-                streakCount
+                streakCount,
+                userReports[0].get(0).getUsageUnits()
         );
         reportsRepo.insertReport(report);
     }

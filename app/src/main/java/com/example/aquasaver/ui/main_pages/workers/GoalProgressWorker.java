@@ -69,7 +69,8 @@ public class GoalProgressWorker extends Worker
                 amountLogged,
                 new Date(),
                 onTarget,
-                goalAmount
+                goalAmount,
+                history[0].get(0).getGoalUnits()
         );
 
         goalProgressRepo.insertGoalProgress(newProgress);

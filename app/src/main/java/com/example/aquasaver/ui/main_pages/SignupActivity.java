@@ -51,7 +51,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 public class SignupActivity extends AppCompatActivity {
 
     EditText email, password, locationField;
-    Spinner goalSpinner;
+    Spinner goalSpinner, unitSpinner;
     Switch notifications, weatherAlertSwitch, reminderTimeSwitch, locationTrackingSwitch;
     LinearLayout extraNotificationOptions;
     Button signupSubmit;
@@ -76,17 +76,20 @@ public class SignupActivity extends AppCompatActivity {
         password = findViewById(R.id.signupPassword);
         locationField = findViewById(R.id.location);
         goalSpinner = findViewById(R.id.goalSpinner);
-        notifications = findViewById(R.id.notifications);
+        unitSpinner = findViewById(R.id.unitsSpinner);
         weatherAlertSwitch = findViewById(R.id.weatherAlertSwitch);
         reminderTimeSwitch = findViewById(R.id.reminderTimeSwitch);
         extraNotificationOptions = findViewById(R.id.extraNotificationOptions);
         signupSubmit = findViewById(R.id.signupSubmit);
-        locationTrackingSwitch = findViewById(R.id.locationTrackingSwitch);
 
         // Setup spinner
         String[] goals = {"Daily", "Weekly", "Monthly"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, goals);
         goalSpinner.setAdapter(adapter);
+
+        String[] units = {"Liters", "Gallons"};
+        ArrayAdapter<String> unitAdap = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, units);
+        unitSpinner.setAdapter(unitAdap);
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -126,6 +129,7 @@ public class SignupActivity extends AppCompatActivity {
             String pass = PasswordUtils.hashPassword(rawPass, salt);
             String loc = locationField.getText().toString().trim();
             String goal = goalSpinner.getSelectedItem().toString();
+            String unit = unitSpinner.getSelectedItem().toString();
             boolean notify = notifications.isChecked();
             boolean useGps = locationTrackingSwitch.isChecked();
             boolean weatherAlert = weatherAlertSwitch.isChecked();
@@ -180,11 +184,11 @@ public class SignupActivity extends AppCompatActivity {
                         UserProfile newUser = new UserProfile(userEmail, pass, salt, loc, useGps, finalGoalType, notify, "12:00 AM", weatherAlert, joinDate, lastStreakUpdate);
                         GoalProgress userGp;
                         if (finalGoalType == GoalType.DAILY) {
-                            userGp = new GoalProgress(userEmail, 0, joinDate, true, 400);
+                            userGp = new GoalProgress(userEmail, 0, joinDate, true, 400, unit);
                         } else if (finalGoalType == GoalType.WEEKLY) {
-                            userGp = new GoalProgress(userEmail, 0, joinDate, true, 2800);
+                            userGp = new GoalProgress(userEmail, 0, joinDate, true, 2800, unit);
                         } else {
-                            userGp = new GoalProgress(userEmail, 0, joinDate, true, 11200);
+                            userGp = new GoalProgress(userEmail, 0, joinDate, true, 11200, unit);
                         }
 
                         userProfileRepo.insertUserProfile(newUser);
@@ -229,6 +233,7 @@ public class SignupActivity extends AppCompatActivity {
                                 .putString("password", pass)
                                 .putString("location", loc)
                                 .putString("goal", goal)
+                                .putString("units", unit)
                                 .putBoolean("notifications", notify)
                                 .putBoolean("weatherAlert", weatherAlert)
                                 .putBoolean("reminderTime", reminder)
