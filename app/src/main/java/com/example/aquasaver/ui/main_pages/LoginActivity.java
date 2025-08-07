@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.aquasaver.repository.UserProfileRepository;
 import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.R;
+import com.example.aquasaver.ui.main_pages.utility.PasswordUtils;
 
 import java.util.concurrent.Executors;
 
@@ -45,33 +46,36 @@ public class LoginActivity extends AppCompatActivity {
 
             Executors.newSingleThreadExecutor().execute(() -> {
                 // Query DB for user with email and password
-                final UserProfile[] existingUser = new UserProfile[1];
-                userProfileRepo.getUserProfileByIds(user, pass, snapshot -> {
+                userProfileRepo.getUserProfilesByEmail(user, snapshot -> {
                     if (!snapshot.isEmpty()) {
-                        existingUser[0] = snapshot.getDocuments().get(0).toObject(UserProfile.class);
-                    }
-                });
+                        UserProfile existingUser = snapshot.getDocuments().get(0).toObject(UserProfile.class);
+                        String inputPassword = pass;
+                        boolean isMatch = PasswordUtils.verifyPassword(inputPassword, existingUser.getSalt(), existingUser.getPasswordHash());
 
-                runOnUiThread(() -> {
-                    if (existingUser[0] != null) {
-                        Log.d("LoginActivity", "Login success: user=" + existingUser[0].getEmail());
+                        if (isMatch)
+                        {
+                            runOnUiThread(() -> {
+                                Log.d("LoginActivity", "Login success: user=" + existingUser.getEmail());
 
-                        // Save user info in SharedPreferences for later use
-                        SharedPreferences prefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
-                        prefs.edit()
-                                .putString("username", existingUser[0].getEmail())
-                                .putString("location", existingUser[0].getLocation())
-                                .apply();
+                                // Save user info in SharedPreferences for later use
+                                SharedPreferences prefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
+                                prefs.edit()
+                                        .putString("username", existingUser.getEmail())
+                                        .putString("location", existingUser.getLocation())
+                                        .apply();
 
-                        Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
 
-                        // Navigate to MainActivity and finish LoginActivity
-                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                        startActivity(intent);
-                        finish();
-                    } else {
-                        Log.d("LoginActivity", "Login failure: user not found for username=" + user);
-                        Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show();
+                                // Navigate to MainActivity and finish LoginActivity
+                                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                                startActivity(intent);
+                                finish();
+                            });
+                        }
+                        else {
+                            Log.d("LoginActivity", "Login failure: user not found for username=" + user);
+                            Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 });
             });

@@ -15,14 +15,16 @@ public class UserProfile {
     private Date joinDate;
     private int streak;
     private Date lastStreakUpdate;
+    private String salt;
 
     public UserProfile() {}
 
-    public UserProfile(String email, String passwordHash, String location, boolean useGPS,
+    public UserProfile(String email, String passwordHash, String salt, String location, boolean useGPS,
                        GoalType goalType, boolean notificationsOn, String reminderTime,
                        boolean weatherAlertsEnabled, Date joinDate, Date lastStreakUpdate) {
         this.email = email;
         this.location = location;
+        this.salt = salt;
         this.passwordHash = passwordHash;
         this.useGPS = useGPS;
         this.goalType = goalType;
@@ -47,6 +49,16 @@ public class UserProfile {
 
     public void setPasswordHash(String passwordHash) { // Setter for password hash
         this.passwordHash = passwordHash;
+    }
+
+    public String getSalt()
+    {
+        return salt;
+    }
+
+    public void setSalt(String salt)
+    {
+        this.salt = salt;
     }
 
     public String getLocation() { // Getter for location

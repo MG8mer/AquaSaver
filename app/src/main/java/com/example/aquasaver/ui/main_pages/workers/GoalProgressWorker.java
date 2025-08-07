@@ -11,10 +11,11 @@ import androidx.work.WorkerParameters;
 
 import com.example.aquasaver.repository.GoalProgressRepository;
 import com.example.aquasaver.repository.UserProfileRepository;
-import com.example.aquasaver.db.AppDatabase;
 import com.example.aquasaver.model.GoalProgress;
 import com.example.aquasaver.model.UserProfile;
+import com.google.firebase.firestore.DocumentSnapshot;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -42,13 +43,23 @@ public class GoalProgressWorker extends Worker
                 .getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
         String userEmail = prefs.getString("username", null);
         if (userEmail == null) return Result.failure();
-        UserProfile user = userProfileDao.getUserByEmail(userEmail);
-        if (user == null) {
+        final UserProfile[] user = new UserProfile[1];
+        userProfileRepo.getUserByEmail(userEmail, snapshot -> {
+            if (!snapshot.isEmpty()) {
+                user[0] = snapshot.getDocuments().get(0).toObject(UserProfile.class);
+            }
+        });
+        if (user[0] == null) {
             return Result.failure();
         }
-
-        List<GoalProgress> history = goalProgressDao.getAllProgressForUser("example@gmail.com");
-        int goalAmount = history.get(0).getGoalAmount();
+        final List<GoalProgress>[] history = new List[]{new ArrayList<>()};
+        goalProgressRepo.getAllProgressForUser(user[0].getEmail(), snapshot -> {
+            for (DocumentSnapshot doc : snapshot) {
+                GoalProgress challenge = doc.toObject(GoalProgress.class);
+                if (challenge != null) history[0].add(challenge);
+            }
+        });
+        int goalAmount = history[0].get(0).getGoalAmount();
 
         double amountLogged = 0;
 
@@ -61,7 +72,7 @@ public class GoalProgressWorker extends Worker
                 goalAmount
         );
 
-        goalProgressDao.insertGoalProgress(newProgress);
+        goalProgressRepo.insertGoalProgress(newProgress);
         return Result.success();
     }
 }

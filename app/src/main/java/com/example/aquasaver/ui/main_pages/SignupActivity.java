@@ -12,6 +12,7 @@ import com.example.aquasaver.model.GoalProgress;
 import com.example.aquasaver.model.Suggestions;
 import com.example.aquasaver.repository.UserProfileRepository;
 import com.example.aquasaver.ui.conservation_tips.ConservationTipsSeeder;
+import com.example.aquasaver.ui.main_pages.utility.PasswordUtils;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import android.content.SharedPreferences;
@@ -120,7 +121,9 @@ public class SignupActivity extends AppCompatActivity {
 
         signupSubmit.setOnClickListener(v -> {
             String userEmail = email.getText().toString().trim();
-            String pass = password.getText().toString().trim();
+            String rawPass = password.getText().toString().trim();
+            String salt = PasswordUtils.generateSalt();
+            String pass = PasswordUtils.hashPassword(rawPass, salt);
             String loc = locationField.getText().toString().trim();
             String goal = goalSpinner.getSelectedItem().toString();
             boolean notify = notifications.isChecked();
@@ -174,7 +177,7 @@ public class SignupActivity extends AppCompatActivity {
                     } else {
                         // Placeholders:
                         // reminderTime: "12:00 AM"
-                        UserProfile newUser = new UserProfile(userEmail, pass, loc, useGps, finalGoalType, notify, "12:00 AM", weatherAlert, joinDate, lastStreakUpdate);
+                        UserProfile newUser = new UserProfile(userEmail, pass, salt, loc, useGps, finalGoalType, notify, "12:00 AM", weatherAlert, joinDate, lastStreakUpdate);
                         GoalProgress userGp;
                         if (finalGoalType == GoalType.DAILY) {
                             userGp = new GoalProgress(userEmail, 0, joinDate, true, 400);

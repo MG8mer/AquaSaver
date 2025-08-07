@@ -40,7 +40,7 @@ public class EcoChallengesFragment extends Fragment {
     private Challenges currentChallenge;
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_eco_challenges, container, false);
 
         challengeTitleText = view.findViewById(R.id.challengeTitleText);

@@ -10,6 +10,7 @@ import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import com.example.aquasaver.model.WaterUsage;
 import com.example.aquasaver.repository.ChallengeProgressRepository;
 import com.example.aquasaver.repository.ChallengesRepository;
 import com.example.aquasaver.repository.GoalProgressRepository;
@@ -21,25 +22,24 @@ import com.example.aquasaver.model.enums.SummaryType;
 import com.example.aquasaver.repository.ReportsRepository;
 import com.example.aquasaver.repository.UserProfileRepository;
 import com.example.aquasaver.repository.WaterUsageRepository;
-import com.example.aquasaver.db.AppDatabase;
 import com.example.aquasaver.model.GoalProgress;
 import com.example.aquasaver.model.Reports;
 import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.ui.home.HomeFragment;
+import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 public class ReportsWorker extends Worker {
-    private final AppDatabase db;
-    private final ReportsRepository reportsDao;
-    private final WaterUsageRepository waterUsageDao;
-    private final UserProfileRepository userProfileDao;
+    private final ReportsRepository reportsRepo;
+    private final WaterUsageRepository waterUsageRepo;
+    private final UserProfileRepository userProfileRepo;
 
-    private final GoalProgressRepository goalProgressDao;
-    private final ChallengesRepository challengesDao;
-    private final ChallengeProgressRepository challengeProgressDao;
+    private final GoalProgressRepository goalProgressRepo;
+    private final ChallengesRepository challengesRepo;
+    private final ChallengeProgressRepository challengeProgressRepo;
     private UserProfile user;
 
     public ReportsWorker(
@@ -47,13 +47,12 @@ public class ReportsWorker extends Worker {
             @NonNull WorkerParameters params
     ) {
         super(context, params);
-        db = AppDatabase.getInstance(getApplicationContext());
-        reportsDao = db.reportsDao();
-        waterUsageDao = db.waterUsageDao();
-        userProfileDao = db.userProfileDao();
-        goalProgressDao = db.goalProgressDao();
-        challengesDao = db.challengesDao();
-        challengeProgressDao = db.challengeProgressDao();
+        reportsRepo = new ReportsRepository();
+        waterUsageRepo = new WaterUsageRepository();
+        userProfileRepo = new UserProfileRepository();
+        goalProgressRepo = new GoalProgressRepository();
+        challengesRepo = new ChallengesRepository();
+        challengeProgressRepo = new ChallengeProgressRepository();
     }
 
     @NonNull
@@ -64,7 +63,12 @@ public class ReportsWorker extends Worker {
                 .getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
         String userEmail = prefs.getString("username", null);
         if (userEmail == null) return Result.failure();
-        user = userProfileDao.getUserByEmail(userEmail);
+        final UserProfile[] user = new UserProfile[1];
+        userProfileRepo.getUserByEmail(userEmail, snapshot -> {
+            if (!snapshot.isEmpty()) {
+                user[0] = snapshot.getDocuments().get(0).toObject(UserProfile.class);
+            }
+        });
         if (user == null) {
             return Result.failure();
         }
@@ -107,18 +111,40 @@ public class ReportsWorker extends Worker {
     private void insertReport(String userEmail, SummaryType type, long[] window) {
         int streakCount;
         int challengesCompleted;
-        float totalLiters = waterUsageDao.getLitersUsedBetween(userEmail, window[0], window[1]);
+        float[] totalLiters = new float[1];
+        waterUsageRepo.getLitersUsedBetween(userEmail, window[0], window[1], snapshot ->{
+            if (!snapshot.isEmpty()) {
+                WaterUsage usage = snapshot.getDocuments().get(0).toObject(WaterUsage.class);
+                if (usage != null)
+                {
+                    totalLiters[0] = (float)usage.getAmountLiters();
+                }
+            }
+        });
         GoalType goalType = user.getGoalType();
-        List<Reports> userReports = reportsDao.getUserReports(userEmail);
 
-        if (userReports.isEmpty() || userReports.get(0).getSummaryType() != type)
+        final List<Reports>[] userReports = new List[]{new ArrayList<>()};
+        reportsRepo.getUserReports(userEmail, snapshot -> {
+            for (DocumentSnapshot doc : snapshot) {
+                Reports report = doc.toObject(Reports.class);
+                if (report != null) userReports[0].add(report);
+            }
+        });
+
+        if (userReports[0].isEmpty() || userReports[0].get(0).getSummaryType() != type)
         {
             streakCount = 0;
         }
         else {
-            List<GoalProgress> goalProgressList = goalProgressDao.getAllProgressForUser(userEmail);
-            GoalProgress recent = goalProgressList.get(0);
-            streakCount = userReports.get(0).getStreakCount();
+            final List<GoalProgress>[] goalProgressList = new List[]{new ArrayList<>()};
+            goalProgressRepo.getAllProgressForUser(userEmail, snapshot -> {
+                for (DocumentSnapshot doc : snapshot) {
+                    GoalProgress goalProgress = doc.toObject(GoalProgress.class);
+                    if (goalProgress != null) goalProgressList[0].add(goalProgress);
+                }
+            });
+            GoalProgress recent = goalProgressList[0].get(0);
+            streakCount = userReports[0].get(0).getStreakCount();
 
             if (recent.getOnTarget())
             {
@@ -126,29 +152,49 @@ public class ReportsWorker extends Worker {
             }
         }
 
-        List<Challenges> challenges;
+        final List<Challenges>[] challenges = new List[]{new ArrayList<>()};
         if (type == SummaryType.DAILY)
         {
-            challenges = challengesDao.getOneDayChallengesBeforeDate(userEmail, window[1]);
+            challengesRepo.getOneDayChallengesBeforeDate(userEmail, window[1], snapshot -> {
+                for (DocumentSnapshot doc : snapshot) {
+                    Challenges challenge = doc.toObject(Challenges.class);
+                    if (challenge != null) challenges[0].add(challenge);
+                }
+            });
         }
         else if (type == SummaryType.WEEKLY)
         {
-            challenges = challengesDao.getWeeklyChallengesBeforeDate(userEmail, window[1]);
-
+            challengesRepo.getWeeklyChallengesBeforeDate(userEmail, window[1], snapshot -> {
+                for (DocumentSnapshot doc : snapshot) {
+                    Challenges challenge = doc.toObject(Challenges.class);
+                    if (challenge != null) challenges[0].add(challenge);
+                }
+            });
         }
         else {
-            challenges = challengesDao.getMonthlyChallengesBeforeDate(userEmail, window[1]);
+            challengesRepo.getMonthlyChallengesBeforeDate(userEmail, window[1], snapshot -> {
+                for (DocumentSnapshot doc : snapshot) {
+                    Challenges challenge = doc.toObject(Challenges.class);
+                    if (challenge != null) challenges[0].add(challenge);
+                }
+            });
         }
 
 
         List<ChallengeProgress> challengeProgresses = new ArrayList<ChallengeProgress>();
 
-        for (int i = 0; i < challenges.size(); i++)
+        for (int i = 0; i < challenges[0].size(); i++)
         {
-            ChallengeProgress challengeProgress = challengeProgressDao.getChallengeByTitle(challenges.get(i).getTitle());
-            if (challengeProgress.isCompletion())
+            final ChallengeProgress[] challengeProgress = new ChallengeProgress[1];
+            challengeProgressRepo.getChallengeByTitle(challenges[0].get(i).getTitle(), snapshot -> {
+                if (!snapshot.isEmpty())
+                {
+                    challengeProgress[0] = snapshot.getDocuments().get(0).toObject(ChallengeProgress.class);
+                }
+            });
+            if (challengeProgress[0].isCompletion())
             {
-                challengeProgresses.add(challengeProgress);
+                challengeProgresses.add(challengeProgress[0]);
             }
         }
         challengesCompleted = challengeProgresses.size();
@@ -158,11 +204,11 @@ public class ReportsWorker extends Worker {
                 type,
                 new Date(window[0]),
                 new Date(window[1]),
-                (int) totalLiters,
+                (int) totalLiters[0],
                 challengesCompleted,
                 streakCount
         );
-        reportsDao.insertReport(report);
+        reportsRepo.insertReport(report);
     }
 
     private void enqueueGoalProgressWorker() {
