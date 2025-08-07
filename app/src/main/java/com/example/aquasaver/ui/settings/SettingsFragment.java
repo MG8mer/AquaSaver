@@ -20,15 +20,16 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
 
 import com.example.aquasaver.R;
 import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.model.enums.GoalType;
+import com.example.aquasaver.repository.UserProfileRepository;
+import com.google.firebase.firestore.DocumentSnapshot;
 
 public class SettingsFragment extends Fragment {
 
-    private SettingsViewModel viewModel;
+    private UserProfileRepository userProfileRepo;
 
     private TextView textUserEmail;
     private SwitchCompat switchNotifications, switchGPS, switchWeatherAlerts;
@@ -69,8 +70,7 @@ public class SettingsFragment extends Fragment {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerGoalType.setAdapter(adapter);
 
-        viewModel = new ViewModelProvider.AndroidViewModelFactory(requireActivity().getApplication())
-                .create(SettingsViewModel.class);
+        userProfileRepo = new UserProfileRepository();
 
         // Load logged-in user email from SharedPreferences
         SharedPreferences prefs = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
@@ -144,13 +144,11 @@ public class SettingsFragment extends Fragment {
 
             // Update DB in background thread
             new Thread(() -> {
-                int updated = viewModel.updateUserProfile(userProfile);
-                requireActivity().runOnUiThread(() -> {
-                    if (updated > 0) {
-                        Toast.makeText(requireContext(), "Settings updated", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(requireContext(), "Update failed", Toast.LENGTH_SHORT).show();
-                    }
+                userProfileRepo.updateUserProfile(userProfile, count ->
+                {
+                    Toast.makeText(requireContext(), "Settings updated", Toast.LENGTH_SHORT).show();
+                }, e -> {
+                    Toast.makeText(requireContext(), "Update failed", Toast.LENGTH_SHORT).show();
                 });
             }).start();
         });
@@ -160,26 +158,32 @@ public class SettingsFragment extends Fragment {
 
     private void loadUserProfile(String email) {
         new Thread(() -> {
-            userProfile = viewModel.getUserProfileByEmail(email);
+            final UserProfile[] userProfile = new UserProfile[1];
+            userProfileRepo.getUserProfilesByEmail(email, snapshot -> {
+                if (!snapshot.isEmpty())
+                {
+                    userProfile[0] = snapshot.getDocuments().get(0).toObject(UserProfile.class);
+                }
+            });
             if (userProfile != null) {
                 requireActivity().runOnUiThread(() -> {
                     // Display user email
-                    textUserEmail.setText(userProfile.getEmail());
+                    textUserEmail.setText(userProfile[0].getEmail());
 
-                    switchNotifications.setChecked(userProfile.isNotificationsOn());
+                    switchNotifications.setChecked(userProfile[0].isNotificationsOn());
                     updateSwitchColor(switchNotifications);
 
-                    switchGPS.setChecked(userProfile.isUseGPS());
+                    switchGPS.setChecked(userProfile[0].isUseGPS());
                     updateSwitchColor(switchGPS);
 
-                    switchWeatherAlerts.setChecked(userProfile.isWeatherAlertsEnabled());
+                    switchWeatherAlerts.setChecked(userProfile[0].isWeatherAlertsEnabled());
                     updateSwitchColor(switchWeatherAlerts);
 
-                    editLocation.setText(userProfile.getLocation());
+                    editLocation.setText(userProfile[0].getLocation());
 
                     GoalType[] goals = GoalType.values();
                     for (int i = 0; i < goals.length; i++) {
-                        if (goals[i] == userProfile.getGoalType()) {
+                        if (goals[i] == userProfile[0].getGoalType()) {
                             spinnerGoalType.setSelection(i);
                             break;
                         }

@@ -1,6 +1,8 @@
 package com.example.aquasaver.repository;
 
 import android.util.Log;
+
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.*;
 import com.example.aquasaver.model.*;
@@ -15,9 +17,16 @@ public class UserProfileRepository {
         ref.document(key).set(p);
     }
 
-    public void updateUserProfile(UserProfile p) {
+    public void updateUserProfile(UserProfile p, OnSuccessListener<Integer> onSuccess, OnFailureListener onFailure) {
         String key = p.getEmail() + "_" + p.getLocation();
-        ref.document(key).set(p);
+
+        ref.document(key).set(p)
+                .addOnSuccessListener(unused -> {
+                    onSuccess.onSuccess(1); // 1 means update succeeded
+                })
+                .addOnFailureListener(e -> {
+                    onFailure.onFailure(e); // handle the error
+                });
     }
 
     public void deleteUserProfile(UserProfile p) {

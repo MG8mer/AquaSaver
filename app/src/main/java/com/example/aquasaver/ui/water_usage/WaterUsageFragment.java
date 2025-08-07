@@ -14,7 +14,7 @@ import android.widget.Toast;
 import com.example.aquasaver.repository.GoalProgressRepository;
 import com.example.aquasaver.repository.UserProfileRepository;
 import com.example.aquasaver.repository.WaterUsageRepository;
-import com.example.aquasaver.db.AppDatabase;
+import com.example.aquasaver.ui.home.HomeFragment;
 import com.example.aquasaver.model.GoalProgress;
 import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.model.WaterUsage;
@@ -50,6 +50,7 @@ import java.util.Map;
 import java.util.Random;
 
 import com.example.aquasaver.R;
+import com.google.firebase.firestore.DocumentSnapshot;
 
 public class WaterUsageFragment extends Fragment {
 
@@ -58,7 +59,7 @@ public class WaterUsageFragment extends Fragment {
 
     private FragmentWaterUsageBinding binding;
 
-    private WaterUsageRepository dao;
+    private WaterUsageRepository repo;
 
     private UserProfile user;
 
@@ -92,11 +93,10 @@ public class WaterUsageFragment extends Fragment {
         View root = binding.getRoot();
 
         Context context = requireContext(); // or getContext(), if you know it's non-null
-        AppDatabase db = AppDatabase.getInstance(context);
 
-        dao = db.waterUsageDao();
-        UserProfileRepository userProfileDao = db.userProfileDao();
-        GoalProgressRepository goalProgressDao = db.goalProgressDao();
+        repo = new WaterUsageRepository();
+        UserProfileRepository userProfileRepo = new UserProfileRepository();
+        GoalProgressRepository goalProgressRepo = new GoalProgressRepository();
 
         new Thread(() -> {
             SharedPreferences prefs = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
@@ -108,44 +108,73 @@ public class WaterUsageFragment extends Fragment {
                 return;
             }
 
-            user = userProfileDao.getUserByEmail(userEmail);
+            final UserProfile[] user = new UserProfile[1];
+             userProfileRepo.getUserByEmail(userEmail, snapshot -> {
+                 if (!snapshot.isEmpty())
+                 {
+                     user[0] = snapshot.getDocuments().get(0).toObject(UserProfile.class);
+                 }
+             });
 
-            if (user == null) {
+            if (user[0] == null) {
                 requireActivity().runOnUiThread(() ->
                         Toast.makeText(requireContext(), "User not found. Please log in.", Toast.LENGTH_LONG).show());
                 return;
             }
 
-            Calendar cal = Calendar.getInstance();
-            cal.set(Calendar.HOUR, 23);
-            cal.set(Calendar.MINUTE, 59);
-            cal.set(Calendar.SECOND, 59);
-            calendar.set(Calendar.MILLISECOND, 99);
-            Date startDate = cal.getTime();
-            cal.set(Calendar.DAY_OF_MONTH, 1);
-            Date endDate = cal.getTime();
 
-            GoalProgress goalProgress = goalProgressDao.getMonthlyProgress(user.getEmail(), endDate, startDate);
-            if(goalProgress == null) {
+            long[] dailyWindow = HomeFragment.computeTodayWindow();
+            long[] weeklyWindow = HomeFragment.computeCurrentWeekWindow();
+            long[] monthlyWindow = HomeFragment.computeCurrentMonthWindow();
+            final GoalProgress[] goalProgress = new GoalProgress[1];
+            goalProgressRepo.getMonthlyProgress(user[0].getEmail(), new Date(monthlyWindow[0]), new Date(monthlyWindow[1]), snapshot -> {
+                if (!snapshot.isEmpty()) {
+                    goalProgress[0] = snapshot.getDocuments().get(0).toObject(GoalProgress.class);
+                }
+            });
+            if(goalProgress[0] == null) {
                 Log.d("TEST", "goalProgress is null");
             }
 
-            float targetValue = goalProgress != null ? goalProgress.getGoalAmount() : 100f;
+            float targetValue = goalProgress != null ? goalProgress[0].getGoalAmount() : 100f;
             goalValue = targetValue;
-            goalType = user.getGoalType();
+            goalType = user[0].getGoalType();
             adjustTarget();
 
-            addRandomLogsForDateRange(dao);
-            float litersUsed = dao.getLitersUsedToday(user.getEmail());
-            Log.d("TEST", "litersUsed: " + litersUsed);
-            List<DailyUsage> usageData = dao.getAllDailyUsageForUser(user.getEmail());
+            final float[] litersUsed = new float[1];
+            repo.getLitersUsedBetween(user[0].getEmail(), dailyWindow[0], dailyWindow[1], snapshot -> {
+                if (!snapshot.isEmpty()) {
+                    WaterUsage usage = snapshot.getDocuments().get(0).toObject(WaterUsage.class);
+                    litersUsed[0] = (float) usage.getAmountLiters();
+                    // Now you can use todayProgress[0]
+                }
+            });
+            Log.d("TEST", "litersUsed: " + litersUsed[0]);
+            // This needs to be fixed later. There is a better way to obtain weekly/monthly usage instead of
+            // this implementation. For I just matched it with firebase, but Mathangi when you work on the backend
+            // you can use the "getLitersUsedBetween" method in the water usage repo and update the "getSublistByViewRange"
+            // method accordingly. You can also use the helper methods in HomeFragment "computeTodayWindow", "computeCurrentWeekWindow",
+            // and "computeCurrentMonthWindow" to actually use the method i told you about in the water usage repo, because for daily usage
+            // i calculate it as the water you used from 12 AM to 11:59 PM, weekly is from Monday to the next Sunday 11:59 PM, and Monthly is
+            // from day one of the month 12 AM to the last day of the month 11:59 PM.
+
+            // Use that info and ChatGPT to help you fix the backend of this page.
+
+            final List<DailyUsage>[] usageData = new List[]{new ArrayList<>()};
+            repo.getAllDailyUsageForUser(user[0].getEmail(), snapshot ->
+            {
+                for (DocumentSnapshot doc: snapshot) {
+                    DailyUsage usage = doc.toObject(DailyUsage.class);
+                    usageData[0].add(usage);
+                }
+            });
 
             requireActivity().runOnUiThread(() -> {
 
                 barChart = binding.waterGraph;
                 binding.graphToggle.check(R.id.week);
                 viewRange = "week";
-                data = usageData;
+                data = usageData[0];
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
                 dataRange = setDateRange(sdf.format(curCalendar.getTime()), viewRange);
@@ -764,59 +793,6 @@ public class WaterUsageFragment extends Fragment {
             }
         }
         return -1; // not found
-    }
-
-    public void addRandomLogsForDateRange(WaterUsageRepository waterUsageDao) {
-        // Date format to parse and format dates
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        Calendar startCal = Calendar.getInstance();
-        startCal.set(Calendar.HOUR, 0);
-        startCal.set(Calendar.MINUTE, 0);
-        startCal.set(Calendar.SECOND, 0);
-        startCal.set(Calendar.MILLISECOND, 0);
-
-        Calendar endCal = Calendar.getInstance();
-
-        Date todayDate = null; // zero time part
-        try {
-            todayDate = sdf.parse(sdf.format(startCal.getTime()));
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-
-        }
-        long todayTimestamp = todayDate.getTime();
-        dao.deleteLogsOlderThan(todayTimestamp);
-
-        try {
-            // Start date: Jan 1, 2025
-            startCal.setTime(sdf.parse("2025-01-01"));
-        } catch (ParseException e) {
-            e.printStackTrace();
-            return; // Abort on parse error
-        }
-
-        // End date: yesterday
-        endCal.add(Calendar.DAY_OF_MONTH, -1);
-
-
-
-        Random random = new Random();
-
-
-        while (!startCal.after(endCal)) {
-            // Convert current day to timestamp (milliseconds)
-            long timestamp = startCal.getTimeInMillis();
-
-            // Generate a random float value for usage (e.g., between 10.0 and 50.0)
-            float randomUsage = (float) (target*0.5 + random.nextFloat() * 1.0*target);
-
-            // Create a WaterUsage object — adapt constructor/fields as needed
-            WaterUsage log = new WaterUsage(user.getEmail(), new Date(timestamp), randomUsage, "test");
-            dao.insertLog(log);
-
-            // Move to next day
-            startCal.add(Calendar.DAY_OF_MONTH, 1);
-        }
     }
 
     public void setLabelText(String s) {
