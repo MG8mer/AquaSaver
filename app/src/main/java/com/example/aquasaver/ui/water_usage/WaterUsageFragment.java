@@ -158,6 +158,9 @@ public class WaterUsageFragment extends Fragment {
             // i calculate it as the water you used from 12 AM to 11:59 PM, weekly is from Monday to the next Sunday 11:59 PM, and Monthly is
             // from day one of the month 12 AM to the last day of the month 11:59 PM.
 
+            // You can also use the Reports db entity to help do this as it should automatically populate every day, week, and month (see ReportsWorker file for more details), and from it
+            // you can grab stuff like info on water used in a day, week, and month and whether a goal was met or not.
+
             // Use that info and ChatGPT to help you fix the backend of this page.
 
             final List<DailyUsage>[] usageData = new List[]{new ArrayList<>()};

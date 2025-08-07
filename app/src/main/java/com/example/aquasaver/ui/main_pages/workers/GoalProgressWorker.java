@@ -20,20 +20,18 @@ import java.util.List;
 
 public class GoalProgressWorker extends Worker
 {
-    private final AppDatabase db;
-    private final GoalProgressRepository goalProgressDao;
-    private final UserProfileRepository userProfileDao;
+    private final GoalProgressRepository goalProgressRepo;
+    private final UserProfileRepository userProfileRepo;
 
     public GoalProgressWorker(
             @NonNull Context context,
             @NonNull WorkerParameters params
     ) {
         super(context, params);
-        db = AppDatabase.getInstance(getApplicationContext());
 
 
-        goalProgressDao = db.goalProgressDao();
-        userProfileDao  = db.userProfileDao();
+        goalProgressRepo = new GoalProgressRepository();
+        userProfileRepo  = new UserProfileRepository();
     }
 
     @NonNull
