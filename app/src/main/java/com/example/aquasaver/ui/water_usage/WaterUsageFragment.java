@@ -1,4 +1,5 @@
 package com.example.aquasaver.ui.water_usage;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -47,10 +48,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Random;
 
 import com.example.aquasaver.R;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 public class WaterUsageFragment extends Fragment {
 
@@ -60,6 +61,8 @@ public class WaterUsageFragment extends Fragment {
     private FragmentWaterUsageBinding binding;
 
     private WaterUsageRepository repo;
+    private UserProfileRepository userProfileRepo;
+    private GoalProgressRepository goalProgressRepo;
 
     private UserProfile user;
 
@@ -69,21 +72,19 @@ public class WaterUsageFragment extends Fragment {
     private final int[] daysInMonth = {31, calendar.get(Calendar.YEAR) % 4 == 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
     private String[] dataRange;
-
     private String viewRange;
-
     private List<DailyUsage> data = new ArrayList<>();
-
     private BarChart barChart;
 
     float avg;
-
     float target;
-
     float goalValue;
-
     GoalType goalType;
 
+    // small helper to avoid repeating log tag
+    private static final String TAG = "WaterUsageFragment";
+
+    @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         WaterUsageViewModel waterusageViewModel =
@@ -92,159 +93,123 @@ public class WaterUsageFragment extends Fragment {
         binding = FragmentWaterUsageBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        Context context = requireContext(); // or getContext(), if you know it's non-null
+        Context context = requireContext();
 
         repo = new WaterUsageRepository();
-        UserProfileRepository userProfileRepo = new UserProfileRepository();
-        GoalProgressRepository goalProgressRepo = new GoalProgressRepository();
+        userProfileRepo = new UserProfileRepository();
+        goalProgressRepo = new GoalProgressRepository();
 
-        new Thread(() -> {
-            SharedPreferences prefs = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
-            String userEmail = prefs.getString("username", null);
+        // set defaults
+        viewRange = "week";
+        binding.graphToggle.check(R.id.week);
 
-            if (userEmail == null) {
-                requireActivity().runOnUiThread(() ->
-                        Toast.makeText(requireContext(), "User not logged in", Toast.LENGTH_LONG).show());
-                return;
-            }
+        loadAllDataAndBuildUI();
 
-            final UserProfile[] user = new UserProfile[1];
-             userProfileRepo.getUserByEmail(userEmail, snapshot -> {
-                 if (!snapshot.isEmpty())
-                 {
-                     user[0] = snapshot.getDocuments().get(0).toObject(UserProfile.class);
-                 }
-             });
-
-            if (user[0] == null) {
-                requireActivity().runOnUiThread(() ->
-                        Toast.makeText(requireContext(), "User not found. Please log in.", Toast.LENGTH_LONG).show());
-                return;
-            }
-
-
-            long[] dailyWindow = HomeFragment.computeTodayWindow();
-            long[] weeklyWindow = HomeFragment.computeCurrentWeekWindow();
-            long[] monthlyWindow = HomeFragment.computeCurrentMonthWindow();
-            final GoalProgress[] goalProgress = new GoalProgress[1];
-            goalProgressRepo.getMonthlyProgress(user[0].getEmail(), new Date(monthlyWindow[0]), new Date(monthlyWindow[1]), snapshot -> {
-                if (!snapshot.isEmpty()) {
-                    goalProgress[0] = snapshot.getDocuments().get(0).toObject(GoalProgress.class);
-                }
-            });
-            if(goalProgress[0] == null) {
-                Log.d("TEST", "goalProgress is null");
-            }
-
-            float targetValue = goalProgress != null ? goalProgress[0].getGoalAmount() : 100f;
-            goalValue = targetValue;
-            goalType = user[0].getGoalType();
-            adjustTarget();
-
-            final float[] litersUsed = new float[1];
-            repo.getLitersUsedBetween(user[0].getEmail(), dailyWindow[0], dailyWindow[1], snapshot -> {
-                if (!snapshot.isEmpty()) {
-                    WaterUsage usage = snapshot.getDocuments().get(0).toObject(WaterUsage.class);
-                    litersUsed[0] = (float) usage.getAmount();
-                    // Now you can use todayProgress[0]
-                }
-            });
-            Log.d("TEST", "litersUsed: " + litersUsed[0]);
-            // This needs to be fixed later. There is a better way to obtain weekly/monthly usage instead of
-            // this implementation. For I just matched it with firebase, but Mathangi when you work on the backend
-            // you can use the "getLitersUsedBetween" method in the water usage repo and update the "getSublistByViewRange"
-            // method accordingly. You can also use the helper methods in HomeFragment "computeTodayWindow", "computeCurrentWeekWindow",
-            // and "computeCurrentMonthWindow" to actually use the method i told you about in the water usage repo, because for daily usage
-            // i calculate it as the water you used from 12 AM to 11:59 PM, weekly is from Monday to the next Sunday 11:59 PM, and Monthly is
-            // from day one of the month 12 AM to the last day of the month 11:59 PM.
-
-            // You can also use the Reports db entity to help do this as it should automatically populate every day, week, and month (see ReportsWorker file for more details), and from it
-            // you can grab stuff like info on water used in a day, week, and month and whether a goal was met or not.
-
-            // Use that info and ChatGPT to help you fix the backend of this page.
-
-            final List<DailyUsage>[] usageData = new List[]{new ArrayList<>()};
-            repo.getAllDailyUsageForUser(user[0].getEmail(), snapshot ->
-            {
-                for (DocumentSnapshot doc: snapshot) {
-                    DailyUsage usage = doc.toObject(DailyUsage.class);
-                    usageData[0].add(usage);
-                }
-            });
-
-            requireActivity().runOnUiThread(() -> {
-
-                barChart = binding.waterGraph;
-                binding.graphToggle.check(R.id.week);
-                viewRange = "week";
-                data = usageData[0];
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-
-                dataRange = setDateRange(sdf.format(curCalendar.getTime()), viewRange);
-                List<DailyUsage> sublist = getSublistByViewRange(data, dataRange);
-                List<BarEntry> entries = convertDailyUsageToBarEntries(sublist);
-                Log.d("TEST", "dataRange: " + Arrays.toString(dataRange));
-                createBarGraphWithDailyUsage(entries, viewRange, dataRange);
-            });
-        }).start();
-
-
-        binding.buttonBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                backPress();
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-                List<DailyUsage> sublist = getSublistByViewRange(data, dataRange);
-                List<BarEntry> entries = convertDailyUsageToBarEntries(sublist);
-                Log.d("TEST", "dataRange: " + Arrays.toString(dataRange));
-                createBarGraphWithDailyUsage(entries, viewRange, dataRange);
-            }
+        // navigation buttons
+        binding.buttonBack.setOnClickListener(v -> {
+            backPress();
+            refreshChartFromCurrentData();
+        });
+        binding.buttonForward.setOnClickListener(v -> {
+            forwardPress();
+            refreshChartFromCurrentData();
         });
 
-        binding.buttonForward.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                forwardPress();
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-                List<DailyUsage> sublist = getSublistByViewRange(data, dataRange);
-                List<BarEntry> entries = convertDailyUsageToBarEntries(sublist);
-                Log.d("TEST", "dataRange: " + Arrays.toString(dataRange));
-                createBarGraphWithDailyUsage(entries, viewRange, dataRange);
-            }
-        });
+        binding.graphToggle.addOnButtonCheckedListener((MaterialButtonToggleGroup.OnButtonCheckedListener) (group, checkedId, isChecked) -> {
+            if (!isChecked) return;
+            if (checkedId == R.id.day) viewRange = "day";
+            else if (checkedId == R.id.week) viewRange = "week";
+            else if (checkedId == R.id.month) viewRange = "month";
+            else if (checkedId == R.id.year) viewRange = "year";
 
-
-
-        binding.graphToggle.addOnButtonCheckedListener(new MaterialButtonToggleGroup.OnButtonCheckedListener() {
-            @Override
-            public void onButtonChecked(MaterialButtonToggleGroup group, int checkedId, boolean isChecked) {
-                if (isChecked) {
-                    if (checkedId == R.id.day) {
-                        viewRange = "day";
-                    } else if (checkedId == R.id.week) {
-                        viewRange = "week";
-                    } else if (checkedId == R.id.month) {
-                        viewRange = "month";
-                    } else if (checkedId == R.id.year) {
-                        viewRange = "year";
-                    }
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-                    dataRange = setDateRange(sdf.format(curCalendar.getTime()), viewRange);
-                    List<DailyUsage> sublist = getSublistByViewRange(data, dataRange);
-                    List<BarEntry> entries = convertDailyUsageToBarEntries(sublist);
-                    Log.d("TEST", "dataRange: " + Arrays.toString(dataRange));
-                    createBarGraphWithDailyUsage(entries, viewRange, dataRange);
-                }
-            }
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+            dataRange = setDateRange(sdf.format(curCalendar.getTime()), viewRange);
+            refreshChartFromCurrentData();
         });
 
         return root;
     }
 
+    /**
+     * Top-level loader: fetch user -> goalProgress -> daily usages -> build chart
+     */
+    private void loadAllDataAndBuildUI() {
+        SharedPreferences prefs = requireActivity().getSharedPreferences("UserProfile", Context.MODE_PRIVATE);
+        String userEmail = prefs.getString("username", null);
+
+        if (userEmail == null) {
+            Toast.makeText(requireContext(), "User not logged in", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // 1) get user
+        userProfileRepo.getUserByEmail(userEmail, (QuerySnapshot userSnapshot) -> {
+            if (userSnapshot == null || userSnapshot.isEmpty()) {
+                requireActivity().runOnUiThread(() ->
+                        Toast.makeText(requireContext(), "User not found. Please log in.", Toast.LENGTH_LONG).show());
+                return;
+            }
+
+            DocumentSnapshot userDoc = userSnapshot.getDocuments().get(0);
+            user = userDoc.toObject(UserProfile.class);
+            if (user == null) {
+                requireActivity().runOnUiThread(() ->
+                        Toast.makeText(requireContext(), "User not found. Please log in.", Toast.LENGTH_LONG).show());
+                return;
+            }
+
+            // 2) load goalProgress for current month (async)
+            long[] monthlyWindow = HomeFragment.computeCurrentMonthWindow();
+            goalProgressRepo.getMonthlyProgress(user.getEmail(), new Date(monthlyWindow[0]), new Date(monthlyWindow[1]), (QuerySnapshot gpSnapshot) -> {
+                GoalProgress gp = null;
+                if (gpSnapshot != null && !gpSnapshot.isEmpty()) {
+                    gp = gpSnapshot.getDocuments().get(0).toObject(GoalProgress.class);
+                }
+
+                goalValue = (gp != null) ? gp.getGoalAmount() : 100f;
+                goalType = (user.getGoalType() != null) ? user.getGoalType() : GoalType.DAILY;
+                adjustTarget();
+
+                // 3) load all daily usage for user
+                repo.getAllDailyUsageForUser(user.getEmail(), (QuerySnapshot usageSnapshot) -> {
+                    List<DailyUsage> usageList = new ArrayList<>();
+                    if (usageSnapshot != null && !usageSnapshot.isEmpty()) {
+                        for (DocumentSnapshot doc : usageSnapshot.getDocuments()) {
+                            DailyUsage du = doc.toObject(DailyUsage.class);
+                            if (du != null) usageList.add(du);
+                        }
+                    }
+                    // assign to field and update UI on main thread
+                    data = usageList;
+                    requireActivity().runOnUiThread(() -> {
+                        // initial viewRange already set
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+                        dataRange = setDateRange(sdf.format(curCalendar.getTime()), viewRange);
+                        List<DailyUsage> sublist = getSublistByViewRange(data, dataRange);
+                        List<BarEntry> entries = convertDailyUsageToBarEntries(sublist);
+                        barChart = binding.waterGraph;
+                        createBarGraphWithDailyUsage(entries, viewRange, dataRange);
+                    });
+                });
+            });
+        });
+    }
+
+    // small helper to regenerate chart using current data/dataRange/viewRange
+    private void refreshChartFromCurrentData() {
+        if (data == null) return;
+        if (dataRange == null) {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+            dataRange = setDateRange(sdf.format(curCalendar.getTime()), viewRange);
+        }
+        List<DailyUsage> sublist = getSublistByViewRange(data, dataRange);
+        List<BarEntry> entries = convertDailyUsageToBarEntries(sublist);
+        createBarGraphWithDailyUsage(entries, viewRange, dataRange);
+    }
+
     public void backPress() {
         if (dataRange == null || dataRange.length < 2) return;
 
-        // Save old dates to revert if needed
         String oldStart = dataRange[0];
         String oldEnd = dataRange[1];
 
@@ -257,7 +222,7 @@ public class WaterUsageFragment extends Fragment {
             endCal.setTime(sdf.parse(dataRange[1]));
         } catch (ParseException e) {
             e.printStackTrace();
-            return;  // Parsing failed, exit
+            return;
         }
 
         switch (viewRange) {
@@ -285,12 +250,10 @@ public class WaterUsageFragment extends Fragment {
         dataRange[0] = sdf.format(startCal.getTime());
         dataRange[1] = sdf.format(endCal.getTime());
 
-        // Check if both dates are valid indexes
         int startIndex = findDailyUsageIndex(data, dataRange[0]);
         int endIndex = findDailyUsageIndex(data, dataRange[1]);
 
         if (startIndex == -1 && endIndex == -1) {
-            // Revert changes because both dates not found
             dataRange[0] = oldStart;
             dataRange[1] = oldEnd;
         }
@@ -298,14 +261,11 @@ public class WaterUsageFragment extends Fragment {
 
     public boolean isLeapYear(String dateString) {
         try {
-            // Extract the year from the date string (e.g., "2024-02-29")
             int year = Integer.parseInt(dateString.substring(0, 4));
-
-            // Leap year logic
             return (year % 4 == 0) && ((year % 100 != 0) || (year % 400 == 0));
         } catch (Exception e) {
             e.printStackTrace();
-            return false; // Invalid date format
+            return false;
         }
     }
 
@@ -313,11 +273,15 @@ public class WaterUsageFragment extends Fragment {
         float targetValue = goalValue;
         switch (goalType) {
             case DAILY:
+                // daily target = goalValue (no change)
                 break;
             case WEEKLY:
-                targetValue /= 7.0;
+                targetValue = targetValue / 7.0f;
+                break;
             case MONTHLY:
-                targetValue /= daysInMonth[calendar.get(Calendar.MONTH)];
+                targetValue = targetValue / daysInMonth[calendar.get(Calendar.MONTH)];
+                break;
+            default:
                 break;
         }
         target = targetValue;
@@ -326,7 +290,6 @@ public class WaterUsageFragment extends Fragment {
     public void forwardPress() {
         if (dataRange == null || dataRange.length < 2) return;
 
-        // Save old dates to revert if needed
         String oldStart = dataRange[0];
         String oldEnd = dataRange[1];
 
@@ -339,7 +302,7 @@ public class WaterUsageFragment extends Fragment {
             endCal.setTime(sdf.parse(dataRange[1]));
         } catch (ParseException e) {
             e.printStackTrace();
-            return;  // Parsing failed, exit
+            return;
         }
 
         switch (viewRange) {
@@ -347,23 +310,19 @@ public class WaterUsageFragment extends Fragment {
                 startCal.add(Calendar.DAY_OF_MONTH, 1);
                 endCal.setTime(startCal.getTime());
                 break;
-
             case "week":
                 startCal.add(Calendar.WEEK_OF_YEAR, 1);
                 endCal.add(Calendar.WEEK_OF_YEAR, 1);
                 break;
-
             case "month":
                 startCal.add(Calendar.MONTH, 1);
                 endCal.add(Calendar.MONTH, 1);
                 adjustTarget();
                 break;
-
             case "year":
                 startCal.add(Calendar.YEAR, 1);
                 endCal.add(Calendar.YEAR, 1);
                 break;
-
             default:
                 return;
         }
@@ -371,16 +330,11 @@ public class WaterUsageFragment extends Fragment {
         dataRange[0] = sdf.format(startCal.getTime());
         dataRange[1] = sdf.format(endCal.getTime());
 
-        // Check if both dates are valid indexes
         int startIndex = findDailyUsageIndex(data, dataRange[0]);
         int endIndex = findDailyUsageIndex(data, dataRange[1]);
         String today = sdf.format(Calendar.getInstance().getTime());
-        Log.d("TEST", "today: " + today);
-        Log.d("TEST", "dataRange[0]: " + dataRange[0]);
-        Log.d("TEST", "dataRange[1]: " + dataRange[1]);
 
         if (startIndex == -1 && endIndex == -1 && !(oldEnd.compareTo(sdf.format(Calendar.getInstance().getTime())) < 0)) {
-            // Revert changes because both dates not found
             dataRange[0] = oldStart;
             dataRange[1] = oldEnd;
         }
@@ -395,33 +349,30 @@ public class WaterUsageFragment extends Fragment {
             Date current = sdf.parse(currentDate);
             Date start = sdf.parse(dataRange[0]);
             Date end = sdf.parse(dataRange[1]);
-
-            // Check if current >= start && current <= end
             return !current.before(start) && !current.after(end);
-
         } catch (ParseException e) {
             e.printStackTrace();
-            return false;  // Parsing failed means no match
+            return false;
         }
     }
 
     private void createBarGraphWithDailyUsage(List<BarEntry> dataToUse, String timeWindow, String[] dataRange) {
-        if (barChart == null || dataToUse == null || dataToUse.isEmpty()) return;
+        if (binding == null || binding.waterGraph == null) return;
+        if (dataToUse == null) dataToUse = new ArrayList<>();
+        if (barChart == null) barChart = binding.waterGraph;
 
         barChart.clear();
-        float targetValue = (float) (viewRange == "year" ? (isLeapYear(dataRange[0]) ? target*366.0/12.0 : target*365/12.0) : target);
+        float targetValue = (float) ( "year".equals(viewRange) ? (isLeapYear(dataRange[0]) ? target*366.0/12.0 : target*365/12.0) : target);
 
         YAxis rightAxis = barChart.getAxisRight();
         YAxis leftAxis = barChart.getAxisLeft();
         leftAxis.removeAllLimitLines();
         rightAxis.removeAllLimitLines();
 
-
         TypedValue typedValue = new TypedValue();
         requireContext().getTheme().resolveAttribute(R.attr.colorPrimary, typedValue, true);
         int colorPrimary = typedValue.data;
 
-        // Set up bar dataset
         BarDataSet dataSet = new BarDataSet(dataToUse, "Water Usage");
         dataSet.setColor(colorPrimary);
         dataSet.setValueTextColor(Color.BLACK);
@@ -430,16 +381,13 @@ public class WaterUsageFragment extends Fragment {
         BarData barData = new BarData(dataSet);
         barChart.setData(barData);
 
-        // Configure axes
-
         leftAxis.setAxisMinimum(0f);
         rightAxis.setAxisMinimum(0f);
 
-        float maxY = getMaxY(dataToUse);  // Custom helper to find max usage
+        float maxY = getMaxY(dataToUse);
         float upperLimit = Math.max(Math.max(avg, targetValue), maxY) + 20;
         leftAxis.setAxisMaximum(upperLimit);
         rightAxis.setAxisMaximum(upperLimit);
-
 
         final String[] labels;
         String labelText;
@@ -450,25 +398,13 @@ public class WaterUsageFragment extends Fragment {
 
         switch (timeWindow) {
             case "day":
-                labels = new String[] {formatDateLabel(dataRange[0])};
-
-                if(isDateWithinRange(today)) {
-                    labelText = "Today";
-                } else {
-                    labelText = formatDateLabel(dataRange[0]);
-                }
+                labels = new String[] { formatDateLabel(dataRange[0]) };
+                labelText = isDateWithinRange(today) ? "Today" : formatDateLabel(dataRange[0]);
                 break;
-
             case "week":
                 labels = days;
-                if(isDateWithinRange(today)) {
-                    labelText = "This Week";
-                } else {
-                    labelText = formatDateLabel(dataRange[0]) + " - " + formatDateLabel(dataRange[1]);
-
-                }
+                labelText = isDateWithinRange(today) ? "This Week" : formatDateLabel(dataRange[0]) + " - " + formatDateLabel(dataRange[1]);
                 break;
-
             case "month":
                 labels = new String[] {
                         "1", "", "", "", "", "", "",
@@ -480,12 +416,10 @@ public class WaterUsageFragment extends Fragment {
                 };
                 labelText = formatMonthLabel(dataRange[0]);
                 break;
-
             case "year":
                 labels = months;
                 labelText = formatYearLabel(dataRange[0]);
                 break;
-
             default:
                 labels = new String[dataToUse.size()];
                 Arrays.fill(labels, "");
@@ -495,8 +429,6 @@ public class WaterUsageFragment extends Fragment {
 
         setLabelText(labelText);
 
-        Log.d("DEBUG", "MADE IT");
-        // 6. Configure X-axis
         XAxis xAxis = barChart.getXAxis();
         xAxis.setDrawGridLines(false);
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
@@ -505,9 +437,8 @@ public class WaterUsageFragment extends Fragment {
         xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
 
         int targetColor = Color.argb(255, 229, 57, 53);
-
         int avgColor = Color.argb(128, 0, 0, 0);
-        // 5. Add average and target limit lines
+
         LimitLine avgLine = new LimitLine(avg, "");
         avgLine.setLineColor(avgColor);
         avgLine.setLineWidth(2f);
@@ -525,9 +456,6 @@ public class WaterUsageFragment extends Fragment {
         leftAxis.addLimitLine(avgLine);
         leftAxis.addLimitLine(targetLine);
 
-        // 7. Enable both Y axes
-
-
         leftAxis.setEnabled(true);
         rightAxis.setEnabled(true);
 
@@ -536,14 +464,14 @@ public class WaterUsageFragment extends Fragment {
         barChart.setExtraLeftOffset(10f);
         barChart.setExtraRightOffset(10f);
         barChart.getLegend().setEnabled(false);
-        barChart.getBarData().setDrawValues(false);
+        if (barChart.getBarData() != null) barChart.getBarData().setDrawValues(false);
         barChart.getDescription().setEnabled(false);
         barChart.invalidate();
     }
 
-    // Helper function to get max y from BarEntry list
     private float getMaxY(List<BarEntry> entries) {
         float max = 0f;
+        if (entries == null) return max;
         for (BarEntry entry : entries) {
             if (entry.getY() > max) max = entry.getY();
         }
@@ -551,6 +479,7 @@ public class WaterUsageFragment extends Fragment {
     }
 
     public void setLegend(String dataLabel, String avgLabel, String targetLabel, int dataColor, int avgColor, int targetColor) {
+        if (binding == null || binding.legend == null) return;
         TextView legendWaterUsageText = binding.legend.legendWaterUsageText;
         TextView legendAverageText = binding.legend.legendAverageText;
         TextView legendTargetText = binding.legend.legendTargetText;
@@ -565,13 +494,11 @@ public class WaterUsageFragment extends Fragment {
         legendTargetIcon.setBackgroundColor(targetColor);
     }
 
-
     public List<BarEntry> convertDailyUsageToBarEntries(List<DailyUsage> dailyUsageList) {
         if (dailyUsageList == null || dailyUsageList.isEmpty()) {
             return new ArrayList<>();
         }
 
-        // First, sort the list by date ascending (assuming format YYYY-MM-DD lex order works)
         Collections.sort(dailyUsageList, new Comparator<DailyUsage>() {
             @Override
             public int compare(DailyUsage d1, DailyUsage d2) {
@@ -590,42 +517,33 @@ public class WaterUsageFragment extends Fragment {
         return barEntries;
     }
 
-    // Converts "YYYY-MM-DD" to "Jul 19"
     private String formatDateLabel(String date) {
-        // date format YYYY-MM-DD
         String[] parts = date.split("-");
-        if (parts.length != 3) return date; // fallback
-
+        if (parts.length != 3) return date;
         int month = Integer.parseInt(parts[1]);
         int day = Integer.parseInt(parts[2]);
-
-        String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-
         return months[month - 1] + " " + day;
     }
 
-    // Converts "YYYY-MM-DD" to "Jul"
     private String formatMonthLabel(String date) {
         String[] parts = date.split("-");
         if (parts.length != 3) return date;
-
         int month = Integer.parseInt(parts[1]);
-        String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
         return months[month - 1];
     }
 
-    // Converts "YYYY-MM-DD" to "YYYY"
     private String formatYearLabel(String date) {
         String[] parts = date.split("-");
         if (parts.length != 3) return date;
-
         return parts[0];
     }
+
     public List<DailyUsage> getSublistByViewRange(List<DailyUsage> dailyUsageList, String[] dataRange) {
+        List<DailyUsage> result = new ArrayList<>();
+        if (dataRange == null || dataRange.length < 2) return result;
+
         String startDate = dataRange[0];
         String endDate = dataRange[1];
-
-        List<DailyUsage> result = new ArrayList<>();
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
         Calendar startCal = Calendar.getInstance();
@@ -640,14 +558,21 @@ public class WaterUsageFragment extends Fragment {
         }
 
         if (dailyUsageList == null || dailyUsageList.isEmpty()) {
+            // still build zero entries across the date range
+            Calendar iterCal = (Calendar) startCal.clone();
+            while (!iterCal.after(endCal)) {
+                result.add(new DailyUsage(sdf.format(iterCal.getTime()), 0f));
+                iterCal.add(Calendar.DAY_OF_MONTH, 1);
+            }
+            // set stats to zero
+            avg = 0f;
+            setStatistics(0f, 0f, 0f);
             return result;
         }
 
         if ("year".equals(viewRange)) {
-            // Initialize array for 12 months (0 = Jan, ..., 11 = Dec)
             float[] monthSums = new float[12];
             boolean[] monthSeen = new boolean[12];
-
             float low = Float.MAX_VALUE;
             float high = Float.MIN_VALUE;
             float sum = 0f;
@@ -671,9 +596,7 @@ public class WaterUsageFragment extends Fragment {
             for (int i = 0; i < 12; i++) {
                 String labelDate = String.format(Locale.US, "%04d-%02d-01", startCal.get(Calendar.YEAR), i + 1);
                 float monthlyTotal = monthSums[i];
-
                 result.add(new DailyUsage(labelDate, monthlyTotal));
-
                 if (monthSeen[i]) {
                     low = Math.min(low, monthlyTotal);
                     high = Math.max(high, monthlyTotal);
@@ -684,13 +607,10 @@ public class WaterUsageFragment extends Fragment {
 
             Float newAvg = (count > 0) ? (sum / count) : null;
             avg = newAvg == null ? 0 : newAvg;
-            setStatistics(low, high, newAvg);
-
-            Log.d("UsageStats", "Low (monthly): " + low + ", High (monthly): " + high + ", Avg (monthly): " + avg);
+            setStatistics(low == Float.MAX_VALUE ? 0f : low, high == Float.MIN_VALUE ? 0f : high, newAvg);
             return result;
         }
 
-        // Otherwise, default (daily) behavior
         Map<String, DailyUsage> usageMap = new HashMap<>();
         float low = Float.MAX_VALUE;
         float high = Float.MIN_VALUE;
@@ -715,30 +635,23 @@ public class WaterUsageFragment extends Fragment {
 
         Float newAvg = (count > 0) ? (sum / count) : null;
         avg = newAvg == null ? 0 : newAvg;
-        setStatistics(low, high, newAvg);
-
-        Log.d("UsageStats", "Low: " + low + ", High: " + high + ", Avg: " + avg);
+        setStatistics(low == Float.MAX_VALUE ? 0f : low, high == Float.MIN_VALUE ? 0f : high, newAvg);
 
         Calendar iterCal = (Calendar) startCal.clone();
         while (!iterCal.after(endCal)) {
             String dateStr = sdf.format(iterCal.getTime());
             DailyUsage du = usageMap.get(dateStr);
-            if (du != null) {
-                result.add(new DailyUsage(du));
-            } else {
-                result.add(new DailyUsage(dateStr, 0f));
-            }
+            if (du != null) result.add(new DailyUsage(du));
+            else result.add(new DailyUsage(dateStr, 0f));
             iterCal.add(Calendar.DAY_OF_MONTH, 1);
         }
 
         return result;
     }
 
-
     public String[] setDateRange(String currentDay, String viewRange) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
         Calendar cal = Calendar.getInstance();
-
         try {
             Date date = sdf.parse(currentDay);
             cal.setTime(date);
@@ -748,78 +661,63 @@ public class WaterUsageFragment extends Fragment {
         }
 
         String startDate, endDate;
-
         switch (viewRange.toLowerCase()) {
             case "day":
                 startDate = currentDay;
                 endDate = currentDay;
                 break;
-
             case "week":
-                cal.set(Calendar.DAY_OF_WEEK, cal.getFirstDayOfWeek()); // typically Sunday
+                cal.set(Calendar.DAY_OF_WEEK, cal.getFirstDayOfWeek());
                 startDate = sdf.format(cal.getTime());
                 cal.add(Calendar.DAY_OF_WEEK, 6);
                 endDate = sdf.format(cal.getTime());
                 break;
-
             case "month":
                 cal.set(Calendar.DAY_OF_MONTH, 1);
                 startDate = sdf.format(cal.getTime());
                 cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH));
                 endDate = sdf.format(cal.getTime());
                 break;
-
             case "year":
                 cal.set(Calendar.DAY_OF_YEAR, 1);
                 startDate = sdf.format(cal.getTime());
                 cal.set(Calendar.DAY_OF_YEAR, cal.getActualMaximum(Calendar.DAY_OF_YEAR));
                 endDate = sdf.format(cal.getTime());
                 break;
-
             default:
                 startDate = currentDay;
                 endDate = currentDay;
                 break;
         }
-
         return new String[] {startDate, endDate};
     }
 
     public int findDailyUsageIndex(List<DailyUsage> dailyUsageList, String targetDay) {
-        if (dailyUsageList == null || targetDay == null) {
-            return -1;
-        }
+        if (dailyUsageList == null || targetDay == null) return -1;
         for (int i = 0; i < dailyUsageList.size(); i++) {
             DailyUsage dailyUsage = dailyUsageList.get(i);
-            if (targetDay.equals(dailyUsage.getDay())) {  // assuming getDay() returns a String like "YYYY-MM-DD"
-                return i;
-            }
+            if (targetDay.equals(dailyUsage.getDay())) return i;
         }
-        return -1; // not found
+        return -1;
     }
 
     public void setLabelText(String s) {
-        binding.labelText.setText(s);
+        if (binding != null) binding.labelText.setText(s);
     }
 
     public void setStatistics(float low, float high, Float avgValue) {
-        if (avgValue == null) {
-            avgValue = 0f;
-        }
-        if (low == Float.MAX_VALUE) {
-            low = 0f;
-        }
-        if (high == Float.MIN_VALUE) {
-            high = 0f;
-        }
+        if (binding == null || binding.statistics == null) return;
+        if (avgValue == null) avgValue = 0f;
+        if (low == Float.MAX_VALUE) low = 0f;
+        if (high == Float.MIN_VALUE) high = 0f;
         binding.statistics.low.setText("Low: " + String.format("%.2f", low));
         binding.statistics.high.setText("High: " + String.format("%.2f", high));
         binding.statistics.avg.setText("Avg: " + String.format("%.2f", avgValue));
     }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
     }
-
 }

@@ -94,27 +94,27 @@ public class HomeFragment extends Fragment {
         Button undoButton = view.findViewById(R.id.undoButton);
 
 
-        ImageView showerIcon = view.findViewById(R.id.showerIcon);
-        ImageView washerIcon = view.findViewById(R.id.washerIcon);
-        ImageView sprinklerIcon = view.findViewById(R.id.sprinklerIcon);
-        ImageView otherIcon = view.findViewById(R.id.otherIcon);
+        ImageView shower_icon = view.findViewById(R.id.shower_icon);
+        ImageView washer_icon = view.findViewById(R.id.washer_icon);
+        ImageView sprinkler_icon = view.findViewById(R.id.sprinkler_icon);
+        ImageView other_icon = view.findViewById(R.id.other_icon);
 
         // Load images from assets (only if using dynamic loading)
         Glide.with(this)
                 .load("file:///android_asset/shower-icon.png")
-                .into(showerIcon);
+                .into(shower_icon);
 
         Glide.with(this)
                 .load("file:///android_asset/washer-icon.png")
-                .into(washerIcon);
+                .into(washer_icon);
 
         Glide.with(this)
                 .load("file:///android_asset/sprinkler-icon.png")
-                .into(sprinklerIcon);
+                .into(sprinkler_icon);
 
         Glide.with(this)
                 .load("file:///android_asset/other-icon.png")
-                .into(otherIcon);
+                .into(other_icon);
 
         // Get LinearLayouts for clickable areas
         LinearLayout showerButton = view.findViewById(R.id.showerButton);
