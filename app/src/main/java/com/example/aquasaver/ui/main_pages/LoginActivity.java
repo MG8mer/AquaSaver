@@ -8,12 +8,20 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.aquasaver.repository.UserProfileRepository;
-import com.example.aquasaver.model.UserProfile;
 import com.example.aquasaver.R;
+import com.example.aquasaver.model.UserProfile;
+import com.example.aquasaver.repository.UserProfileRepository;
 import com.example.aquasaver.ui.main_pages.utility.PasswordUtils;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.concurrent.Executors;
 
@@ -21,20 +29,20 @@ public class LoginActivity extends AppCompatActivity {
     EditText username, password;
     Button loginBtn, signupBtn;
 
+    private UserProfileRepository userProfileRepo;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        // Connect UI components
         username = findViewById(R.id.username);
         password = findViewById(R.id.password);
         loginBtn = findViewById(R.id.loginBtn);
         signupBtn = findViewById(R.id.signupBtn);
 
-        UserProfileRepository userProfileRepo = new UserProfileRepository();
+        userProfileRepo = new UserProfileRepository();
 
-        // Handle Login button click
         loginBtn.setOnClickListener(v -> {
             String user = username.getText().toString().trim();
             String pass = password.getText().toString().trim();
@@ -45,49 +53,58 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             Executors.newSingleThreadExecutor().execute(() -> {
-                // Query DB for user with email and password
                 userProfileRepo.getUserProfilesByEmail(user, snapshot -> {
                     if (!snapshot.isEmpty()) {
                         UserProfile existingUser = snapshot.getDocuments().get(0).toObject(UserProfile.class);
-                        String inputPassword = pass;
-                        boolean isMatch = PasswordUtils.verifyPassword(inputPassword, existingUser.getSalt(), existingUser.getPasswordHash());
 
-                        if (isMatch)
-                        {
-                            runOnUiThread(() -> {
-                                Log.d("LoginActivity", "Login success: user=" + existingUser.getEmail());
+                        boolean isMatch = PasswordUtils.verifyPassword(pass, existingUser.getSalt(), existingUser.getPasswordHash());
 
-                                // Save user info in SharedPreferences for later use
+                        runOnUiThread(() -> {
+                            if (isMatch) {
+
                                 SharedPreferences prefs = getSharedPreferences("UserProfile", MODE_PRIVATE);
                                 prefs.edit()
                                         .putString("username", existingUser.getEmail())
-                                        .putString("location", existingUser.getLocation())
+                                        .putString("goal", existingUser.getGoalType().toString())
                                         .apply();
+                                FirebaseAuth.getInstance().signInWithEmailAndPassword(user, pass)
+                                        .addOnCompleteListener(task -> {
+                                            if (task.isSuccessful()) {
+                                                FirebaseUser app_user = FirebaseAuth.getInstance().getCurrentUser();
+                                                Log.d("LoginActivity", "Login successful. User: " +
+                                                        (app_user != null ? app_user.getEmail() : "null"));
 
+                                                // Don't navigate immediately - wait for auth state
+                                                FirebaseAuth.getInstance().addAuthStateListener(authStateListener -> {
+                                                    FirebaseUser currentUser = authStateListener.getCurrentUser();
+                                                    if (currentUser != null) {
+                                                        Log.d("LoginActivity", "Auth state confirmed: " + currentUser.getEmail());
+                                                        // NOW navigate to main activity
+                                                        startActivity(new Intent(this, MainActivity.class));
+                                                        finish();
+                                                    }
+                                                });
+                                            }
+                                        });
                                 Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show();
 
-                                // Navigate to MainActivity and finish LoginActivity
                                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                                 startActivity(intent);
                                 finish();
-                            });
-                        }
-                        else {
-                            Log.d("LoginActivity", "Login failure: user not found for username=" + user);
-                            Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show();
-                        }
+                            } else {
+                                Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    } else {
+                        runOnUiThread(() -> Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show());
                     }
                 });
             });
         });
 
-        // Handle Signup button click
         signupBtn.setOnClickListener(v -> {
-            // Clear previous user data if any
             getSharedPreferences("UserProfile", MODE_PRIVATE).edit().clear().apply();
-
-            Intent intent = new Intent(LoginActivity.this, SignupActivity.class);
-            startActivity(intent);
+            startActivity(new Intent(LoginActivity.this, SignupActivity.class));
         });
     }
 }

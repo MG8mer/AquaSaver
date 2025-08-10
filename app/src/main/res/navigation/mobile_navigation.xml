@@ -20,7 +20,7 @@
 
     <fragment
         android:id="@+id/nav_goals"
-        android:name="com.example.aquasaver.ui.eco.GoalsFragment"
+        android:name="com.example.aquasaver.ui.eco.EcoChallengesFragment"
         android:label="@string/menu_goals"
         tools:layout="@layout/fragment_eco_challenges" />
 

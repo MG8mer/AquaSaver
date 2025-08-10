@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,6 +42,8 @@ import java.util.Map;
 
 public class HomeFragment extends Fragment {
 
+    private static final String TAG = "HomeFragment";
+
     String selectedActivity = null;
     LinearLayout selectedLayout = null;
 
@@ -50,7 +53,7 @@ public class HomeFragment extends Fragment {
     TextView waterUsagePreview;
     String goalType = "DAILY";
     float goal = 400f; // Default daily goal
-    String units;
+    String units = "Liters"; // Initialize units with default value
     String userEmail;
     boolean unDoAble = false;
     String lastLoggedDocumentId = null;
@@ -58,8 +61,27 @@ public class HomeFragment extends Fragment {
     // Firebase instances
     private FirebaseFirestore db;
     private FirebaseAuth auth;
+    private FirebaseAuth.AuthStateListener authStateListener;
 
     public HomeFragment() {}
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Re-check authentication when fragment starts
+        if (auth != null && authStateListener != null) {
+            auth.addAuthStateListener(authStateListener);
+        }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        // Remove auth listener to prevent memory leaks
+        if (auth != null && authStateListener != null) {
+            auth.removeAuthStateListener(authStateListener);
+        }
+    }
 
     @Nullable
     @Override
@@ -71,35 +93,71 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        Log.d(TAG, "onViewCreated called");
+        debugAuthState();
+
         // Initialize Firebase
         db = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();
 
-        // Get current user
-        FirebaseUser currentUser = auth.getCurrentUser();
-        if (currentUser != null) {
-            userEmail = currentUser.getEmail();
-        } else {
-            Toast.makeText(requireContext(), "User not logged in", Toast.LENGTH_LONG).show();
-            return;
+        // Wait for authentication state to be ready
+        authStateListener = firebaseAuth -> {
+            FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+            if (currentUser != null) {
+                userEmail = currentUser.getEmail();
+                Log.d(TAG, "User authenticated: " + userEmail);
+
+                // Initialize UI only after user is confirmed
+                if (userEmail != null && !userEmail.isEmpty()) {
+                    initializeUI(view);
+                } else {
+                    Log.e(TAG, "User email is null or empty");
+                    Toast.makeText(requireContext(), "User email not available", Toast.LENGTH_LONG).show();
+                }
+            } else {
+                Log.e(TAG, "No authenticated user found");
+                Toast.makeText(requireContext(), "User not logged in", Toast.LENGTH_LONG).show();
+                // Optionally redirect to login screen here
+            }
+        };
+
+        auth.addAuthStateListener(authStateListener);
+
+        // Also try immediate check in case user is already available
+        FirebaseUser immediateUser = auth.getCurrentUser();
+        if (immediateUser != null && immediateUser.getEmail() != null) {
+            userEmail = immediateUser.getEmail();
+            Log.d(TAG, "Immediate user check successful: " + userEmail);
+            initializeUI(view);
         }
+    }
+
+    private void initializeUI(@NonNull View view) {
+        Log.d(TAG, "Initializing UI for user: " + userEmail);
 
         // Initialize views
         pieChart = view.findViewById(R.id.pieChart);
         timerLabel = view.findViewById(R.id.timerLabel);
         waterUsagePreview = view.findViewById(R.id.waterUsagePreview);
+
         Button incrementButton = view.findViewById(R.id.incrementTimer);
         Button decrementButton = view.findViewById(R.id.decrementTimer);
         Button logWaterUsage = view.findViewById(R.id.logWaterUsageButton);
         Button undoButton = view.findViewById(R.id.undoButton);
 
+        // Check if views are found
+        if (incrementButton == null) Log.e(TAG, "incrementTimer button not found");
+        if (decrementButton == null) Log.e(TAG, "decrementTimer button not found");
+        if (logWaterUsage == null) Log.e(TAG, "logWaterUsageButton not found");
 
         ImageView shower_icon = view.findViewById(R.id.shower_icon);
         ImageView washer_icon = view.findViewById(R.id.washer_icon);
         ImageView sprinkler_icon = view.findViewById(R.id.sprinkler_icon);
         ImageView other_icon = view.findViewById(R.id.other_icon);
 
-        // Load images from assets (only if using dynamic loading)
+        // Load images from drawable resources instead of assets
+        // Remove Glide loading if you're using drawable resources
+        /*
         Glide.with(this)
                 .load("file:///android_asset/shower-icon.png")
                 .into(shower_icon);
@@ -115,6 +173,7 @@ public class HomeFragment extends Fragment {
         Glide.with(this)
                 .load("file:///android_asset/other-icon.png")
                 .into(other_icon);
+        */
 
         // Get LinearLayouts for clickable areas
         LinearLayout showerButton = view.findViewById(R.id.showerButton);
@@ -122,59 +181,126 @@ public class HomeFragment extends Fragment {
         LinearLayout sprinklerButton = view.findViewById(R.id.sprinklerButton);
         LinearLayout otherOption = view.findViewById(R.id.otherOption);
 
-        // Set click listeners for activity selection
-        showerButton.setOnClickListener(v -> setSelectedActivity(showerButton, "Shower"));
-        washerButton.setOnClickListener(v -> setSelectedActivity(washerButton, "Washer"));
-        sprinklerButton.setOnClickListener(v -> setSelectedActivity(sprinklerButton, "Sprinkler"));
+        // Check if activity buttons are found
+        if (showerButton == null) Log.e(TAG, "showerButton not found");
+        if (washerButton == null) Log.e(TAG, "washerButton not found");
+        if (sprinklerButton == null) Log.e(TAG, "sprinklerButton not found");
+        if (otherOption == null) Log.e(TAG, "otherOption not found");
 
-        otherOption.setOnClickListener(v -> {
-            String[] otherActivities = {"Washing Car", "Watering Garden", "Cleaning", "Filling Pool"};
-            AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-            builder.setTitle("Select Activity");
-            builder.setItems(otherActivities, (dialog, which) -> {
-                setSelectedActivity(otherOption, otherActivities[which]);
-                Toast.makeText(requireContext(), "Selected: " + otherActivities[which], Toast.LENGTH_SHORT).show();
+        // Set click listeners for activity selection
+        if (showerButton != null) {
+            showerButton.setOnClickListener(v -> {
+                Log.d(TAG, "Shower button clicked");
+                setSelectedActivity(showerButton, "Shower");
             });
-            builder.setNegativeButton("Cancel", null);
-            builder.show();
-        });
+        }
+
+        if (washerButton != null) {
+            washerButton.setOnClickListener(v -> {
+                Log.d(TAG, "Washer button clicked");
+                setSelectedActivity(washerButton, "Washer");
+            });
+        }
+
+        if (sprinklerButton != null) {
+            sprinklerButton.setOnClickListener(v -> {
+                Log.d(TAG, "Sprinkler button clicked");
+                setSelectedActivity(sprinklerButton, "Sprinkler");
+            });
+        }
+
+        if (otherOption != null) {
+            otherOption.setOnClickListener(v -> {
+                Log.d(TAG, "Other option clicked");
+                String[] otherActivities = {"Washing Car", "Watering Garden", "Cleaning", "Filling Pool"};
+                AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+                builder.setTitle("Select Activity");
+                builder.setItems(otherActivities, (dialog, which) -> {
+                    setSelectedActivity(otherOption, otherActivities[which]);
+                    Toast.makeText(requireContext(), "Selected: " + otherActivities[which], Toast.LENGTH_SHORT).show();
+                });
+                builder.setNegativeButton("Cancel", null);
+                builder.show();
+            });
+        }
 
         // Timer controls
-        incrementButton.setOnClickListener(v -> {
-            timerValue++;
-            updateTimerLabel();
-            setWaterUsagePreview();
-        });
-
-        decrementButton.setOnClickListener(v -> {
-            if (timerValue > 0) {
-                timerValue--;
+        if (incrementButton != null) {
+            incrementButton.setOnClickListener(v -> {
+                Log.d(TAG, "Increment button clicked");
+                timerValue++;
                 updateTimerLabel();
                 setWaterUsagePreview();
-            }
-        });
+            });
+        }
+
+        if (decrementButton != null) {
+            decrementButton.setOnClickListener(v -> {
+                Log.d(TAG, "Decrement button clicked");
+                if (timerValue > 0) {
+                    timerValue--;
+                    updateTimerLabel();
+                    setWaterUsagePreview();
+                }
+            });
+        }
+
+        // Initialize timer label
+        updateTimerLabel();
+        setWaterUsagePreview();
 
         // Load user profile and initialize chart
         loadUserProfileAndUpdateChart();
 
         // Log water usage
-        logWaterUsage.setOnClickListener(v -> {
-            if (selectedActivity == null || timerValue == 0) {
-                Toast.makeText(requireContext(), "Please select an activity and set the time.", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            logWaterUsage();
-        });
+        if (logWaterUsage != null) {
+            logWaterUsage.setOnClickListener(v -> {
+                Log.d(TAG, "Log water usage button clicked");
+                if (selectedActivity == null || timerValue == 0) {
+                    Toast.makeText(requireContext(), "Please select an activity and set the time.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                logWaterUsage();
+            });
+        }
 
         // Undo button
-        undoButton.setOnClickListener(v -> undoLastLog());
+        if (undoButton != null) {
+            undoButton.setOnClickListener(v -> {
+                Log.d(TAG, "Undo button clicked");
+                undoLastLog();
+            });
+        }
+
+        // Set up conservation tips buttons
+        Button conservationTipsButton = view.findViewById(R.id.conservationTipsButton);
+        Button ecoChallengesButton = view.findViewById(R.id.ecoChallengesButton);
+
+        if (conservationTipsButton != null) {
+            conservationTipsButton.setOnClickListener(v -> {
+                // Navigate to conservation tips
+                Toast.makeText(requireContext(), "Conservation Tips clicked", Toast.LENGTH_SHORT).show();
+                // Add navigation logic here
+            });
+        }
+
+        if (ecoChallengesButton != null) {
+            ecoChallengesButton.setOnClickListener(v -> {
+                // Navigate to eco challenges
+                Toast.makeText(requireContext(), "Eco Challenges clicked", Toast.LENGTH_SHORT).show();
+                // Add navigation logic here
+            });
+        }
     }
 
     private void loadUserProfileAndUpdateChart() {
+        Log.d(TAG, "Loading user profile for: " + userEmail);
+
         db.collection("users").document(userEmail)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
+                    Log.d(TAG, "User profile loaded successfully");
+
                     if (documentSnapshot.exists()) {
                         goalType = documentSnapshot.getString("goalType");
                         if (goalType == null) goalType = "DAILY";
@@ -197,19 +323,33 @@ public class HomeFragment extends Fragment {
                         if (customGoal != null) {
                             goal = customGoal.floatValue();
                         }
+
+                        // Initialize units properly
+                        units = goalUnits != null ? goalUnits : "Liters";
+
+                        Log.d(TAG, "Goal type: " + goalType + ", Goal: " + goal + ", Units: " + units);
+                    } else {
+                        // Set default values if user profile doesn't exist
+                        units = "Liters";
+                        Log.d(TAG, "User profile doesn't exist, using defaults");
                     }
 
                     // Load water usage and update chart
                     loadWaterUsageAndUpdateChart();
                 })
                 .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error loading user profile", e);
                     Toast.makeText(requireContext(), "Error loading user profile", Toast.LENGTH_SHORT).show();
+                    units = "Liters"; // Set default units
                     loadWaterUsageAndUpdateChart(); // Use defaults
                 });
     }
 
     private void loadWaterUsageAndUpdateChart() {
+        Log.d(TAG, "Loading water usage data");
+
         long[] window = getTimeWindow();
+        Log.d(TAG, "Time window: " + new Date(window[0]) + " to " + new Date(window[1]));
 
         db.collection("waterUsage")
                 .whereEqualTo("userEmail", userEmail)
@@ -217,24 +357,34 @@ public class HomeFragment extends Fragment {
                 .whereLessThan("timestamp", new Date(window[1]))
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
+                    Log.d(TAG, "Water usage data loaded successfully. Documents: " + queryDocumentSnapshots.size());
+
                     float totalUsage = 0f;
                     for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
                         Double amount = doc.getDouble("amountLiters");
                         if (amount != null) {
                             totalUsage += amount.floatValue();
+                            Log.d(TAG, "Added usage: " + amount.floatValue());
                         }
                     }
+
+                    Log.d(TAG, "Total usage: " + totalUsage + ", Goal: " + goal + ", Units: " + units);
                     updatePieChart(totalUsage, goal, units);
                 })
                 .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error loading water usage", e);
                     Toast.makeText(requireContext(), "Error loading water usage", Toast.LENGTH_SHORT).show();
                     updatePieChart(0f, goal, units);
                 });
     }
 
     private void logWaterUsage() {
+        Log.d(TAG, "Logging water usage for activity: " + selectedActivity + ", time: " + timerValue);
+
         double multiplier = getWaterUsageMultiplier(selectedActivity);
         double litersUsed = timerValue * multiplier;
+
+        Log.d(TAG, "Multiplier: " + multiplier + ", Liters used: " + litersUsed);
 
         Map<String, Object> waterUsage = new HashMap<>();
         waterUsage.put("userEmail", userEmail);
@@ -245,6 +395,8 @@ public class HomeFragment extends Fragment {
         db.collection("waterUsage")
                 .add(waterUsage)
                 .addOnSuccessListener(documentReference -> {
+                    Log.d(TAG, "Water usage logged successfully with ID: " + documentReference.getId());
+
                     lastLoggedDocumentId = documentReference.getId();
                     unDoAble = true;
 
@@ -253,7 +405,7 @@ public class HomeFragment extends Fragment {
                     updateTimerLabel();
 
                     if (selectedLayout != null) {
-                        selectedLayout.setBackgroundResource(R.drawable.default_background);
+                        selectedLayout.setBackgroundColor(Color.TRANSPARENT);
                         selectedLayout = null;
                     }
                     selectedActivity = null;
@@ -262,16 +414,19 @@ public class HomeFragment extends Fragment {
                     // Reload chart
                     loadWaterUsageAndUpdateChart();
 
-                    Toast.makeText(requireContext(), "Water usage logged", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), "Water usage logged: " + String.format("%.1f", litersUsed) + " L", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error logging water usage", e);
                     Toast.makeText(requireContext(), "Error logging water usage", Toast.LENGTH_SHORT).show();
                 });
     }
 
     private void undoLastLog() {
+        Log.d(TAG, "Attempting to undo last log");
+
         if (!unDoAble || lastLoggedDocumentId == null) {
-            Toast.makeText(requireContext(), "Please log your water usage to undo", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "No recent log to undo", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -286,6 +441,8 @@ public class HomeFragment extends Fragment {
                         db.collection("waterUsage").document(lastLoggedDocumentId)
                                 .delete()
                                 .addOnSuccessListener(aVoid -> {
+                                    Log.d(TAG, "Successfully undid log for: " + activityType);
+
                                     unDoAble = false;
                                     lastLoggedDocumentId = null;
 
@@ -297,11 +454,16 @@ public class HomeFragment extends Fragment {
                                     Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
                                 })
                                 .addOnFailureListener(e -> {
+                                    Log.e(TAG, "Error undoing log", e);
                                     Toast.makeText(requireContext(), "Error undoing log", Toast.LENGTH_SHORT).show();
                                 });
+                    } else {
+                        Log.w(TAG, "Document to undo not found");
+                        Toast.makeText(requireContext(), "Log not found", Toast.LENGTH_SHORT).show();
                     }
                 })
                 .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error finding log to undo", e);
                     Toast.makeText(requireContext(), "Error finding log to undo", Toast.LENGTH_SHORT).show();
                 });
     }
@@ -337,10 +499,20 @@ public class HomeFragment extends Fragment {
     }
 
     private void updateTimerLabel() {
-        timerLabel.setText("Timer: " + timerValue + " min");
+        if (timerLabel != null) {
+            timerLabel.setText("Timer: " + timerValue + " min");
+            Log.d(TAG, "Timer updated to: " + timerValue);
+        }
     }
 
     private void updatePieChart(float usage, float goal, String units) {
+        if (pieChart == null) {
+            Log.e(TAG, "PieChart is null, cannot update");
+            return;
+        }
+
+        Log.d(TAG, "Updating pie chart - Usage: " + usage + ", Goal: " + goal + ", Units: " + units);
+
         ArrayList<PieEntry> entries = new ArrayList<>();
 
         float usageLiters = usage;
@@ -351,21 +523,28 @@ public class HomeFragment extends Fragment {
         entries.add(new PieEntry(remaining, "Remaining"));
 
         PieDataSet dataSet = new PieDataSet(entries, "");
-        dataSet.setColors(
-                ContextCompat.getColor(requireContext(), R.color.light_blue),
-                ContextCompat.getColor(requireContext(), R.color.dark_blue)
-        );
+
+        // Use default colors if custom colors are not available
+        try {
+            dataSet.setColors(
+                    ContextCompat.getColor(requireContext(), R.color.light_blue),
+                    ContextCompat.getColor(requireContext(), R.color.dark_blue)
+            );
+        } catch (Exception e) {
+            // Fallback to default colors
+            dataSet.setColors(Color.BLUE, Color.CYAN);
+            Log.w(TAG, "Using default colors for pie chart", e);
+        }
+
         dataSet.setValueTextColor(Color.BLACK);
         dataSet.setValueTextSize(12f);
         dataSet.setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
-                if (units.equals("Liters"))
-                {
-                    return String.format("%.1f L", value);
+                if (units != null && units.equals("Gallons")) {
+                    return String.format("%.1f G", value);
                 }
-                return String.format("%.1f G", value);
-
+                return String.format("%.1f L", value);
             }
         });
 
@@ -388,38 +567,61 @@ public class HomeFragment extends Fragment {
         }
 
         String centerText = String.format(
-                "%.1f / %.1f liters\n%.1f%% %s",
+                "%.1f / %.1f %s\n%.1f%% %s",
                 usageLiters,
                 totalLiters,
+                units != null ? (units.equals("Gallons") ? "gal" : "L") : "L",
                 percentUsed,
                 label
         );
 
         pieChart.setCenterText(centerText);
-        pieChart.setCenterTextSize(16f);
+        pieChart.setCenterTextSize(14f);
         pieChart.setCenterTextColor(Color.BLACK);
         pieChart.getDescription().setEnabled(false);
+        pieChart.getLegend().setEnabled(false);
+        pieChart.setDrawHoleEnabled(true);
+        pieChart.setHoleRadius(40f);
+        pieChart.setTransparentCircleRadius(45f);
         pieChart.invalidate();
+
+        Log.d(TAG, "Pie chart updated successfully");
     }
 
     private void setSelectedActivity(LinearLayout layout, String activity) {
+        Log.d(TAG, "Setting selected activity: " + activity);
+
+        // Clear previous selection
         if (selectedLayout != null) {
-            selectedLayout.setBackgroundResource(R.drawable.default_background);
+            selectedLayout.setBackgroundColor(Color.TRANSPARENT);
         }
-        layout.setBackgroundResource(R.drawable.selected_background);
+
+        // Set new selection
+        try {
+            layout.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.light_blue));
+        } catch (Exception e) {
+            // Fallback color
+            layout.setBackgroundColor(Color.LTGRAY);
+            Log.w(TAG, "Using fallback selection color", e);
+        }
+
         selectedLayout = layout;
         selectedActivity = activity;
         setWaterUsagePreview();
+
+        Log.d(TAG, "Activity selected: " + selectedActivity);
     }
 
     private void setWaterUsagePreview() {
+        if (waterUsagePreview == null) return;
+
         if (selectedActivity != null && timerValue > 0) {
             double multiplier = getWaterUsageMultiplier(selectedActivity);
             double litersUsed = timerValue * multiplier;
-            waterUsagePreview.setText(
-                    String.format("Estimated Usage: %.1f liters for %d min (%s)",
-                            litersUsed, timerValue, selectedActivity)
-            );
+            String previewText = String.format("Estimated Usage: %.1f liters for %d min (%s)",
+                    litersUsed, timerValue, selectedActivity);
+            waterUsagePreview.setText(previewText);
+            Log.d(TAG, "Preview updated: " + previewText);
         } else {
             waterUsagePreview.setText("Select an activity and set a timer");
         }
@@ -468,5 +670,23 @@ public class HomeFragment extends Fragment {
         long end = cal.getTimeInMillis();
 
         return new long[]{start, end};
+    }
+
+    private void debugAuthState() {
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        FirebaseUser user = auth.getCurrentUser();
+
+        Log.d(TAG, "=== AUTH DEBUG ===");
+        Log.d(TAG, "Auth instance: " + auth);
+        Log.d(TAG, "Current user: " + user);
+
+        if (user != null) {
+            Log.d(TAG, "User UID: " + user.getUid());
+            Log.d(TAG, "User email: " + user.getEmail());
+            Log.d(TAG, "Is email verified: " + user.isEmailVerified());
+        } else {
+            Log.d(TAG, "User is NULL");
+        }
+        Log.d(TAG, "================");
     }
 }
