@@ -1,10 +1,9 @@
 import java.util.Properties
 
 plugins {
+    id("com.google.gms.google-services")
     alias(libs.plugins.android.application)
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
-//    id("com.android.application")
-    id("com.google.gms.google-services")
 }
 
 val localProperties = Properties().apply {
@@ -72,6 +71,7 @@ dependencies {
     implementation(libs.navigation.runtime.android)
     implementation(libs.work.runtime)
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     implementation(platform("com.google.firebase:firebase-bom:34.0.0"))
@@ -90,3 +90,5 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.0.0")
     implementation("com.github.bumptech.glide:glide:4.15.1")
 }
+
+
